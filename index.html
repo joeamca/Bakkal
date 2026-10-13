@@ -663,9 +663,9 @@ function render(keep){
     b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="goto" data-tab="yonetim" data-plain="1">Bak</button></div>`;
   $("#banner").innerHTML = b;
   const v = $("#view");
-  const gated = ["login","pickshop","noshop","paused"].includes(S.mode);
+  const gated = ["login","pickshop","noshop","paused","newpass"].includes(S.mode);
   document.body.classList.toggle("gated", gated);
-  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : "Giriş") : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : viewLogin()) : viewGate(); return; }
+  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : "Giriş") : S.mode==="newpass" ? "Yeni şifre" : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : viewLogin()) : viewGate(); return; }
   if (S.mode==="loading"){ return; }
   $("#guideBtn").setAttribute("aria-pressed", S.guide ? "true" : "false");
   $("#setBtn").setAttribute("aria-pressed", S.tab==="ayarlar" ? "true" : "false");
@@ -2478,7 +2478,7 @@ async function cloudBoot(){
   if (c && c.uid && c.shop){
     C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[];
     const d = c.data||{}; S.products = d.products||[]; S.events = d.events||[]; S.suppliers = d.suppliers||{}; S.customers = d.customers||{}; if (d.settings) S.settings = d.settings;
-    setStore(cloudStore()); S.mode = c.shop.active===false ? "paused" : "cloud"; render(); saving();
+    setStore(cloudStore()); S.mode = c.ctx?.must_change ? "newpass" : c.shop.active===false ? "paused" : "cloud"; render(); saving();
   } else { S.mode = "loading"; render(); }
   try{ await loadSB(); }
   catch(e){
@@ -2497,6 +2497,7 @@ async function afterLogin(user){
   const {data:ctx, error} = await SB.rpc("my_context"); if (error) throw error;
   if (!ctx) throw new Error("Hesap bilgisi bulunamadı. Yöneticiye haber ver.");
   C.ctx = ctx; SB.rpc("touch").then(()=>{}, ()=>{});
+  if (ctx.must_change){ S.mode = "newpass"; render(); return; }   // tek kullanımlık şifre: önce kendi şifresini koysun
   const shops = ctx.shops||[];
   let pick = shops.find(s=>s.id===C.shop?.id) || null;
   try{ if (!pick){ const last = localStorage.getItem("bd-son-dukkan"); pick = shops.find(s=>s.id===last) || null; } }catch(_){}
@@ -2594,7 +2595,7 @@ function signupCards(){
   </section>`;
 }
 const waNum = ph => { let d = String(ph||"").replace(/\D/g,""); if (d.startsWith("0")) d = "90" + d.slice(1); else if (d.length===10 && d.startsWith("5")) d = "90" + d; return d; };
-const shareText = (shop, u, p) => `Bakkal Defteri hesabın ${p ? "hazır" : "onaylandı"}.\nDükkân: ${shop}\nAdres: ${SITE()}\nKullanıcı adı: ${u}\nŞifre: ${p || "başvururken yazdığın şifre"}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
+const shareText = (shop, u, p) => `Bakkal Defteri hesabın ${p ? "hazır" : "onaylandı"}.\nDükkân: ${shop}\nAdres: ${SITE()}\nKullanıcı adı: ${u}\nŞifre: ${p || "başvururken yazdığın şifre"}${p ? "\n(Bu şifre tek kullanımlıktır; ilk girişte kendi şifreni belirleyeceksin.)" : ""}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
 
 function viewLogin(){
   return `<div class="card stack login">
@@ -2637,6 +2638,13 @@ function viewSignup(){
 }
 function viewGate(){
   const out = `<button data-act="logout">Çıkış yap</button>`;
+  if (S.mode==="newpass") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kendi şifreni belirle</h2></div>
+    <p>Sana verilen şifre <b>tek kullanımlıktı</b>. Devam etmek için sadece senin bileceğin yeni bir şifre koy.</p>
+    ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
+    <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="6"></label>
+    <label>Yeni şifre (tekrar)<input id="nw-2" type="password" autocomplete="new-password"></label>
+    <span class="small muted" style="margin-top:-4px">En az 6 karakter. Kimseyle paylaşma.</span>
+    <button class="primary" data-act="newPassSave">Şifremi kaydet ve devam et</button>${out}</div>`;
   if (S.mode==="pickshop") return `<div class="card stack"><h2>Hangi dükkân?</h2><p class="small muted">Hesabın birden fazla dükkâna bağlı. Birini seç; sonra Ayarlar'dan değiştirebilirsin.</p>
     ${(C.ctx?.shops||[]).map(s=>`<button class="mtile" data-act="pickShop" data-id="${s.id}"><b>${esc(s.name)}</b><span class="small muted">${ROLE[s.role]||s.role}${s.active?"":" · durduruldu"}</span></button>`).join("")}${out}</div>`;
   if (S.mode==="paused") return `<div class="card stack"><h2>${esc(C.shop?.name||"Dükkân")} durduruldu</h2><p>Dükkânının hesabı şu an kapalı. Kayıtların silinmedi; hesap açılınca aynen geri gelir.</p><p class="small muted">Yöneticiyle görüş.</p>
@@ -2731,8 +2739,17 @@ async function cloudAct(a, t, id){
   if (a==="pwSave"){ const p1 = document.getElementById("pw-new").value, p2 = document.getElementById("pw-new2").value;
     if (p1.length < 6){ S.msg = {kind:"bad", text:"Şifre en az 6 karakter olmalı."}; render(true); return true; }
     if (p1!==p2){ S.msg = {kind:"bad", text:"İki şifre aynı değil."}; render(true); return true; }
-    t.disabled = true; try{ const {error} = await SB.auth.updateUser({password:p1}); if (error) throw error; S.pwOpen = false; S.msg = {kind:"ok", text:"Şifren değişti. Bir dahaki girişte yeni şifreni kullan."}; }catch(e){ S.msg = {kind:"bad", text:sbMsg(e)}; }
+    t.disabled = true; try{ const {error} = await SB.rpc("change_my_password", {p_password:p1}); if (error) throw error; S.pwOpen = false; S.msg = {kind:"ok", text:"Şifren değişti. Bir dahaki girişte yeni şifreni kullan."}; }catch(e){ S.msg = {kind:"bad", text:sbMsg(e)}; }
     render(); window.scrollTo(0,0); return true; }
+  if (a==="newPassSave"){ const p1 = document.getElementById("nw-1").value, p2 = document.getElementById("nw-2").value;
+    if (p1.length < 6){ C.loginErr = "Şifre en az 6 karakter olmalı."; render(); return true; }
+    if (p1!==p2){ C.loginErr = "İki şifre aynı değil."; render(); return true; }
+    t.disabled = true;
+    try{ const {error} = await SB.rpc("change_my_password", {p_password:p1}); if (error) throw error;
+      C.loginErr = null; if (C.ctx) C.ctx.must_change = false; S.msg = {kind:"ok", text:"Şifren kaydedildi. Bundan sonra bu şifreyle gir."};
+      await afterLogin({id:C.user.id}); }
+    catch(e){ C.loginErr = sbMsg(e); render(); }
+    return true; }
   if (a==="addPersonOpen"){ S.addPerson = t.dataset.shop; S.created = null; render(true); document.getElementById("np-name")?.focus(); return true; }
   if (a==="newShopOpen"){ S.addPerson = "__shop"; S.created = null; render(true); document.getElementById("np-shop")?.focus(); return true; }
   if (a==="addPersonCancel"){ S.addPerson = null; render(); return true; }

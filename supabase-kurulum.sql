@@ -29,6 +29,9 @@ create table if not exists public.profiles (
   last_seen   timestamptz
 );
 
+-- Tek kullanımlık şifre: hesabı başkası açtıysa ya da şifre yenilendiyse ilk girişte değiştirmek zorunlu
+alter table public.profiles add column if not exists must_change boolean not null default false;
+
 create table if not exists public.members (
   shop_id     uuid not null references public.shops(id) on delete cascade,
   user_id     uuid not null references auth.users(id) on delete cascade,
@@ -178,7 +181,11 @@ begin
   if exists (select 1 from signup_requests where username = lower(trim(p_username)) and status = 'pending') then
     raise exception 'Bu kullanıcı adıyla bekleyen bir başvuru var: %', lower(trim(p_username)) using errcode = 'P0001';
   end if;
-  return bd_create_user_hashed(p_username, crypt(p_password, gen_salt('bf')), p_full_name);
+  declare uid uuid; begin
+    uid := bd_create_user_hashed(p_username, crypt(p_password, gen_salt('bf')), p_full_name);
+    update profiles set must_change = true where user_id = uid;
+    return uid;
+  end;
 end $$;
 revoke all on function public.bd_create_user(text, text, text) from public, anon, authenticated;
 
@@ -192,7 +199,7 @@ begin
     raise exception 'Yönetici zaten var.' using errcode = 'P0001';
   end if;
   uid := bd_create_user(p_username, p_password, p_full_name);
-  update profiles set is_admin = true where user_id = uid;
+  update profiles set is_admin = true, must_change = false where user_id = uid;
   if p_shop_name is not null then
     insert into shops (name, created_by) values (p_shop_name, uid) returning id into sid;
     insert into members (shop_id, user_id, role) values (sid, uid, 'owner');
@@ -206,7 +213,7 @@ revoke all on function public.bootstrap_admin(text, text, text, text) from publi
 create or replace function public.my_context() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
-    'user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'is_admin', p.is_admin,
+    'user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'is_admin', p.is_admin, 'must_change', p.must_change,
     'pending_signups', case when p.is_admin then (select count(*) from signup_requests r where r.status = 'pending') else 0 end,
     'shops', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'name', s.name, 'role', m.role, 'active', s.active) order by s.name)
                         from members m join shops s on s.id = m.shop_id where m.user_id = p.user_id), '[]'::jsonb))
@@ -267,6 +274,20 @@ begin
     raise exception 'Yöneticinin şifresi buradan değiştirilemez.' using errcode = '42501';
   end if;
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_user;
+  update profiles set must_change = (p_user <> auth.uid()) where user_id = p_user;
+end $$;
+
+-- Kendi şifreni değiştir (tek kullanımlık şifreden sonra da bu kullanılır)
+create or replace function public.change_my_password(p_password text)
+returns void language plpgsql security definer set search_path = public, extensions as $$
+declare cur text;
+begin
+  if auth.uid() is null then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
+  if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
+  select encrypted_password into cur from auth.users where id = auth.uid();
+  if cur is not null and cur = crypt(p_password, cur) then raise exception 'Yeni şifre eskisiyle aynı olamaz.' using errcode = 'P0001'; end if;
+  update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = auth.uid();
+  update profiles set must_change = false where user_id = auth.uid();
 end $$;
 
 -- Dükkândan çıkar (başka dükkânı yoksa hesabı tamamen kapatır)
@@ -401,7 +422,7 @@ begin
     'public.shop_members(uuid)', 'public.reset_password(uuid,text)', 'public.remove_member(uuid,uuid)',
     'public.admin_set_shop_active(uuid,boolean)', 'public.rename_shop(uuid,text)', 'public.admin_overview()',
     'public.is_admin()', 'public.is_member(uuid)', 'public.is_owner(uuid)',
-    'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)'] loop
+    'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)', 'public.change_my_password(text)'] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
   end loop;

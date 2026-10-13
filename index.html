@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bakkal Defteri Telefon</title>
+<title>Bakkal Defteri</title>
 <meta name="theme-color" content="#0f6b55">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -137,6 +137,14 @@ details.more>.stack{margin-top:8px}
 .toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;max-width:620px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:15px}
 .toast button{background:transparent;border-color:var(--bg);color:var(--bg);min-height:40px;padding:6px 14px;font-weight:600}
 .toast[hidden]{display:none}
+body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
+.login{max-width:420px;margin:12px auto}
+.prow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
+.dangerLink{color:var(--bad)!important;font-weight:600}
+.who{color:var(--c4);font-weight:600}
+section.paused{opacity:.7}
+.newperson{border:1px dashed var(--line);border-radius:10px;padding:12px}
+@media (max-width:420px){ #saveState{display:none} }
 .line.lbad{border-left:4px solid var(--bad);padding-left:10px}
 .lerr{color:var(--bad);font-weight:600;margin:0 0 4px}
 header.top>.row{flex-wrap:nowrap}
@@ -306,7 +314,14 @@ const store = {
   saveCustomer: x => ready.then(()=>real.saveCustomer(x)),
   deleteCustomer: id => ready.then(()=>real.deleteCustomer(id)),
 };
-function saving(){ const el = document.getElementById("saveState"); if (el) el.textContent = pending>0 ? "Kaydediliyor…" : (S.mode==="db" ? "Kaydedildi ✓" : ""); }
+function saving(){
+  const el = document.getElementById("saveState");
+  if (S.mode==="cloud"){ const C = S.cloud, n = C.queue.length;
+    if (el) el.textContent = !n ? (C.online ? "Kaydedildi ✓" : "İnternet yok") : (!C.online ? `İnternet yok · ${n} bekliyor` : "Gönderiliyor…");
+    const nn = document.getElementById("netNote");
+    if (nn) nn.innerHTML = !C.online ? `<div class="notice warn" style="margin-bottom:12px"><b>İnternet yok.</b> ${n ? `${n} kayıt telefonda bekliyor; bağlantı gelince kendiliğinden gönderilecek.` : "Girdiklerin telefonda tutulur, bağlantı gelince gönderilir."}</div>` : "";
+    return; }
+  if (el) el.textContent = pending>0 ? "Kaydediliyor…" : (S.mode==="db" ? "Kaydedildi ✓" : ""); }
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -621,7 +636,8 @@ function guideCard(){
       ${i<ORDER.length-1?`<button class="primary" data-act="guideGo" data-tab="${ORDER[i+1]}">Sıradaki: ${titles[ORDER[i+1]]} →</button>`:`<button class="primary" data-act="guideClose">Anladım, başlayalım</button>`}
     </div></section>`;
 }
-const titles = {ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
+const shopTitle = () => S.settings?.shopName || (S.mode==="cloud" && S.cloud?.shop?.name) || "";
+const titles = {yonetim:"Yönetici paneli", ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
 
 function renderData(){ if (!S.quiet) render(true); }
 function renderToast(){
@@ -640,21 +656,25 @@ function render(keep){
   if (S.mode==="local" && !hideLocal) b = `<div class="note" style="margin-bottom:12px"><div class="row between"><span>Kayıtlar bu cihazda saklanıyor.</span>
       <span class="row"><button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Excel'e al</button><button class="link" data-act="whyLocal">${S.showWhy?"Kapat":"Ne demek?"}</button><button class="link" data-act="hideLocal">Gizle</button></span></div>${S.showWhy?why:""}</div>`;
   else if (S.mode==="memory" && !FILE_MODE) b = `<div class="notice bad" style="margin-bottom:12px"><b>Bu tarayıcı kayıt yapmaya izin vermiyor; bilgiler sayfa kapanınca silinir.</b> Gizli sekmedeysen normal sekmede aç.</div>`;
-  else if (S.mode==="db" && S.localPending) b = `<div class="notice ok stack" style="margin-bottom:12px"><span>Bu cihazda daha önce hesaba kaydedilmemiş ${S.localPending.products.length} ürün ve ${S.localPending.events.length} kayıt var.</span><div class="row"><button class="primary" data-act="migrate">Hesabıma aktar</button><button data-act="dropLocal">Gerek yok</button></div></div>`;
+  else if ((S.mode==="db"||S.mode==="cloud") && S.localPending) b = `<div class="notice ok stack" style="margin-bottom:12px"><span>Bu cihazda daha önce hesaba kaydedilmemiş ${S.localPending.products.length} ürün ve ${S.localPending.events.length} kayıt var.</span><div class="row"><button class="primary" data-act="migrate">Hesabıma aktar</button><button data-act="dropLocal">Gerek yok</button></div></div>`;
   if (FILE_MODE) b = `<div class="notice ${S.mode==="memory"?"bad":"ok"} stack" style="margin-bottom:12px"><b>${S.mode==="memory"?"Dosyadan açtın; burada yazdıkların kaydedilmez.":"Dosyadan açtın. Uygulamanın kalıcı adresi daha güvenli."}</b><span>Düğmeye bas, uygulama tarayıcıda açılsın. Sonra oradan ana ekrana ekle.</span><a class="btn primary" href="${APP_URL}" target="_blank" rel="noopener" style="text-align:center;color:var(--accent-ink);background:var(--accent);text-decoration:none;padding:12px;border-radius:10px;font-weight:700">Uygulamayı aç</a></div>` + b;
+  if (S.mode==="cloud") b = `<div id="netNote"></div>` + b;
   $("#banner").innerHTML = b;
   const v = $("#view");
+  const gated = ["login","pickshop","noshop","paused"].includes(S.mode);
+  document.body.classList.toggle("gated", gated);
+  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? "Giriş" : "Dükkân"; v.innerHTML = S.mode==="login" ? viewLogin() : viewGate(); return; }
   if (S.mode==="loading"){ return; }
   $("#guideBtn").setAttribute("aria-pressed", S.guide ? "true" : "false");
   $("#setBtn").setAttribute("aria-pressed", S.tab==="ayarlar" ? "true" : "false");
-  document.title = S.settings?.shopName ? S.settings.shopName + " · Bakkal Defteri" : "Bakkal Defteri";
+  document.title = shopTitle() ? shopTitle() + " · Bakkal Defteri" : "Bakkal Defteri"; saving();
   document.documentElement.classList.toggle("big", !!S.settings?.bigText);
   renderToast();
   const saved = {};
   if (keep) v.querySelectorAll("input,select").forEach(el=>{ if (el.id && el.type!=="file") saved[el.id] = (el.type==="checkbox"||el.type==="radio") ? el.checked : el.value; });
   const openHow = keep ? [...v.querySelectorAll("details[open]")].map(d=>d.dataset.id).filter(Boolean) : [];
-  const VIEWS = {ana:viewHome, siparis:viewOrder, fatura:viewInvoice, veresiye:viewVeresiye, menu:viewMenu, stok:viewStock, plan:viewPlan, maliyet:viewCost, fire:viewFire, kar:viewProfit, urunler:viewProducts, ayarlar:viewSettings};
-  const pre = ["fire","kar","urunler","ayarlar"].includes(S.tab) && !S.editId ? backLink() : "";
+  const VIEWS = {yonetim:viewAdmin, ana:viewHome, siparis:viewOrder, fatura:viewInvoice, veresiye:viewVeresiye, menu:viewMenu, stok:viewStock, plan:viewPlan, maliyet:viewCost, fire:viewFire, kar:viewProfit, urunler:viewProducts, ayarlar:viewSettings};
+  const pre = ["fire","kar","urunler","ayarlar","yonetim"].includes(S.tab) && !S.editId ? backLink() : "";
   v.innerHTML = (S.guide ? guideCard() : "") + pre + (VIEWS[S.tab]||viewHome)();
   if (keep){
     for (const [id,val] of Object.entries(saved)){ const el = document.getElementById(id); if (!el) continue;
@@ -887,11 +907,11 @@ function viewInvoice(){
       ${S.invMsg ? `<p class="notice bad">${esc(S.invMsg)}</p>` : ""}
       <button data-act="manualInv">Elle gir</button>
     </div>`;
-    const recent = S.events.filter(e=>e.type==="gelen"||e.type==="iade").reduce((m,e)=>{ const k = invKeyOf(e); m[k] ||= {k,no:e.invoiceNo,date:e.date,sup:e.supplier,n:0,q:0}; m[k].n++; m[k].q+=e.qty; return m; },{});
+    const recent = S.events.filter(e=>e.type==="gelen"||e.type==="iade").reduce((m,e)=>{ const k = invKeyOf(e); m[k] ||= {k,no:e.invoiceNo,date:e.date,sup:e.supplier,n:0,q:0,eid:e.id}; m[k].n++; m[k].q+=e.qty; return m; },{});
     const rec = Object.values(recent).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
     if (rec.length) html += `<div class="card stack"><h3>Son faturalar</h3>
       <p class="small muted">Yanlış girdiğin bir fatura varsa sil; o faturayla gelen mal ve tahmine etkisi geri alınır.</p>
-      ${rec.map(r=>`<div class="row between"><span><b>${esc(r.sup||"Tedarikçi yok")}</b>${r.no?` <span class="small muted num">${esc(r.no)}</span>`:""}<br><span class="small muted num">${new Date(r.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long"})} · ${r.n} kalem · ${fmt(r.q)} tane</span></span>
+      ${rec.map(r=>`<div class="row between"><span><b>${esc(r.sup||"Tedarikçi yok")}</b>${r.no?` <span class="small muted num">${esc(r.no)}</span>`:""}<br><span class="small muted num">${new Date(r.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long"})} · ${r.n} kalem · ${fmt(r.q)} tane</span>${whoTag("event", r.eid)}</span>
         <button class="${S.confirmInv===r.k?"danger":""}" data-act="delInv" data-k="${esc(r.k)}">${S.confirmInv===r.k?"Emin misin? Sil":"Sil"}</button></div>`).join("")}</div>`;
     return html;
   }
@@ -1098,6 +1118,7 @@ function viewSettings(){
   let html = "";
   if (!S.products.length) html += `<p class="notice ok">Başka bir cihazdan aldığın Excel yedeğin varsa en alttaki "Excel'den yükle" ile hepsini getirebilirsin.</p>`;
   if (S.msg) html += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
+  html += accountCards();
   const sups = [...new Set(S.products.map(x=>x.supplier).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"tr"));
   html += `<section class="card stack"><h2>Dükkân</h2>
     <div class="row" style="align-items:flex-end"><label style="flex:1;min-width:180px">Dükkânın adı<input id="shop-name" maxlength="40" value="${esc(S.settings?.shopName||"")}" placeholder="Örn. Yıldız Bakkal"></label><button data-act="saveShop">Kaydet</button></div>
@@ -1132,12 +1153,12 @@ function viewSettings(){
       <label>Satış nasıl olur?<select id="sp-k">${Object.entries(SPECIAL).map(([k,v])=>`<option value="${k}" ${k==="cokyogun"?"selected":""}>${v.t}</option>`).join("")}</select></label></div>
     <button data-act="addSpecial">Özel gün ekle</button>
   </section>
-  <section class="card stack"><h2>Dükkânda birden fazla kişi</h2>
+  ${S.mode==="cloud" ? "" : `<section class="card stack"><h2>Dükkânda birden fazla kişi</h2>
     ${S.shared ? `<p class="small"><b>Ortak defteri kullanıyorsun.</b> Uygulamanın paylaşıldığı herkes aynı ürünleri, faturaları ve fireleri görüp girebilir.</p>
       <button data-act="shareOff">Kendi defterime dön</button>`
     : `<p class="small muted">Sen ve çırağın gibi aynı dükkânda çalışanlar tek defter kullanabilir. Dikkat: ortak defteri, bu uygulamayı paylaştığın <b>herkes</b> görür ve değiştirebilir. Uygulamayı başka bakkallara da gönderiyorsan her dükkâna ayrı bir kopya ver.</p>
       ${S.mode==="db" ? `<button data-act="shareOn">Ortak deftere geç</button>` : `<p class="small muted">Bu açılışta ortak defter yok. İki telefonda çalışacaksanız birinde <b>Excel'e aktar</b>, öbüründe <b>Excel'den yükle</b>.</p>`}`}
-  </section>
+  </section>`}
   <section class="card stack" id="excel"><h2>Excel ile taşı ve yedekle</h2>
     <p class="small muted">Bütün kayıtlar (ürünler, faturalar, fireler, sayımlar, veresiye defteri, ayarlar) tek bir Excel dosyasına alınır. Bu dosyayı başka bir telefonda ya da tarayıcıda "Excel'den yükle" ile açarsan her şey aynen gelir. Excel'de satır ekleyip düzeltip geri de yükleyebilirsin.</p>
     ${importCard()}
@@ -1160,7 +1181,7 @@ const ICONS = {
   chart:'<path d="M3 20h18"/><path d="M6 20v-6M11 20V8M16 20v-9M21 20V5"/>',
   trash:'<path d="M4 7h16M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>',
   tag:'<path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
-  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+  gear:'<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
   help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.8-2.5 2-2.5 4"/><path d="M12 17.5h.01"/>',
   sheet:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/>',
   truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
@@ -1220,7 +1241,7 @@ function lineChart(pts, o={}){ // pts: [{v, l, mark}]
 const isMade = p => Array.isArray(p.recipe) && p.recipe.length>0;
 const usedIn = id => S.products.filter(x=>isMade(x) && x.recipe.some(r=>r.id===id));
 const stockP = () => S.products.filter(p=>!isMade(p));
-const MENU_TABS = ["menu","stok","plan","maliyet","kar","fire","urunler","ayarlar"];
+const MENU_TABS = ["menu","stok","plan","maliyet","kar","fire","urunler","ayarlar","yonetim"];
 function dayWeight(t){ const w=dayW(), m=w.reduce((x,y)=>x+y,0)/7||1, sd=specials().find(x=>x.d===ymd(t)); return sd ? (SPECIAL[sd.k]?.w??1) : w[new Date(t).getDay()]/m; }
 function depDaily(){ const d={}; for (const m of S.products) if (isMade(m)) for (const c of m.recipe){ d[c.id]=(d[c.id]||0)+(Number(m.dailyEst)||0)*(Number(c.qty)||0); } return d; }
 function gotToday(pid){ const k=ymd(Date.now()); return S.events.some(e=>e.productId===pid && e.type==="gelen" && ymd(new Date(e.date).getTime())===k); }
@@ -1563,7 +1584,7 @@ function custDetail(c){
   let run = 0; const hist = s.ev.map(e=>{ run += e.type==="borc" ? Number(e.amount) : -Number(e.amount); return {e, run}; }).reverse();
   html += `<section class="card"><h3 style="margin-bottom:6px">Hesap dökümü</h3>${hist.length ? hist.map(({e,run})=>`<div class="lrow">
       <span class="lic ${e.type}">${ic(e.type==="borc"?"plus":"minus",16)}</span>
-      <span class="lmid"><b>${e.type==="borc"?"Veresiye":"Ödeme"}</b>${e.note?` · ${esc(e.note)}`:""}<br><span class="small muted">${new Date(e.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"short"})} ${new Date(e.date).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})}</span></span>
+      <span class="lmid"><b>${e.type==="borc"?"Veresiye":"Ödeme"}</b>${e.note?` · ${esc(e.note)}`:""}${whoTag("event", e.id)}<br><span class="small muted">${new Date(e.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"short"})} ${new Date(e.date).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})}</span></span>
       <span class="lamt"><b class="num ${e.type==="borc"?"neg":"pos"}">${e.type==="borc"?"+":"−"}${TLx(Number(e.amount))}</b><span class="small muted num">kalan ${TLx(run)}</span>
       <button class="link" data-act="vDelEntry" data-id="${e.id}">${S.confirmV===e.id?"Emin misin?":"Sil"}</button></span></div>`).join("") : `<p class="small muted">Henüz kayıt yok. Yukarıdan "Veresiye yaz" ile başla.</p>`}</section>`;
   html += `<div class="row"><button class="danger" data-act="vDelCust" data-id="${c.id}">${S.confirmDelC===c.id?(s.bal>0.005?`Borcu var (${TL(s.bal)})! Yine de sil`:"Emin misin? Sil"):"Müşteriyi sil"}</button></div>`;
@@ -1583,7 +1604,7 @@ function custForm(c){
 
 /* ---------- Ana sayfa ve menü ---------- */
 function phoneCard(){
-  if (FILE_MODE || (S.mode!=="local" && S.mode!=="memory")) return "";
+  if (FILE_MODE || (S.mode!=="local" && S.mode!=="memory" && S.mode!=="cloud")) return "";
   const ua = navigator.userAgent||"";
   const inApp = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|; wv\)|WhatsApp|Snapchat|TikTok|musical_ly/i.test(ua);
   const ios = /iPhone|iPad|iPod/i.test(ua);
@@ -1612,7 +1633,7 @@ function viewHome(){
   const nOut = st2.filter(x=>x.s.k==="out").length, nLow = st2.filter(x=>x.s.k==="low").length;
   const custs = Object.values(S.customers||{}).map(c=>({c, s:custStats(c)})), debt = custs.reduce((a,x)=>a+Math.max(0,x.s.bal),0);
   const lateC = custs.filter(x=>x.s.bal>0.005 && x.s.ageDays>30);
-  let html = phoneCard() + `<div class="hello"><h2>${hi}${S.settings?.shopName?", "+esc(S.settings.shopName):""}</h2><p class="small muted">${new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</p></div>`;
+  let html = phoneCard() + `<div class="hello"><h2>${hi}${shopTitle()?", "+esc(shopTitle()):""}</h2><p class="small muted">${new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</p></div>`;
   html += `<div class="btiles">
     <button class="btile" data-act="goto" data-tab="siparis" data-plain="1"><span class="bi c1">${ic("truck",24)}</span><span class="bn num">${todaySup.length}</span><span class="bt">${todaySup.length?"araç bugün geliyor":"bugün araç yok"}</span><span class="bs">${esc(todaySup.slice(0,2).join(", ")||(tomSup.length?"yarın: "+tomSup.slice(0,2).join(", "):""))}</span></button>
     <button class="btile" data-act="goto" data-tab="siparis" data-plain="1"><span class="bi c4">${ic("list",24)}</span><span class="bn num">${nOrder}</span><span class="bt">ürün sipariş bekliyor</span></button>
@@ -1656,7 +1677,9 @@ function viewMenu(){
     ["maliyet","coin","Stok maliyeti","Maliyeti düşürme önerileri","c2"],["kar","chart","Kâr ve zarar","Ne kazanıyorsun, nerede kaybediyorsun","c1"],
     ["fire","trash","Fire","Haftalık bozulan mal","c3"],["urunler","tag","Ürünler","Ekle, düzenle, reçete","c6"],["ayarlar","gear","Ayarlar","Araç günleri, özel günler, Excel","c5"]];
   return `<div class="mgrid">${items.map(([t,i,l,d,c])=>`<button class="mtile" data-act="goto" data-tab="${t}" data-plain="1"><span class="bi ${c}">${ic(i,26)}</span><b>${l}</b><span class="small muted">${d}</span></button>`).join("")}
-    <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button></div>`;
+    <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
+    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="goto" data-tab="yonetim" data-plain="1"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici paneli</b><span class="small muted">Dükkânlar, hesaplar, şifreler</span></button>` : ""}
+    ${S.mode==="cloud" ? `<button class="mtile" data-act="goto" data-tab="ayarlar" data-plain="1"><span class="bi c5">${ic("user",26)}</span><b>Hesabım</b><span class="small muted">${esc(S.cloud.ctx?.username||"")} · şifre, kişiler, çıkış</span></button>` : ""}</div>`;
 }
 
 /* ---------- Excel'e aktar ---------- */
@@ -2057,6 +2080,7 @@ document.addEventListener("click", async ev=>{
   if (t.dataset.tab && !t.dataset.act){ syncInv(); S.tab=t.dataset.tab; S.msg=null; S.fireImpact=null; S.vCust=null; S.vEditCust=null; S.vMode=null; S.editId=null; render(); window.scrollTo(0,0); return; }
   const a = t.dataset.act, id = t.dataset.id;
   try{
+    if (CLOUD_ON && await cloudAct(a, t, id)) return;
     if (a==="stockF"){ S.stockF = t.dataset.f||"all"; render(); }
     else if (a==="stockGo"){ S.tab="stok"; S.stockF=t.dataset.f||"all"; S.guide=false; S.msg=null; render(); window.scrollTo(0,0); }
     else if (a==="applyN"){ const p=S.products.find(x=>x.id===id), n=Number(t.dataset.n)||1, prev=Number(p.everyN)||1; await store.saveProduct({...p, everyN:n}); S.msg={kind:"ok",text:`${p.name} artık ${n===1?"her teslimatta":n+" teslimatta bir"} sipariş edilecek.`}; offerUndo("Sipariş sıklığı değişti.", ()=>store.saveProduct({...S.products.find(x=>x.id===id), everyN:prev})); render(); }
@@ -2260,6 +2284,7 @@ const CKEY = "bd-onbellek";
 function cacheWrite(){ clearTimeout(cacheWrite.t); cacheWrite.t = setTimeout(()=>{ try{ localStorage.setItem(CKEY, JSON.stringify({uid:S.uid, products:S.products.map(({showCount,...x})=>x), events:S.events, suppliers:S.suppliers, settings:S.settings, customers:S.customers})); }catch(_){} }, 400); }
 function cacheRead(){ try{ return JSON.parse(localStorage.getItem(CKEY)||"null"); }catch(_){ return null; } }
 async function boot(){
+  if (CLOUD_ON) return cloudBoot();
   const cached = cacheRead();
   if (cached && Array.isArray(cached.products)){ S.products = cached.products; S.events = cached.events||[]; S.suppliers = cached.suppliers||{}; S.customers = cached.customers||{}; if (cached.settings) S.settings = cached.settings; S.mode = "db"; render(); }
   else S.mode = "loading";
@@ -2333,6 +2358,355 @@ async function switchShared(on){
     render();
   }catch(e){ S.msg={kind:"bad",text:"Defter değiştirilemedi. Tekrar dene."}; render(); }
 }
+/* ---------- Bulut: Supabase ile giriş, kullanıcılar ve kayıt ---------- */
+// url ve key boşsa uygulama eskisi gibi (telefonda/Claude'da) çalışır. Doluysa giriş ekranı açılır.
+const CLOUD = {url:"https://mvonvaoatjhfmezlidrv.supabase.co", key:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12b252YW9hdGpoZm1lemxpZHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTg0NjAsImV4cCI6MjEwNzQ3NDQ2MH0.Rwg4ZXS9XXLGKeM4eZb_hOYLbGDgL_o03yz4c8bkapA", emailDomain:"kullanici.bakkaldefteri.app",
+  lib:"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"};
+const CLOUD_ON = /^https:\/\//.test(CLOUD.url) && CLOUD.key.length > 20;
+const BKEY = "bd-bulut";
+let SB = null, RT = null, flushTimer = null;
+const newC = () => ({user:null, ctx:null, shop:null, queue:[], lastSync:null, by:{}, people:[], online: navigator.onLine!==false, flushing:false, err:null, loginErr:null, busy:false});
+let C = newC(); S.cloud = C;
+const SITE = () => location.origin + location.pathname;
+const TRMAP = {"ç":"c","ğ":"g","ı":"i","İ":"i","ö":"o","ş":"s","ü":"u","Ç":"c","Ğ":"g","Ö":"o","Ş":"s","Ü":"u"};
+function normUser(u){ return String(u||"").replace(/[çğıİöşüÇĞÖŞÜ]/g, ch=>TRMAP[ch]).toLowerCase().replace(/\s+/g,"").replace(/[^a-z0-9._-]/g,""); }
+const toEmail = u => normUser(u) + "@" + CLOUD.emailDomain;
+const ROLE = {owner:"dükkân sahibi", staff:"çalışan"};
+const WORDS = ["simit","elma","armut","zeytin","peynir","limon","incir","nane","kiraz","ceviz","findik","lokum"];
+const genPass = () => WORDS[Math.floor(Math.random()*WORDS.length)] + "-" + String(1000 + Math.floor(Math.random()*9000));
+const agoShort = t => { if (!t) return "hiç girmedi"; const m = (Date.now()-new Date(t).getTime())/60000; return m<2 ? "şimdi" : m<60 ? `${Math.round(m)} dk önce` : m<1440 ? `${Math.round(m/60)} saat önce` : `${Math.round(m/1440)} gün önce`; };
+const sbMsg = e => { const m = String(e?.message||e||""); return /fetch|network|Load failed|NetworkError/i.test(m) ? "İnternet bağlantısı yok. Bağlanınca tekrar dene." : m.replace(/^.*?ERROR:\s*/,""); };
+const isNetErr = e => /fetch|network|Load failed|NetworkError|timeout/i.test(String(e?.message||e||"")) || (!e?.code && !e?.status);
+
+function cloudSave(){ clearTimeout(cloudSave.t); cloudSave.t = setTimeout(cloudSaveNow, 150); }
+function cloudSaveNow(){ clearTimeout(cloudSave.t); if (!C.user) return; try{ localStorage.setItem(BKEY, JSON.stringify({uid:C.user.id, ctx:C.ctx, shop:C.shop, queue:C.queue, lastSync:C.lastSync, by:C.by, people:C.people,
+  data:{products:S.products.map(({showCount,...x})=>x), events:S.events, suppliers:S.suppliers, customers:S.customers, settings:S.settings}})); }catch(_){} }
+function cloudRead(){ try{ return JSON.parse(localStorage.getItem(BKEY)||"null"); }catch(_){ return null; } }
+window.addEventListener("pagehide", ()=>{ if (CLOUD_ON) cloudSaveNow(); });
+
+function loadSB(){
+  if (window.supabase?.createClient) return Promise.resolve();
+  return new Promise((res,rej)=>{ const s = document.createElement("script"); s.src = CLOUD.lib; s.onload = res; s.onerror = ()=>{ s.remove(); rej(new Error("NetworkError: kütüphane yüklenemedi")); }; document.head.appendChild(s); });
+}
+function client(){
+  if (!SB){ SB = window.supabase.createClient(CLOUD.url, CLOUD.key, {auth:{persistSession:true, autoRefreshToken:true, storageKey:"bd-oturum"}});
+    SB.auth.onAuthStateChange((ev)=>{ if (ev==="SIGNED_OUT" && C.user && !C.leaving){ C.loginErr = "Oturumun kapandı. Tekrar giriş yap."; resetCloud(false); } }); }
+  return SB;
+}
+
+/* --- kayıt kuyruğu: önce telefona, sonra internete --- */
+const strip = o => { const {showCount, ...x} = o||{}; return x; };
+function put(kind, id, data, deleted){
+  if (!C.shop){ S.msg = {kind:"bad", text:"Önce bir dükkân seç."}; return; }
+  C.queue = C.queue.filter(q=>!(q.kind===kind && q.id===id && q.shop===C.shop.id));
+  C.queue.push({shop:C.shop.id, kind, id:String(id), data: deleted ? {} : strip(data), deleted:!!deleted});
+  cloudSave(); saving(); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 250);
+}
+async function flush(){
+  clearTimeout(flushTimer);
+  if (C.flushing || !SB || !C.user || !C.shop) { saving(); return; }
+  const mine = C.queue.filter(q=>q.shop===C.shop.id);
+  if (!mine.length){ saving(); return; }
+  C.flushing = true; saving();
+  const batch = mine.slice(0, 200);
+  try{
+    const {error} = await SB.from("docs").upsert(batch.map(q=>({shop_id:q.shop, kind:q.kind, id:q.id, data:q.data, deleted:q.deleted})));
+    if (error) throw error;
+    C.queue = C.queue.filter(q=>!batch.includes(q)); C.err = null; C.online = true; cloudSave();
+  }catch(e){
+    if (isNetErr(e)){ C.online = false; flushTimer = setTimeout(flush, 15000); }
+    else { C.err = e; S.msg = {kind:"bad", text:"Kayıt internete gönderilemedi: " + sbMsg(e) + (e.code==="42501" ? " Dükkânın hesabı durdurulmuş ya da bu dükkândan çıkarılmış olabilirsin." : "")}; render(); }
+  }finally{ C.flushing = false; saving(); }
+  if (!C.err && C.online && C.queue.some(q=>q.shop===C.shop?.id)) flush();
+}
+function cloudStore(){
+  const upd = (arr, x) => { const i = arr.findIndex(y=>y.id===x.id); if (i>=0) arr[i] = x; else arr.push(x); };
+  return {
+    async saveProduct(p){ upd(S.products, {...p}); put("product", p.id, p); renderData(); },
+    async deleteProduct(id){ S.products = S.products.filter(x=>x.id!==id); put("product", id, null, true); renderData(); },
+    async addEvent(e){ const x = {...e, id:e.id||newId()}; S.events.push(x); put("event", x.id, x); renderData(); },
+    async deleteEvent(id){ S.events = S.events.filter(x=>x.id!==id); put("event", id, null, true); renderData(); },
+    async saveSupplier(x){ S.suppliers = {...S.suppliers, [x.id]:x}; put("supplier", x.id, x); renderData(); },
+    async saveSettings(x){ S.settings = x; put("settings", "main", x); renderData(); },
+    async saveCustomer(x){ S.customers = {...S.customers, [x.id]:x}; put("customer", x.id, x); renderData(); },
+    async deleteCustomer(id){ const c = {...S.customers}; delete c[id]; S.customers = c; put("customer", id, null, true); renderData(); }
+  };
+}
+
+/* --- sunucudan gelen satırı uygula --- */
+function applyRow(r){
+  if (!r || !C.shop || r.shop_id!==C.shop.id) return;
+  if (!C.lastSync || r.updated_at > C.lastSync) C.lastSync = r.updated_at;
+  if (C.queue.some(q=>q.shop===r.shop_id && q.kind===r.kind && q.id===r.id)) return; // telefondaki daha yeni
+  if (r.updated_by) C.by[r.kind+":"+r.id] = r.updated_by;
+  const d = r.deleted ? null : r.data;
+  const inArr = (arr) => { const i = arr.findIndex(x=>x.id===r.id); if (!d){ if (i>=0) arr.splice(i,1); } else { const v = {...d, id:r.id}; if (i>=0){ if (arr[i].showCount) v.showCount = true; arr[i] = v; } else arr.push(v); } };
+  if (r.kind==="product") inArr(S.products);
+  else if (r.kind==="event") inArr(S.events);
+  else if (r.kind==="supplier" || r.kind==="customer"){ const key = r.kind==="supplier" ? "suppliers" : "customers"; const o = {...S[key]}; if (d) o[r.id] = {...d, id:r.id}; else delete o[r.id]; S[key] = o; }
+  else if (r.kind==="settings" && d){ S.settings = {...d}; S.settingsFromDb = true; }
+}
+async function pull(){
+  const size = 1000; let from = 0, n = 0; const since = C.lastSync;
+  for (;;){
+    let q = SB.from("docs").select("shop_id,kind,id,data,deleted,updated_at,updated_by").eq("shop_id", C.shop.id);
+    if (since) q = q.gte("updated_at", since);
+    const {data, error} = await q.order("updated_at", {ascending:true}).order("kind").order("id").range(from, from+size-1);
+    if (error) throw error;
+    data.forEach(applyRow); n += data.length;
+    if (data.length < size) break; from += size;
+  }
+  C.online = true; cloudSave(); return n;
+}
+function subscribe(){
+  try{
+    if (RT) SB.removeChannel(RT);
+    RT = SB.channel("docs-"+C.shop.id).on("postgres_changes", {event:"*", schema:"public", table:"docs", filter:"shop_id=eq."+C.shop.id},
+      p=>{ applyRow(p.new); cloudSave(); renderData(); }).subscribe();
+  }catch(_){}
+}
+async function loadPeople(){ if (!C.shop || !SB) return; try{ const {data, error} = await SB.rpc("shop_members", {p_shop:C.shop.id}); if (!error){ C.people = data||[]; C.peopleAt = Date.now(); cloudSave(); } }catch(_){} }
+const whoName = uid => { const p = C.people.find(x=>x.user_id===uid); return p ? (p.full_name || p.username) : null; };
+// "kim girdi" etiketi: dükkânda birden fazla kişi varsa gösterilir
+const whoTag = (kind, id) => { if (S.mode!=="cloud" || C.people.length < 2) return ""; const n = whoName(C.by[kind+":"+id]); return n ? ` · <span class="who">${esc(n)}</span>` : ""; };
+
+/* --- açılış, giriş, çıkış --- */
+async function cloudBoot(){
+  const c = cloudRead();
+  if (c && c.uid && c.shop){
+    C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[];
+    const d = c.data||{}; S.products = d.products||[]; S.events = d.events||[]; S.suppliers = d.suppliers||{}; S.customers = d.customers||{}; if (d.settings) S.settings = d.settings;
+    setStore(cloudStore()); S.mode = c.shop.active===false ? "paused" : "cloud"; render(); saving();
+  } else { S.mode = "loading"; render(); }
+  try{ await loadSB(); }
+  catch(e){
+    if (S.mode==="cloud"){ C.online = false; saving(); window.addEventListener("online", ()=>{ loadSB().then(()=>{ client(); resync(); }, ()=>{}); }, {once:true}); return; }
+    S.mode = "login"; C.loginErr = "İnternet bağlantısı yok. İlk giriş için internet gerekiyor."; render(); window.addEventListener("online", ()=>cloudBoot(), {once:true}); return;
+  }
+  client();
+  let session = null; try{ session = (await SB.auth.getSession()).data.session; }catch(_){}
+  if (!session){ if (S.mode!=="cloud" || !C.user){ S.mode = "login"; render(); } else { C.online = false; saving(); } return; }
+  try{ await afterLogin(session.user); }
+  catch(e){ if (isNetErr(e) && S.mode==="cloud"){ C.online = false; saving(); } else { C.loginErr = sbMsg(e); S.mode = "login"; render(); } }
+}
+async function afterLogin(user){
+  if (C.user && C.user.id!==user.id){ const keep = {loginErr:null}; C = Object.assign(newC(), keep); S.cloud = C; clearData(); }
+  C.user = {id:user.id};
+  const {data:ctx, error} = await SB.rpc("my_context"); if (error) throw error;
+  if (!ctx) throw new Error("Hesap bilgisi bulunamadı. Yöneticiye haber ver.");
+  C.ctx = ctx; SB.rpc("touch").then(()=>{}, ()=>{});
+  const shops = ctx.shops||[];
+  let pick = shops.find(s=>s.id===C.shop?.id) || null;
+  try{ if (!pick){ const last = localStorage.getItem("bd-son-dukkan"); pick = shops.find(s=>s.id===last) || null; } }catch(_){}
+  if (!pick && shops.length===1) pick = shops[0];
+  if (!pick){
+    if (shops.length>1){ S.mode = "pickshop"; render(); return; }
+    if (ctx.is_admin){ C.shop = null; setStore(cloudStore()); S.mode = "cloud"; S.tab = "yonetim"; S.guide = false; render(); loadOverview(); return; }
+    S.mode = "noshop"; render(); return;
+  }
+  await openShop(pick);
+}
+function clearData(){ S.products = []; S.events = []; S.suppliers = {}; S.customers = {}; S.settings = {dayW:[1,1,1,1,1,1,1], bigText:true}; S.settingsFromDb = false; }
+async function openShop(sh){
+  if (C.shop && C.shop.id!==sh.id){ clearData(); C.lastSync = null; C.by = {}; C.people = []; }
+  C.shop = sh; try{ localStorage.setItem("bd-son-dukkan", sh.id); }catch(_){}
+  if (!sh.active){ S.mode = "paused"; render(); return; }
+  setStore(cloudStore()); S.mode = "cloud"; render();
+  try{ await pull(); }catch(e){ if (isNetErr(e)) C.online = false; else { S.msg = {kind:"bad", text:"Kayıtlar alınamadı: " + sbMsg(e)}; } }
+  const L = readLocal(); if (L && (L.products.length || L.events.length || Object.keys(L.customers||{}).length)) S.localPending = L;
+  subscribe(); C.ready = true; flush(); loadPeople().then(()=>renderData()); cloudSaveNow(); render(); saving();
+}
+async function doLogin(){
+  const u = normUser(document.getElementById("lg-user")?.value), p = document.getElementById("lg-pass")?.value || "";
+  if (!u || !p){ C.loginErr = "Kullanıcı adını ve şifreni yaz."; render(); return; }
+  C.busy = true; C.loginErr = null; render();
+  try{
+    await loadSB(); client();
+    const {data, error} = await SB.auth.signInWithPassword({email: toEmail(u), password: p});
+    if (error) throw error;
+    C.busy = false; await afterLogin(data.user);
+  }catch(e){
+    C.loginErr = /invalid login|invalid_credentials|Invalid/i.test(e?.message||"") ? "Kullanıcı adı ya da şifre yanlış." : sbMsg(e);
+    S.mode = "login";
+  }
+  C.busy = false; render();
+}
+function resetCloud(clearCache){
+  if (RT && SB) try{ SB.removeChannel(RT); }catch(_){} RT = null;
+  if (clearCache) try{ localStorage.removeItem(BKEY); }catch(_){}
+  const msg = C.loginErr; C = newC(); C.loginErr = msg; S.cloud = C; clearData(); S.mode = "login"; S.tab = "ana"; render();
+}
+async function doLogout(force){
+  if (C.queue.length && !force){ S.confirmOut = true; render(); return; }
+  S.confirmOut = false; C.leaving = true;
+  try{ await SB?.auth.signOut({scope:"local"}); }catch(_){}
+  resetCloud(true);
+}
+
+/* --- hesap ve kişi yönetimi --- */
+async function rpc(name, args, okText){
+  try{ const {data, error} = await SB.rpc(name, args); if (error) throw error; if (okText) S.msg = {kind:"ok", text:okText}; return (data===null || data===undefined || data==="") ? true : data; }
+  catch(e){ S.msg = {kind:"bad", text:sbMsg(e)}; return null; }
+}
+async function loadOverview(){ const d = await rpc("admin_overview", {}); if (d){ C.overview = d; } renderData(); }
+const shareText = (shop, u, p) => `Bakkal Defteri hesabın hazır.\nDükkân: ${shop}\nAdres: ${SITE()}\nKullanıcı adı: ${u}\nŞifre: ${p}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
+
+function viewLogin(){
+  return `<div class="card stack login">
+    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("book",26)}</span><h2>Bakkal Defteri</h2><p class="small muted">Dükkânının hesabına giriş yap</p></div>
+    ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
+    <form id="lgform" class="stack" autocomplete="on">
+      <label>Kullanıcı adı<input id="lg-user" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" placeholder="örn. mertbakkal"></label>
+      <label>Şifre<input id="lg-pass" name="password" type="password" autocomplete="current-password"></label>
+      <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Giriş yapılıyor':"Giriş yap"}</button>
+    </form>
+    <details class="how"><summary>Hesabım yok / şifremi unuttum</summary><p class="small" style="margin-top:8px">Hesapları yönetici açar. Şifreni unuttuysan dükkân sahibine ya da yöneticiye söyle, sana yeni bir şifre versin.</p></details>
+  </div>`;
+}
+function viewGate(){
+  const out = `<button data-act="logout">Çıkış yap</button>`;
+  if (S.mode==="pickshop") return `<div class="card stack"><h2>Hangi dükkân?</h2><p class="small muted">Hesabın birden fazla dükkâna bağlı. Birini seç; sonra Ayarlar'dan değiştirebilirsin.</p>
+    ${(C.ctx?.shops||[]).map(s=>`<button class="mtile" data-act="pickShop" data-id="${s.id}"><b>${esc(s.name)}</b><span class="small muted">${ROLE[s.role]||s.role}${s.active?"":" · durduruldu"}</span></button>`).join("")}${out}</div>`;
+  if (S.mode==="paused") return `<div class="card stack"><h2>${esc(C.shop?.name||"Dükkân")} durduruldu</h2><p>Dükkânının hesabı şu an kapalı. Kayıtların silinmedi; hesap açılınca aynen geri gelir.</p><p class="small muted">Yöneticiyle görüş.</p>
+    ${(C.ctx?.shops||[]).length>1?`<button data-act="chooseShop">Başka dükkân seç</button>`:""}${out}</div>`;
+  return `<div class="card stack"><h2>Bu hesaba bağlı dükkân yok</h2><p>Dükkândan çıkarılmış olabilirsin. Dükkân sahibine ya da yöneticiye haber ver.</p>${out}</div>`;
+}
+function accountCards(){
+  if (S.mode!=="cloud") return "";
+  const ctx = C.ctx||{}, sh = C.shop, me = sh ? (ctx.shops||[]).find(s=>s.id===sh.id) : null, owner = me?.role==="owner" || ctx.is_admin;
+  const wait = C.queue.length;
+  let h = `<section class="card stack"><h2>Hesap</h2>
+    <div class="row"><span class="bi c1">${ic("user",20)}</span><span><b>${esc(ctx.full_name||ctx.username||"")}</b> <span class="small muted">@${esc(ctx.username||"")}</span><br>
+      <span class="small muted">${sh?`${esc(sh.name)} · ${ROLE[me?.role]||"yönetici"}`:"Dükkân seçilmedi"}${ctx.is_admin?" · yönetici":""}</span></span></div>
+    <p class="small muted">Kayıtların internette, dükkânın hesabında duruyor; telefon değişse de kaybolmaz. İnternet yokken girdiklerin telefonda bekler, bağlantı gelince kendiliğinden gönderilir.${wait?` <b>Şu an ${wait} kayıt gönderilmeyi bekliyor.</b>`:""}</p>
+    ${S.pwOpen ? `<div class="stack" style="gap:6px"><label>Yeni şifre<input id="pw-new" type="password" autocomplete="new-password" minlength="6"></label>
+        <label>Yeni şifre (tekrar)<input id="pw-new2" type="password" autocomplete="new-password"></label>
+        <div class="row"><button class="primary" data-act="pwSave">Şifremi değiştir</button><button data-act="pwCancel">Vazgeç</button></div></div>`
+      : ""}
+    ${S.confirmOut ? `<p class="notice bad">${wait} kayıt henüz internete gönderilmedi. Şimdi çıkarsan bu kayıtlar kaybolur. Önce internete bağlanıp bekle.</p>
+        <div class="row"><button data-act="cancelOut">Vazgeç</button><button class="danger" data-act="logoutForce">Yine de çık</button></div>`
+      : `<div class="row">${S.pwOpen?"":`<button data-act="pwOpen">Şifremi değiştir</button>`}${(ctx.shops||[]).length>1?`<button data-act="chooseShop">Dükkân değiştir</button>`:""}<button data-act="logout">Çıkış yap</button></div>`}
+    ${ctx.is_admin ? `<button class="primary" data-act="goto" data-tab="yonetim" data-plain="1">${ic("grid",18)} Yönetici paneli</button>` : ""}
+  </section>`;
+  if (sh && SB && Date.now()-(C.peopleAt||0) > 15000 && !C.peopleLoading){ C.peopleLoading = true; setTimeout(()=>loadPeople().finally(()=>{ C.peopleLoading = false; renderData(); }), 0); }
+  if (sh && owner){
+    h += `<section class="card stack"><h2>Dükkândaki kişiler</h2>
+      <p class="small muted">Çırağına ya da yanında çalışana ayrı hesap aç: aynı defteri görür, kimin ne girdiği yazılır. Çalışan kişi ekleyemez, şifre değiştiremez.</p>
+      ${C.people.map(p=>personRow(p, sh.id, p.role==="staff" && p.user_id!==C.user.id)).join("") || `<p class="small muted">Yükleniyor…</p>`}
+      ${S.addPerson===sh.id ? personForm(sh.id) : `<button data-act="addPersonOpen" data-shop="${sh.id}">${ic("plus",18)} Çalışan ekle</button>`}
+      ${S.created ? createdCard() : ""}
+    </section>`;
+  }
+  return h;
+}
+function personRow(p, shopId, canManage){
+  return `<div class="prow"><div><b>${esc(p.full_name||p.username)}</b> <span class="small muted">@${esc(p.username)} · ${ROLE[p.role]||p.role}</span><br><span class="small muted">Son giriş: ${agoShort(p.last_seen)}</span></div>
+    ${canManage ? `<div class="row">${S.resetFor===p.user_id ? "" : `<button class="link" data-act="resetOpen" data-id="${p.user_id}">Şifre yenile</button>`}
+      <button class="link ${S.confirmRm===p.user_id?"dangerLink":""}" data-act="rmPerson" data-id="${p.user_id}" data-shop="${shopId}">${S.confirmRm===p.user_id?"Emin misin? Çıkar":"Çıkar"}</button></div>` : ""}
+    ${S.resetFor===p.user_id ? `<div class="row" style="flex-wrap:nowrap"><input id="rs-pass" value="${genPass()}" aria-label="Yeni şifre" style="flex:1;min-width:0"><button class="primary" data-act="resetSave" data-id="${p.user_id}" data-u="${esc(p.username)}" data-shop="${shopId}">Kaydet</button><button data-act="resetCancel">Vazgeç</button></div>` : ""}
+  </div>`;
+}
+function personForm(shopId, newShop){
+  return `<div class="stack newperson" style="gap:8px">
+    ${newShop ? `<label>Dükkânın adı<input id="np-shop" maxlength="60" placeholder="örn. Mert Bakkal"></label>` : ""}
+    <label>${newShop?"Dükkân sahibinin adı":"Adı"}<input id="np-name" maxlength="60" placeholder="örn. ${newShop?"Mert Yılmaz":"Ahmet"}"></label>
+    <label>Kullanıcı adı<input id="np-user" maxlength="24" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="örn. ${newShop?"mertbakkal":"ahmet.cirak"}"></label>
+    <span class="small muted" style="margin-top:-4px">Türkçe harf ve boşluk olmadan: harf, rakam, nokta, tire. 3-24 karakter.</span>
+    <label>Şifre<input id="np-pass" value="${genPass()}" maxlength="60"></label>
+    ${newShop ? "" : `<label>Görevi<select id="np-role"><option value="staff">Çalışan (sadece kayıt girer)</option><option value="owner">Dükkân sahibi (kişi ekler, şifre yeniler)</option></select></label>`}
+    <div class="row"><button class="primary" data-act="${newShop?"newShopSave":"addPersonSave"}" data-shop="${shopId||""}">${newShop?"Dükkânı ve hesabı aç":"Hesabı aç"}</button><button data-act="addPersonCancel">Vazgeç</button></div></div>`;
+}
+function createdCard(){
+  const x = S.created;
+  return `<div class="notice ok stack"><b>Hesap hazır. ${esc(x.name||x.u)} için giriş bilgileri; kopyalayıp gönder:</b>
+    <pre class="small" style="white-space:pre-wrap;margin:0;font-family:var(--mono)">${esc(shareText(x.shop, x.u, x.p))}</pre>
+    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Mesajı kopyala</button><a class="btn" href="https://wa.me/?text=${encodeURIComponent(shareText(x.shop, x.u, x.p))}" target="_blank" rel="noopener">WhatsApp'ta aç</a><button class="link" data-act="closeCreated">Kapat</button></div></div>`;
+}
+function viewAdmin(){
+  if (S.mode!=="cloud" || !C.ctx?.is_admin) return `<p class="notice bad">Bu bölüm sadece yönetici içindir.</p>`;
+  const ov = C.overview;
+  let h = S.msg ? `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>` : "";
+  h += `<section class="card stack"><div class="row between"><h2>Yönetici paneli</h2><button class="link" data-act="ovRefresh">Yenile</button></div>
+    <p class="small muted">Dükkânları ve hesapları buradan yönetirsin. Dükkânların kayıtlarının içeriğini göremezsin; sadece ne kadar kullanıldığını görürsün.</p>
+    ${S.addPerson==="__shop" ? personForm("", true) : `<button class="primary" data-act="newShopOpen">${ic("plus",18)} Yeni dükkân aç</button>`}
+    ${S.created ? createdCard() : ""}
+    ${C.shop ? "" : `<p class="small muted">Kendi dükkânın yok; sadece yönetici olarak giriş yaptın.</p>`}
+  </section>`;
+  if (!ov){ if (!C.ovLoading){ C.ovLoading = true; setTimeout(()=>loadOverview().finally(()=>{ C.ovLoading = false; }), 0); } return h + `<p class="small muted">Yükleniyor…</p>`; }
+  const act = ov.filter(s=>s.active).length;
+  h += `<div class="tiles"><div class="tile"><span class="tn num">${ov.length}</span><span>dükkân</span></div><div class="tile"><span class="tn num">${act}</span><span>açık</span></div>
+    <div class="tile"><span class="tn num">${ov.filter(s=>s.last_write && Date.now()-new Date(s.last_write).getTime() < 7*DAY).length}</span><span>bu hafta kullanan</span></div></div>`;
+  h += ov.map(s=>`<section class="card stack ${s.active?"":"paused"}">
+      <div class="row between"><h3>${esc(s.name)}</h3><span class="pill ${s.active?"ok":"bad"}">${s.active?"Açık":"Durduruldu"}</span></div>
+      <p class="small muted">${s.products} ürün · ${s.events} kayıt · ${s.last_write ? "son kayıt " + agoShort(s.last_write) : "henüz kayıt yok"} · açılış ${new Date(s.created_at).toLocaleDateString("tr-TR")}</p>
+      ${(s.members||[]).map(p=>personRow(p, s.id, !(p.user_id===C.user.id))).join("")}
+      ${S.addPerson===s.id ? personForm(s.id) : ""}
+      <div class="row">${S.addPerson===s.id?"":`<button class="link" data-act="addPersonOpen" data-shop="${s.id}">Kişi ekle</button>`}
+        ${(C.ctx.shops||[]).some(x=>x.id===s.id) && C.shop?.id!==s.id ? `<button class="link" data-act="pickShop" data-id="${s.id}">Bu dükkâna geç</button>` : ""}
+        <button class="link ${s.active&&S.confirmPause===s.id?"dangerLink":""}" data-act="shopActive" data-id="${s.id}" data-v="${s.active?"0":"1"}">${s.active ? (S.confirmPause===s.id?"Emin misin? Durdur":"Dükkânı durdur") : "Dükkânı aç"}</button></div>
+    </section>`).join("");
+  return h;
+}
+
+async function cloudAct(a, t, id){
+  if (a==="logout"){ await doLogout(false); return true; }
+  if (a==="logoutForce"){ await doLogout(true); return true; }
+  if (a==="cancelOut"){ S.confirmOut = false; render(); return true; }
+  if (a==="pickShop"){ const sh = (C.ctx?.shops||[]).find(s=>s.id===id); if (sh){ if (C.queue.some(q=>q.shop===C.shop?.id)) await flush(); S.tab = "ana"; await openShop(sh); } return true; }
+  if (a==="chooseShop"){ S.mode = "pickshop"; render(); return true; }
+  if (a==="pwOpen"){ S.pwOpen = true; render(true); return true; }
+  if (a==="pwCancel"){ S.pwOpen = false; render(); return true; }
+  if (a==="pwSave"){ const p1 = document.getElementById("pw-new").value, p2 = document.getElementById("pw-new2").value;
+    if (p1.length < 6){ S.msg = {kind:"bad", text:"Şifre en az 6 karakter olmalı."}; render(true); return true; }
+    if (p1!==p2){ S.msg = {kind:"bad", text:"İki şifre aynı değil."}; render(true); return true; }
+    t.disabled = true; try{ const {error} = await SB.auth.updateUser({password:p1}); if (error) throw error; S.pwOpen = false; S.msg = {kind:"ok", text:"Şifren değişti. Bir dahaki girişte yeni şifreni kullan."}; }catch(e){ S.msg = {kind:"bad", text:sbMsg(e)}; }
+    render(); window.scrollTo(0,0); return true; }
+  if (a==="addPersonOpen"){ S.addPerson = t.dataset.shop; S.created = null; render(true); document.getElementById("np-name")?.focus(); return true; }
+  if (a==="newShopOpen"){ S.addPerson = "__shop"; S.created = null; render(true); document.getElementById("np-shop")?.focus(); return true; }
+  if (a==="addPersonCancel"){ S.addPerson = null; render(); return true; }
+  if (a==="addPersonSave" || a==="newShopSave"){
+    const g = k => (document.getElementById(k)?.value||"").trim();
+    const u = normUser(g("np-user")), p = g("np-pass"), name = g("np-name"), shopName = g("np-shop");
+    if (a==="newShopSave" && !shopName){ S.msg = {kind:"bad", text:"Dükkânın adını yaz."}; render(true); return true; }
+    if (!/^[a-z0-9._-]{3,24}$/.test(u)){ S.msg = {kind:"bad", text:"Kullanıcı adı 3-24 karakter olmalı; harf, rakam, nokta, tire."}; render(true); return true; }
+    if (p.length < 6){ S.msg = {kind:"bad", text:"Şifre en az 6 karakter olmalı."}; render(true); return true; }
+    t.disabled = true;
+    const ok = a==="newShopSave"
+      ? await rpc("admin_create_shop", {p_shop_name:shopName, p_username:u, p_password:p, p_full_name:name||null})
+      : await rpc("add_member", {p_shop:t.dataset.shop, p_username:u, p_password:p, p_full_name:name||null, p_role:g("np-role")||"staff"});
+    if (ok){ const shName = a==="newShopSave" ? shopName : ((C.overview||[]).find(s=>s.id===t.dataset.shop)?.name || C.shop?.name || "");
+      S.created = {shop:shName, u, p, name}; S.addPerson = null; S.msg = {kind:"ok", text: a==="newShopSave" ? `${shopName} açıldı.` : `${name||u} eklendi.`};
+      if (C.ctx?.is_admin) await loadOverview(); await loadPeople(); }
+    render(); return true; }
+  if (a==="copyCreated"){ const x = S.created; try{ await navigator.clipboard.writeText(shareText(x.shop, x.u, x.p)); S.msg = {kind:"ok", text:"Mesaj kopyalandı; WhatsApp'tan gönderebilirsin."}; }catch(_){ S.msg = {kind:"warn", text:"Kopyalanamadı; yazıyı seçip kopyala."}; } render(true); return true; }
+  if (a==="closeCreated"){ S.created = null; render(); return true; }
+  if (a==="resetOpen"){ S.resetFor = id; render(true); return true; }
+  if (a==="resetCancel"){ S.resetFor = null; render(); return true; }
+  if (a==="resetSave"){ const p = (document.getElementById("rs-pass")?.value||"").trim(); t.disabled = true;
+    if (await rpc("reset_password", {p_user:id, p_password:p})){ const shop = (C.overview||[]).find(s=>s.id===t.dataset.shop)?.name || C.shop?.name || "";
+      S.created = {shop, u:t.dataset.u, p, name:t.dataset.u}; S.resetFor = null; S.msg = {kind:"ok", text:"Şifre yenilendi. Yeni şifreyi kişiye gönder."}; }
+    render(); return true; }
+  if (a==="rmPerson"){ if (S.confirmRm!==id){ S.confirmRm = id; render(true); return true; } S.confirmRm = null;
+    if (await rpc("remove_member", {p_shop:t.dataset.shop, p_user:id}, "Kişi dükkândan çıkarıldı; hesabı kapandı.")){ await loadPeople(); if (C.ctx?.is_admin) await loadOverview(); }
+    render(); return true; }
+  if (a==="shopActive"){ const on = t.dataset.v==="1"; if (!on && S.confirmPause!==id){ S.confirmPause = id; render(true); return true; } S.confirmPause = null;
+    if (await rpc("admin_set_shop_active", {p_shop:id, p_active:on}, on ? "Dükkân açıldı." : "Dükkân durduruldu; kayıtları silinmedi.")) await loadOverview();
+    render(); return true; }
+  if (a==="ovRefresh"){ await loadOverview(); return true; }
+  return false;
+}
+document.addEventListener("submit", ev=>{ if (ev.target.id==="lgform"){ ev.preventDefault(); doLogin(); } });
+// İnternetsiz açılıp sonradan bağlanınca: girişi tamamla (canlı eşitleme dahil), bekleyenleri gönder, kaçanları al
+async function resync(){
+  if (!SB || !["cloud","paused"].includes(S.mode)) return;
+  C.online = true;
+  if (!C.ready){ try{ const s = (await SB.auth.getSession()).data.session; if (s) await afterLogin(s.user); }catch(e){ if (isNetErr(e)) C.online = false; } saving(); return; }
+  flush(); pull().then(n=>{ if (n) renderData(); }, ()=>{});
+}
+window.addEventListener("online", ()=>{ resync(); });
+window.addEventListener("offline", ()=>{ if (S.mode==="cloud"){ C.online = false; saving(); } });
+document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="visible" && S.mode==="cloud" && SB && C.shop){ resync(); SB.rpc("touch").then(()=>{}, ()=>{}); } });
+
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}
 render(); boot();

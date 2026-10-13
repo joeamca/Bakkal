@@ -9,7 +9,7 @@ create extension if not exists pgcrypto with schema extensions;
 -- Kullanıcı adları bu alan adıyla e-postaya çevrilir (e-posta gönderilmez).
 -- Uygulamadaki EMAIL_DOMAIN ile aynı olmalı.
 create or replace function public.bd_email_domain() returns text
-language sql immutable as $$ select 'kullanici.bakkaldefteri.app' $$;
+language sql immutable set search_path = public as $$ select 'kullanici.bakkaldefteri.app' $$;
 
 -- ---------- Tablolar ----------
 create table if not exists public.shops (
@@ -70,7 +70,7 @@ $$;
 
 -- Kim yazdıysa o yazsın, saat sunucudan gelsin
 create or replace function public.docs_stamp() returns trigger
-language plpgsql as $$
+language plpgsql set search_path = public as $$
 begin
   new.updated_at := now();
   new.updated_by := auth.uid();
@@ -299,6 +299,13 @@ begin
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
   end loop;
+end $$;
+
+-- Supabase'in "otomatik RLS" ayarının yardımcı fonksiyonu dışarıdan çağrılmasın
+do $$ begin
+  if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'rls_auto_enable') then
+    execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated';
+  end if;
 end $$;
 
 -- ---------- Canlı eşitleme: bir telefonda girilen diğerinde hemen görünsün ----------

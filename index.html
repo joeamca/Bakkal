@@ -659,11 +659,13 @@ function render(keep){
   else if ((S.mode==="db"||S.mode==="cloud") && S.localPending) b = `<div class="notice ok stack" style="margin-bottom:12px"><span>Bu cihazda daha önce hesaba kaydedilmemiş ${S.localPending.products.length} ürün ve ${S.localPending.events.length} kayıt var.</span><div class="row"><button class="primary" data-act="migrate">Hesabıma aktar</button><button data-act="dropLocal">Gerek yok</button></div></div>`;
   if (FILE_MODE) b = `<div class="notice ${S.mode==="memory"?"bad":"ok"} stack" style="margin-bottom:12px"><b>${S.mode==="memory"?"Dosyadan açtın; burada yazdıkların kaydedilmez.":"Dosyadan açtın. Uygulamanın kalıcı adresi daha güvenli."}</b><span>Düğmeye bas, uygulama tarayıcıda açılsın. Sonra oradan ana ekrana ekle.</span><a class="btn primary" href="${APP_URL}" target="_blank" rel="noopener" style="text-align:center;color:var(--accent-ink);background:var(--accent);text-decoration:none;padding:12px;border-radius:10px;font-weight:700">Uygulamayı aç</a></div>` + b;
   if (S.mode==="cloud") b = `<div id="netNote"></div>` + b;
+  if (S.mode==="cloud" && S.cloud.ctx?.is_admin && S.cloud.ctx.pending_signups > 0 && S.tab!=="yonetim")
+    b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="goto" data-tab="yonetim" data-plain="1">Bak</button></div>`;
   $("#banner").innerHTML = b;
   const v = $("#view");
   const gated = ["login","pickshop","noshop","paused"].includes(S.mode);
   document.body.classList.toggle("gated", gated);
-  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? "Giriş" : "Dükkân"; v.innerHTML = S.mode==="login" ? viewLogin() : viewGate(); return; }
+  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : "Giriş") : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : viewLogin()) : viewGate(); return; }
   if (S.mode==="loading"){ return; }
   $("#guideBtn").setAttribute("aria-pressed", S.guide ? "true" : "false");
   $("#setBtn").setAttribute("aria-pressed", S.tab==="ayarlar" ? "true" : "false");
@@ -1678,7 +1680,7 @@ function viewMenu(){
     ["fire","trash","Fire","Haftalık bozulan mal","c3"],["urunler","tag","Ürünler","Ekle, düzenle, reçete","c6"],["ayarlar","gear","Ayarlar","Araç günleri, özel günler, Excel","c5"]];
   return `<div class="mgrid">${items.map(([t,i,l,d,c])=>`<button class="mtile" data-act="goto" data-tab="${t}" data-plain="1"><span class="bi ${c}">${ic(i,26)}</span><b>${l}</b><span class="small muted">${d}</span></button>`).join("")}
     <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
-    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="goto" data-tab="yonetim" data-plain="1"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici paneli</b><span class="small muted">Dükkânlar, hesaplar, şifreler</span></button>` : ""}
+    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="goto" data-tab="yonetim" data-plain="1"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici paneli</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
     ${S.mode==="cloud" ? `<button class="mtile" data-act="goto" data-tab="ayarlar" data-plain="1"><span class="bi c5">${ic("user",26)}</span><b>Hesabım</b><span class="small muted">${esc(S.cloud.ctx?.username||"")} · şifre, kişiler, çıkış</span></button>` : ""}</div>`;
 }
 
@@ -2527,9 +2529,34 @@ async function doLogin(){
     C.busy = false; await afterLogin(data.user);
   }catch(e){
     C.loginErr = /invalid login|invalid_credentials|Invalid/i.test(e?.message||"") ? "Kullanıcı adı ya da şifre yanlış." : sbMsg(e);
+    if (SB && /yanlış/.test(C.loginErr)){ try{ const {data:st} = await SB.rpc("signup_status", {p_username:u});
+      if (st==="pending") C.loginErr = "Başvurun henüz onaylanmadı. Onaylanınca telefonuna haber gelecek; sonra bu kullanıcı adı ve şifreyle girebilirsin.";
+      else if (st==="rejected") C.loginErr = "Başvurun onaylanmadı. Bilgi için yöneticiyle görüş."; }catch(_){} }
     S.mode = "login";
   }
   C.busy = false; render();
+}
+async function doSignup(){
+  const g = k => (document.getElementById(k)?.value || "").trim();
+  const f = {shop:g("sg-shop"), name:g("sg-name"), phone:g("sg-phone"), user:normUser(g("sg-user")), pass:document.getElementById("sg-pass")?.value||"", pass2:document.getElementById("sg-pass2")?.value||"", note:g("sg-note")};
+  S.sgForm = {...f, pass:"", pass2:""};
+  const err = t => { C.signupErr = t; render(true); window.scrollTo(0,0); };
+  if (g("sg-web")) { S.signup = "done"; S.sgUser = f.user; render(); return; }            // bot tuzağı
+  if (!f.shop) return err("Dükkânının adını yaz.");
+  if (!f.name) return err("Adını soyadını yaz.");
+  if (f.phone.replace(/\D/g,"").length < 10) return err("Telefon numaranı yaz; onaylanınca sana buradan haber verilecek.");
+  if (!/^[a-z0-9._-]{3,24}$/.test(f.user)) return err("Kullanıcı adı 3-24 karakter olmalı: harf, rakam, nokta, tire. Türkçe harf ve boşluk olmasın.");
+  if (f.pass.length < 6) return err("Şifre en az 6 karakter olmalı.");
+  if (f.pass !== f.pass2) return err("İki şifre aynı değil.");
+  if (!document.getElementById("sg-ok")?.checked) return err("Devam etmek için bilgilerinin saklanmasını onayla.");
+  C.busy = true; C.signupErr = null; render(true);
+  try{
+    await loadSB(); client();
+    const {error} = await SB.rpc("request_signup", {p_shop_name:f.shop, p_full_name:f.name, p_phone:f.phone, p_username:f.user, p_password:f.pass, p_note:f.note||null});
+    if (error) throw error;
+    S.signup = "done"; S.sgUser = f.user; S.sgForm = null;
+  }catch(e){ C.signupErr = sbMsg(e); }
+  C.busy = false; render(); window.scrollTo(0,0);
 }
 function resetCloud(clearCache){
   if (RT && SB) try{ SB.removeChannel(RT); }catch(_){} RT = null;
@@ -2548,8 +2575,26 @@ async function rpc(name, args, okText){
   try{ const {data, error} = await SB.rpc(name, args); if (error) throw error; if (okText) S.msg = {kind:"ok", text:okText}; return (data===null || data===undefined || data==="") ? true : data; }
   catch(e){ S.msg = {kind:"bad", text:sbMsg(e)}; return null; }
 }
-async function loadOverview(){ const d = await rpc("admin_overview", {}); if (d){ C.overview = d; } renderData(); }
-const shareText = (shop, u, p) => `Bakkal Defteri hesabın hazır.\nDükkân: ${shop}\nAdres: ${SITE()}\nKullanıcı adı: ${u}\nŞifre: ${p}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
+async function loadOverview(){
+  const [d, sg] = await Promise.all([rpc("admin_overview", {}), rpc("admin_signups", {})]);
+  if (d) C.overview = d;
+  if (Array.isArray(sg)){ C.signups = sg; if (C.ctx) C.ctx.pending_signups = sg.length; }
+  renderData();
+}
+function signupCards(){
+  const L = C.signups || [];
+  if (!L.length) return "";
+  return `<section class="card stack signups"><h2>Bekleyen başvurular <span class="pill warn">${L.length}</span></h2>
+    <p class="small muted">Onaylayınca dükkânı ve hesabı açılır; bakkal başvururken seçtiği kullanıcı adı ve şifreyle girer. Şifresini sen de göremezsin.</p>
+    ${L.map(r=>`<div class="prow"><div><b>${esc(r.shop_name)}</b> <span class="small muted">· ${esc(r.full_name)}</span><br>
+        <span class="small muted">@${esc(r.username)} · <a href="tel:${esc(String(r.phone||"").replace(/[^0-9+]/g,""))}">${esc(r.phone||"")}</a> · ${agoShort(r.created_at).replace("hiç girmedi","")}</span>
+        ${r.note ? `<br><span class="small">“${esc(r.note)}”</span>` : ""}</div>
+      <div class="row"><button class="primary" data-act="sgApprove" data-id="${r.id}">${ic("check",18)} Onayla</button>
+        <button class="${S.confirmRej===r.id?"danger":""}" data-act="sgReject" data-id="${r.id}">${S.confirmRej===r.id?"Emin misin? Reddet":"Reddet"}</button></div></div>`).join("")}
+  </section>`;
+}
+const waNum = ph => { let d = String(ph||"").replace(/\D/g,""); if (d.startsWith("0")) d = "90" + d.slice(1); else if (d.length===10 && d.startsWith("5")) d = "90" + d; return d; };
+const shareText = (shop, u, p) => `Bakkal Defteri hesabın ${p ? "hazır" : "onaylandı"}.\nDükkân: ${shop}\nAdres: ${SITE()}\nKullanıcı adı: ${u}\nŞifre: ${p || "başvururken yazdığın şifre"}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
 
 function viewLogin(){
   return `<div class="card stack login">
@@ -2560,7 +2605,34 @@ function viewLogin(){
       <label>Şifre<input id="lg-pass" name="password" type="password" autocomplete="current-password"></label>
       <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Giriş yapılıyor':"Giriş yap"}</button>
     </form>
-    <details class="how"><summary>Hesabım yok / şifremi unuttum</summary><p class="small" style="margin-top:8px">Hesapları yönetici açar. Şifreni unuttuysan dükkân sahibine ya da yöneticiye söyle, sana yeni bir şifre versin.</p></details>
+    <div class="stack" style="gap:6px;border-top:1px solid var(--line);padding-top:12px"><span class="small muted" style="text-align:center">Hesabın yok mu?</span>
+      <button data-act="signupOpen">${ic("plus",18)} Dükkânımı kaydet</button></div>
+    <details class="how"><summary>Şifremi unuttum</summary><p class="small" style="margin-top:8px">Dükkân sahibine ya da yöneticiye söyle, sana yeni bir şifre versin. Çalışansan dükkân sahibin de yenileyebilir.</p></details>
+  </div>`;
+}
+function viewSignup(){
+  if (S.signup==="done") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Başvurun alındı</h2></div>
+    <p>Yönetici başvurunu inceleyip onaylayınca telefonuna haber gelecek.</p>
+    <p>Onaydan sonra bu bilgilerle gir:<br>Kullanıcı adı: <b class="num">${esc(S.sgUser||"")}</b><br>Şifre: başvururken yazdığın şifre</p>
+    <button class="primary" data-act="signupBack">Giriş ekranına dön</button></div>`;
+  const v = S.sgForm || {};
+  return `<div class="card stack login">
+    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("book",26)}</span><h2>Dükkânını kaydet</h2><p class="small muted">Bilgilerini yaz, başvurun yöneticiye gitsin. Onaylanınca hesabın açılır.</p></div>
+    ${C.signupErr ? `<p class="notice bad">${esc(C.signupErr)}</p>` : ""}
+    <form id="sgform" class="stack" autocomplete="on">
+      <label>Dükkânının adı<input id="sg-shop" maxlength="60" value="${esc(v.shop||"")}" placeholder="örn. Yıldız Bakkal"></label>
+      <label>Adın soyadın<input id="sg-name" maxlength="60" autocomplete="name" value="${esc(v.name||"")}" placeholder="örn. Mert Yılmaz"></label>
+      <label>Telefonun (WhatsApp)<input id="sg-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="${esc(v.phone||"")}" placeholder="0532 123 45 67"></label>
+      <label>İstediğin kullanıcı adı<input id="sg-user" maxlength="24" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(v.user||"")}" placeholder="örn. yildizbakkal"></label>
+      <span class="small muted" style="margin-top:-4px">Türkçe harf ve boşluk olmadan: harf, rakam, nokta, tire.</span>
+      <label>Şifre<input id="sg-pass" type="password" autocomplete="new-password" minlength="6"></label>
+      <label>Şifre (tekrar)<input id="sg-pass2" type="password" autocomplete="new-password"></label>
+      <label>Not (isteğe bağlı)<input id="sg-note" maxlength="300" value="${esc(v.note||"")}" placeholder="örn. hangi semtte, kim önerdi"></label>
+      <input id="sg-web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+      <label class="check"><input id="sg-ok" type="checkbox"> Adımın, telefonumun ve dükkân bilgilerimin hesap açmak için saklanmasını kabul ediyorum.</label>
+      <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Gönderiliyor':"Başvuruyu gönder"}</button>
+    </form>
+    <button class="link" data-act="signupBack">← Hesabım var, giriş yap</button>
   </div>`;
 }
 function viewGate(){
@@ -2618,9 +2690,9 @@ function personForm(shopId, newShop){
 }
 function createdCard(){
   const x = S.created;
-  return `<div class="notice ok stack"><b>Hesap hazır. ${esc(x.name||x.u)} için giriş bilgileri; kopyalayıp gönder:</b>
+  return `<div class="notice ok stack"><b>${x.p ? `Hesap hazır. ${esc(x.name||x.u)} için giriş bilgileri; kopyalayıp gönder:` : `${esc(x.name||x.u)} onaylandı. Haber vermek için gönder:`}</b>
     <pre class="small" style="white-space:pre-wrap;margin:0;font-family:var(--mono)">${esc(shareText(x.shop, x.u, x.p))}</pre>
-    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Mesajı kopyala</button><a class="btn" href="https://wa.me/?text=${encodeURIComponent(shareText(x.shop, x.u, x.p))}" target="_blank" rel="noopener">WhatsApp'ta aç</a><button class="link" data-act="closeCreated">Kapat</button></div></div>`;
+    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Mesajı kopyala</button><a class="btn" href="https://wa.me/${x.phone ? waNum(x.phone) : ""}?text=${encodeURIComponent(shareText(x.shop, x.u, x.p))}" target="_blank" rel="noopener">${x.phone ? "WhatsApp'tan gönder" : "WhatsApp'ta aç"}</a><button class="link" data-act="closeCreated">Kapat</button></div></div>`;
 }
 function viewAdmin(){
   if (S.mode!=="cloud" || !C.ctx?.is_admin) return `<p class="notice bad">Bu bölüm sadece yönetici içindir.</p>`;
@@ -2628,10 +2700,10 @@ function viewAdmin(){
   let h = S.msg ? `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>` : "";
   h += `<section class="card stack"><div class="row between"><h2>Yönetici paneli</h2><button class="link" data-act="ovRefresh">Yenile</button></div>
     <p class="small muted">Dükkânları ve hesapları buradan yönetirsin. Dükkânların kayıtlarının içeriğini göremezsin; sadece ne kadar kullanıldığını görürsün.</p>
-    ${S.addPerson==="__shop" ? personForm("", true) : `<button class="primary" data-act="newShopOpen">${ic("plus",18)} Yeni dükkân aç</button>`}
+    ${S.addPerson==="__shop" ? personForm("", true) : `<button data-act="newShopOpen">${ic("plus",18)} Yeni dükkânı kendim aç</button>`}
     ${S.created ? createdCard() : ""}
     ${C.shop ? "" : `<p class="small muted">Kendi dükkânın yok; sadece yönetici olarak giriş yaptın.</p>`}
-  </section>`;
+  </section>` + signupCards();
   if (!ov){ if (!C.ovLoading){ C.ovLoading = true; setTimeout(()=>loadOverview().finally(()=>{ C.ovLoading = false; }), 0); } return h + `<p class="small muted">Yükleniyor…</p>`; }
   const act = ov.filter(s=>s.active).length;
   h += `<div class="tiles"><div class="tile"><span class="tn num">${ov.length}</span><span>dükkân</span></div><div class="tile"><span class="tn num">${act}</span><span>açık</span></div>
@@ -2693,15 +2765,25 @@ async function cloudAct(a, t, id){
     if (await rpc("admin_set_shop_active", {p_shop:id, p_active:on}, on ? "Dükkân açıldı." : "Dükkân durduruldu; kayıtları silinmedi.")) await loadOverview();
     render(); return true; }
   if (a==="ovRefresh"){ await loadOverview(); return true; }
+  if (a==="signupOpen"){ S.signup = "form"; C.signupErr = null; render(); window.scrollTo(0,0); document.getElementById("sg-shop")?.focus(); return true; }
+  if (a==="signupBack"){ S.signup = null; C.signupErr = null; render(); window.scrollTo(0,0); return true; }
+  if (a==="sgApprove" || a==="sgReject"){
+    if (a==="sgReject" && S.confirmRej!==id){ S.confirmRej = id; render(true); return true; }
+    S.confirmRej = null; t.disabled = true;
+    const r = await rpc("admin_decide_signup", {p_id:id, p_approve: a==="sgApprove"});
+    if (r && r.status==="approved"){ S.created = {shop:r.shop_name, u:r.username, p:null, name:r.full_name, phone:r.phone}; S.msg = {kind:"ok", text:`${r.shop_name} onaylandı; dükkân ve hesap açıldı.`}; }
+    else if (r) S.msg = {kind:"ok", text:"Başvuru reddedildi."};
+    await loadOverview(); window.scrollTo(0,0); return true; }
   return false;
 }
-document.addEventListener("submit", ev=>{ if (ev.target.id==="lgform"){ ev.preventDefault(); doLogin(); } });
+document.addEventListener("submit", ev=>{ if (ev.target.id==="lgform"){ ev.preventDefault(); doLogin(); } else if (ev.target.id==="sgform"){ ev.preventDefault(); doSignup(); } });
 // İnternetsiz açılıp sonradan bağlanınca: girişi tamamla (canlı eşitleme dahil), bekleyenleri gönder, kaçanları al
 async function resync(){
   if (!SB || !["cloud","paused"].includes(S.mode)) return;
   C.online = true;
   if (!C.ready){ try{ const s = (await SB.auth.getSession()).data.session; if (s) await afterLogin(s.user); }catch(e){ if (isNetErr(e)) C.online = false; } saving(); return; }
   flush(); pull().then(n=>{ if (n) renderData(); }, ()=>{});
+  if (C.ctx?.is_admin) SB.rpc("my_context").then(r=>{ if (r && r.data){ C.ctx = r.data; renderData(); } }, ()=>{});
 }
 window.addEventListener("online", ()=>{ resync(); });
 window.addEventListener("offline", ()=>{ if (S.mode==="cloud"){ C.online = false; saving(); } });

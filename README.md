@@ -2,7 +2,7 @@
 
 Mahalle bakkalı için cep defteri: neyi ne kadar sipariş edeceğini söyler, bozulan malı ve kârını gösterir, veresiyeyi unutturmaz.
 
-**Aç:** https://joeamca.github.io/bakkal/
+**Aç:** https://joeamca.github.io/Bakkal/
 
 ## Nasıl kullanılır
 1. Bağlantıyı telefonda **Chrome** ya da **Safari** ile aç (Facebook/WhatsApp içinden değil).

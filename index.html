@@ -137,6 +137,11 @@ details.more>.stack{margin-top:8px}
 .toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;max-width:620px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:15px}
 .toast button{background:transparent;border-color:var(--bg);color:var(--bg);min-height:40px;padding:6px 14px;font-weight:600}
 .toast[hidden]{display:none}
+.line.lbad{border-left:4px solid var(--bad);padding-left:10px}
+.lerr{color:var(--bad);font-weight:600;margin:0 0 4px}
+header.top>.row{flex-wrap:nowrap}
+@media (max-width:420px){ #guideBtn .gl, header.top #today{display:none} }
+@media (max-width:480px){ html.big #guideBtn .gl, html.big header.top #today{display:none} }
 .newp{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-top:1px solid var(--line)} .newp:first-of-type{border-top:0}
 .tog{min-height:40px;padding:6px 12px;font-size:14px} .tog.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .empty .choices{display:flex;flex-direction:column;gap:10px;max-width:340px;margin:0 auto;width:100%}
@@ -249,7 +254,7 @@ table.mrp{border-collapse:collapse;font-size:13px;min-width:100%}
 <div class="wrap">
   <header class="top">
     <div><h3>Bakkal Defteri <span id="today" class="today"></span></h3><h1 id="pageTitle">Bugün</h1></div>
-    <div class="row" style="justify-content:flex-end"><span id="saveState" class="small muted"></span><button id="guideBtn" data-act="guide" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.8-2.5 2-2.5 4"/><path d="M12 17.5h.01"/></svg> Rehber</button><button id="setBtn" data-act="settings" aria-label="Ayarlar" title="Ayarlar"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button></div>
+    <div class="row" style="justify-content:flex-end"><span id="saveState" class="small muted"></span><button id="guideBtn" data-act="guide" aria-pressed="false" aria-label="Rehber" title="Rehber"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.8-2.5 2-2.5 4"/><path d="M12 17.5h.01"/></svg><span class="gl"> Rehber</span></button><button id="setBtn" data-act="settings" aria-label="Ayarlar" title="Ayarlar"><svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button></div>
   </header>
   <div id="banner"></div>
   <main id="view" class="stack">
@@ -303,16 +308,19 @@ const today0 = () => { const d = new Date(Date.now()); d.setHours(0,0,0,0); retu
 const ymd = t => { const d = new Date(t); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
 const SPECIAL = {kapali:{w:0,t:"Kapalı"}, sakin:{w:0.6,t:"Sakin"}, yogun:{w:1.3,t:"Yoğun"}, cokyogun:{w:1.6,t:"Çok yoğun"}};
 const specials = () => Array.isArray(S.settings?.special) ? S.settings.special : [];
-function scheduleN(supName, N){
-  const days = S.suppliers[supKey(supName)]?.days;
+function scheduleN(supName, N, noLead){
+  const sr = S.suppliers[supKey(supName)], days = sr?.days;
   if (!Array.isArray(days) || !days.length) return null;
   const t0 = today0(), dow = new Date(t0).getDay();
-  let a = 0; while (!days.includes((dow+a)%7)) a++;
+  const lead = noLead ? 0 : Math.max(0, Math.min(6, Number(sr?.lead)||0));
+  // Sipariş araçtan "lead" gün önce veriliyorsa, bugün verilen sipariş en erken lead gün sonraki araçla gelir
+  let a = lead; while (!days.includes((dow+a)%7)) a++;
   let b = a; for (let k=0; k<Math.max(1,N||1); k++){ b++; while (!days.includes((dow+b)%7)) b++; }
   const cover = [], dates = []; for (let k=a; k<b; k++){ cover.push((dow+k)%7); dates.push(t0 + k*DAY + 3*3600e3); }
-  return {a, b, days, cover, dates, next:(dow+a)%7, follow:(dow+b)%7, N:Math.max(1,N||1)};
+  return {a, b, days, cover, dates, next:(dow+a)%7, follow:(dow+b)%7, N:Math.max(1,N||1), lead, orderIn:a-lead};
 }
 function schedule(supName){ return scheduleN(supName, 1); }
+function truckIn(supName){ const s = scheduleN(supName, 1, true); return s ? s.a : null; }
 function nextDates(n){ const t0 = today0(), r = []; for (let k=0;k<n;k++) r.push(t0 + k*DAY + 3*3600e3); return r; }
 function span(dates){
   const w = dayW(), m = w.reduce((x,y)=>x+y,0)/7 || 1, sp = specials();
@@ -431,11 +439,24 @@ function stats(p, extra){
   const target = rate * SP * buf;
   // Son kesin bilinen stoktan bugüne tahmini raf: o andan beri gelen − satılan (tahmini) − bozulan
   // Sayım son teslimattan sonra yapıldıysa: sayımdan bugüne satılanı düş, eksiği tamamla
-  let estStock = null;
-  if (lastCount!==null && lastCountAt > lastGelen && !p.outSince) estStock = Math.max(0, lastCount - rate * (now - lastCountAt)/DAY);
+  // Stoğun kesin bilindiği son andan (başlangıç stoğu, rafa bakış, bitti anı) bugüne:
+  // + gelen − tahmini satış − fire/iade. Araç gelene kadar satılacak da düşülür.
+  let estStock = null, estDel = null, estKind = null;
+  const LA = anchors[anchors.length-1];
+  if (LA && !p.outSince){
+    let s0 = LA.q;
+    for (const e of ev){ const t = new Date(e.date).getTime();
+      if (e.type==="gelen" && t >= LA.t) s0 += e.qty;
+      else if ((e.type==="fire"||e.type==="ariza"||e.type==="iade") && t > LA.t) s0 -= e.qty; }
+    let off = 0;
+    for (const e of ev){ if (e.type!=="bos") continue; const t = new Date(e.date).getTime(), b0 = t - e.days*DAY; off += Math.max(0, Math.min(t, now) - Math.max(b0, LA.t)); }
+    estStock = Math.max(0, s0 - rate * Math.max(0, (now - LA.t - off)/DAY));
+    estKind = ev.some(e=>e.type==="sayim" && new Date(e.date).getTime()===LA.t) ? "count" : "est";
+    estDel = Math.max(0, estStock - rate * span(nextDates(sch ? sch.a : 0)).v);
+  }
   let q, mode;
   if (p.outSince){ q = Math.ceil(target); mode = "out"; }
-  else if (estStock!=null){ q = Math.max(0, Math.ceil(target - estStock)); mode = "count"; }
+  else if (estDel!=null){ q = Math.max(0, Math.ceil((nv ? rate*SP*nv.f : target) - estDel)); mode = estKind; }
   else if (nv){ q = Math.ceil(rate * SP * nv.f); mode = "nv"; }
   else { q = Math.ceil(rate * SP * (highFire ? 0.9 : p.core ? 1.1 : 1)); mode = highFire ? "fire" : "normal"; }
   if (rate === 0) q = 0;
@@ -448,7 +469,7 @@ function stats(p, extra){
     if (cnt < NN){ let t = delT, c2 = cnt; while (c2 < NN){ t += DAY; if (sch.days.includes(new Date(t).getDay())) c2++; } q = 0; mode = "skip"; nextOrderT = t; }
   }
   const cs = Math.max(1, Number(p.caseSize)||1);
-  const cases = cs>1 && q>0 ? Math.max(1, Math.round(q/cs)) : 0;
+  const cases = cs>1 && q>0 ? Math.floor(q/cs) : 0, caseRem = cs>1 && q>0 ? q - cases*cs : 0;
   const learning = days < 21 || gelen === 0;
   const lastAnchor = anchors.length ? anchors[anchors.length-1].t : start;
   // İlk hafta bir kez say (stoğun gerçekten azaldığını görmek için), sonra 3-4 haftada bir
@@ -478,7 +499,7 @@ function stats(p, extra){
     orderProfit: unit!=null ? q*unit : null, orderFireLoss: buy!=null && p.perishable ? Math.round(q*fireRate)*buy : null};
   const basis = {out:"Raf boş: yedek pay ekleniyor", count:"Son rafa bakışa göre", fire:"Fire yüksek: öneri %10 azaltıldı", nv:"Kâr ve bozulma riski dengelendi", skip:"Bu teslimatta alınmıyor", est:"Rafta kalan tahminine göre", normal:"Tükeneni yerine koy"}[mode];
   return {weekly:rate*7, daily:rate, q, mode, basis, expFire: p.perishable ? Math.round(q*fireRate) : 0, hasData: gelen>0,
-    cases, cs, fireRate, highFire, NN, nextOrderT, learning, checkShelf, outDays, priceUp, conf, weeks,
+    cases, caseRem, cs, estDel, fireRate, highFire, NN, nextOrderT, learning, checkShelf, outDays, priceUp, conf, weeks,
     days, bos, openDays, consumed, sch, SP, spHits: spn.hits, money, estStock, nv, winDays, anchorRate, anchorSpan, dataRate2: learned, gelen, fire, iade, ariza, w, prior, dataRate, R, buf, target, lastCount,
     lastPrice: prices.length? prices[prices.length-1].price : null};
 }
@@ -685,7 +706,8 @@ function shortSay(p, st){
   if (st.mode==="skip") return `Bu teslimatta alma. Sonraki sipariş <b>${st.nextOrderT ? DN[new Date(st.nextOrderT).getDay()] : "sonraki araçta"}</b>.`;
   if (p.outSince) return `<b>${fmt(st.outDays)} gündür rafta yok.</b> Bu sefer biraz fazla al.`;
   if (!(st.weekly>0)) return `Satış bilgisi yok. Ayrıntılardan tahmin gir.`;
-  return `Haftada yaklaşık <b>${fmt(st.weekly, st.weekly<10?1:0)}</b> tane satılıyor.`;
+  if (st.q===0 && (st.mode==="est"||st.mode==="count")) return `Rafta yeterince var (≈${fmt(st.estStock)} ${unitOf(p)}). Bu sefer alma.`;
+  return `Haftada yaklaşık <b>${fmt(st.weekly, st.weekly<10?1:0)}</b> ${unitOf(p)} satılıyor.`;
 }
 function statusOf(p, st){
   if (p.outSince) return {k:"bad", t:"Rafta yok"};
@@ -699,10 +721,10 @@ function statusOf(p, st){
 function sayIt(p, st){
   const n = x => fmt(x, x<10 ? 1 : 0);
   const unit = st.q===1 ? "tane" : "tane";
-  let a = st.weekly>0 ? `Haftada yaklaşık <b>${n(st.weekly)}</b> tane satıyorsun.` : `Henüz satış bilgisi yok. Ürünler'den haftalık tahminini gir.`;
+  let a = st.weekly>0 ? `Haftada yaklaşık <b>${n(st.weekly)}</b> ${unitOf(p)} satıyorsun.` : `Henüz satış bilgisi yok. Ürünler'den haftalık tahminini gir.`;
   if (st.mode==="out") a += ` Ürün <b>${fmt(st.outDays)} gündür</b> rafta yok; bu yüzden biraz fazlasını al ki bir daha bitmesin.`;
-  else if (st.mode==="count") a += ` Son saydığında rafta <b>${fmt(st.lastCount)}</b> tane vardı, şu an tahminen <b>${fmt(st.estStock)}</b>; eksik kalanı tamamla.`;
-  else if (st.mode==="est") a += ` Son kesin bilgiye göre rafta şu an tahminen <b>${fmt(st.estStock)}</b> tane var; bir sonraki gelişe kadar yetecek kadarını tamamla.`;
+  else if (st.mode==="count") a += ` Son saydığında rafta <b>${fmt(st.lastCount)}</b> ${unitOf(p)} vardı, şu an tahminen <b>${fmt(st.estStock)}</b>; eksik kalanı tamamla.${st.q===0?" Rafta yeterince var, bu sefer alma.":""}`;
+  else if (st.mode==="est") a += ` Rafta şu an tahminen <b>${fmt(st.estStock)}</b> ${unitOf(p)} var${st.sch&&st.sch.a>0?`, araç gelene kadar ≈ <b>${fmt(st.estDel)}</b> kalır`:""}; sadece bir sonraki gelişe kadar eksik kalanı al.${st.q===0?" Rafta yeterince var, bu sefer alma.":""}`;
   else if (st.mode==="skip") a += ` Bu ürünü ${st.NN} teslimatta bir alıyorsun (stok maliyetini düşürmek için). Bir sonraki sipariş <b>${st.nextOrderT ? new Date(st.nextOrderT).toLocaleDateString("tr-TR",{weekday:"long", day:"numeric", month:"long"}) : "sonraki araçta"}</b>.`;
   else if (st.mode==="fire") a += ` Son zamanlarda çok bozuldu; bu sefer biraz az al.`;
   else if (st.mode==="nv" && st.nv.f<1 && st.weekly>0) a += ` Çabuk bozulan ve kârı düşük bir ürün; artan mal çöpe gideceği için tam ihtiyaçtan biraz az almak daha kârlı.`;
@@ -756,10 +778,9 @@ function howCard(p, st){
   rows.push(["Yoğunluğa ve özel günlere göre", `${fmt(st.R)} gün ≈ ${fmt(st.SP,1)} normal gün`]);
   let calc = `${r(st.daily)} × ${fmt(st.SP,1)} gün`;
   if (st.mode==="out") calc += ` × ${fmt(st.buf,2)} (yedek pay)`;
-  else if (st.mode==="count") calc += ` × ${fmt(st.buf,2)} (yedek pay) − rafta tahminen ${fmt(st.estStock)}`;
+  else if (st.mode==="count"||st.mode==="est") calc = `${calc} × ${fmt(st.nv ? st.nv.f : st.buf,2)} (${st.nv?"kâr ve bozulma hesabı":"yedek pay"}) − araç gelince rafta kalacak ≈ ${fmt(st.estDel)}`;
   else if (st.mode==="fire") calc += ` × 0,9 (fire indirimi)`;
   else if (st.mode==="nv") calc += ` × ${fmt(st.nv.f,2)} (kâr ve bozulma hesabı)`;
-  else if (st.mode==="est") calc += ` − rafta tahminen ${fmt(st.estStock)}`;
   if (st.nv) rows.push(["Kâr ve bozulma hesabı", st.nv.f<1 ? "Artan mal çöpe gideceği için biraz az" : "Eksik kalmak daha pahalı, biraz fazla"]);
   if (st.days > st.winDays) rows.unshift(["Hesaba giren dönem", `son ${fmt(st.winDays)} gün`]);
   rows.push(["Hesap", `${calc} = <b>${fmt(st.q)}</b>`]);
@@ -791,13 +812,14 @@ function viewOrder(){
   }
   if (S.invSummary && S.invSummary.length) html += `<section class="card stack"><div class="row between"><h2>Bu faturada</h2><button class="link" data-act="closeInvSum">Kapat</button></div>
     ${S.invSummary.map(x=>`<div class="mrow"><div><b>${esc(x.name)}</b>${x.days!=null?`<div class="small muted">son faturadan beri ${fmt(x.days)} gün</div>`:""}</div>
-      <div class="mnums"><span class="plus num">+${fmt(x.add)} geldi</span>${x.minus!=null?`<span class="minus num">−${fmt(x.minus)} eksilmişti</span>`:""}
+      <div class="mnums"><span class="plus num">+${fmt(x.add)} geldi</span>${x.minus!=null && Math.round(x.minus)>0?`<span class="minus num">−${fmt(x.minus)} eksilmişti</span>`:""}
       ${x.shelf!=null?`<span class="small muted">raf ${fmt(x.shelf)} → <b class="num">${fmt(x.shelf+x.add)}</b></span>`:""}</div></div>`).join("")}</section>`;
   if (alerts.length) html += `<div class="card stack"><h3>Fiyat uyarısı</h3>${alerts.map(({p,st})=>`<p class="small"><b>${esc(p.name)}</b> alış fiyatı <b>%${fmt(st.priceUp*100)}</b> arttı (son alış <span class="num">${fmt(st.lastPrice,2)} TL</span>).${st.money.unit!=null?` Şu an adet başı kârın <b class="num">${TL(st.money.unit,2)}</b> (%${fmt((st.money.margin||0)*100)}).`:""} Raf fiyatını güncellemezsen artış kârından gider.</p>`).join("")}</div>`;
   const ord = Object.entries(groups).map(([sup,list])=>({sup,list,sch:schedule(sup==="Tedarikçi belirtilmemiş"?"":sup)}))
-    .sort((x,y)=>((x.sch?x.sch.a:99)-(y.sch?y.sch.a:99)) || x.sup.localeCompare(y.sup,"tr"));
+    .sort((x,y)=>((x.sch?x.sch.orderIn:99)-(y.sch?y.sch.orderIn:99)) || x.sup.localeCompare(y.sup,"tr"));
   for (const {sup, list, sch} of ord){
     const when = !sch ? `<span class="muted">Araç günleri girilmemiş.</span> <button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Gir</button>`
+      : sch.lead>0 ? `<span class="truck ${sch.orderIn===0?"now":""}">${sch.orderIn===0?"Siparişi bugün ver":`Siparişi ${sch.orderIn===1?"yarın":DN[(new Date(today0()).getDay()+sch.orderIn)%7]} ver`}</span> <span class="muted">· araç ${sch.a===1?"yarın":DN[sch.next]} gelecek</span>`
       : `<span class="truck ${sch.a===0?"now":""}">${sch.a===0?"Araç bugün geliyor":sch.a===1?"Araç yarın geliyor":`Araç ${DN[sch.next]} geliyor (${sch.a} gün sonra)`}</span> <span class="muted">· sonraki geliş ${DN[sch.follow]}</span>`;
     html += `<section class="stack"><div class="supplier"><div><h2>${esc(sup)}</h2><p class="small">${when}</p></div><button class="link" data-act="copy" data-sup="${esc(sup)}">Listeyi kopyala</button></div>`;
     list.sort((a,b)=>(!!b.p.outSince - !!a.p.outSince) || (b.st.q - a.st.q) || a.p.name.localeCompare(b.p.name,"tr"));
@@ -807,7 +829,7 @@ function viewOrder(){
       html += `<article class="pcard s-${sts.k}">
         <div class="phead"><h2 class="pname">${esc(p.name)}</h2><span class="pill ${sts.k}">${sts.t}</span></div>
         <div class="simple">
-          <div class="buy"><span class="buyLab">Bu sefer al</span><span class="buyN num">${fmt(st.q)}</span><span class="buyU">${st.cases?`tane · ≈ ${st.cases} koli`:"tane"}</span></div>
+          <div class="buy"><span class="buyLab">Bu sefer al</span><span class="buyN num">${fmt(st.q)}</span><span class="buyU">${unitOf(p)}${st.cases?` · ${st.cases} koli${st.caseRem?` + ${fmt(st.caseRem)}`:""}`:""}</span></div>
           <div class="side"><p class="short">${shortSay(p, st)}</p>
             ${p.outSince ? `<button class="out" data-act="unout" data-id="${p.id}">Bitti işaretini kaldır</button>`
                          : `<button class="bitti" data-act="out" data-id="${p.id}">Rafta bitti</button>`}</div>
@@ -864,12 +886,13 @@ function viewInvoice(){
     <div class="grid2">
       <label>Tedarikçi<input id="inv-sup" value="${esc(inv.supplier)}"></label>
       <label>Fatura no<input id="inv-no" value="${esc(inv.no)}"></label>
-      <label>Tarih<input id="inv-date" type="date" value="${esc(inv.date)}"></label>
+      <label>Tarih<input id="inv-date" type="date" max="${ymd(Date.now())}" value="${esc(inv.date)}"></label>
     </div>
+    ${S.invErr ? `<p class="notice bad">${esc(S.invErr)}</p>` : ""}
     ${dup ? `<p class="notice bad">Bu fatura numarası daha önce kaydedilmiş. İki kez kaydedersen stok iki kat görünür.</p>` : ""}
   </div>
   <div class="card"><h3 style="margin-bottom:6px">Kalemler (${inv.lines.length})</h3>
-  ${inv.lines.map((l,i)=>`<div class="line">
+  ${inv.lines.map((l,i)=>`<div class="line${l.err?" lbad":""}">${l.err?`<p class="small lerr">${esc(l.err)}</p>`:""}
       ${l.raw ? `<div class="raw">${esc(l.raw)}</div>` : ""}
       <label>Ürün<select id="ln-p-${i}">${opts(l.productId)}</select></label>
       ${l.productId==="__new" || (!l.productId && !l.raw) ? `<label>Yeni ürün adı<input id="ln-n-${i}" value="${esc(l.newName||l.raw||"")}"></label>` : ""}
@@ -1034,7 +1057,8 @@ function viewProducts(){
       <label class="check"><input id="f-core" type="checkbox" ${v.core?"checked":""}> Temel ürün, bitmesin (müşteri bulamazsa başka dükkâna gider)</label>
       <p class="small muted">Araç günlerini Ayarlar'dan girdiysen "kaç günde bir" yerine o günler kullanılır. İlk tahmin sadece başlangıç için; faturalar geldikçe uygulama gerçek satışı öğrenir.</p>`}
       <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="cancelEdit">Vazgeç</button>
-      ${p?`<button type="button" class="danger" data-act="delProduct" data-id="${p.id}" style="margin-left:auto">${S.confirmDel===p.id?"Emin misin? Tekrar bas":"Ürünü sil"}</button>`:""}</div>
+      ${p?`<button type="button" class="danger" data-act="delProduct" data-id="${p.id}" style="margin-left:auto">${S.confirmDel===p.id?(usedIn(p.id).length?"Yine de sil":"Emin misin? Tekrar bas"):"Ürünü sil"}</button>`:""}</div>
+      ${p && S.confirmDel===p.id && usedIn(p.id).length ? `<p class="notice bad">Bu malzeme şu ürünlerin reçetesinde kullanılıyor: <b>${usedIn(p.id).map(x=>esc(x.name)).join(", ")}</b>. Silersen o reçetelerden çıkar ve ihtiyaç hesabına girmez.</p>` : ""}
     </form>`;
     return html;
   }
@@ -1069,7 +1093,9 @@ function viewSettings(){
     <p class="small muted">Her tedarikçinin aracı hangi günler geliyorsa işaretle. Sipariş, bir sonraki gelişe kadar yetecek kadar hesaplanır.</p>
     ${sups.length ? sups.map(sp=>{ const d = S.suppliers[supKey(sp)]?.days || [];
       const ld = Number(S.suppliers[supKey(sp)]?.lead)||0;
-      return `<div class="stack" style="gap:6px"><div class="row between"><b>${esc(sp)}</b><span class="small muted">${d.length?`haftada ${d.length} kez`:"gün seçilmedi"}</span></div>${supDays(sp)}
+      return `<div class="stack" style="gap:6px">${S.renSup===sp
+        ? `<div class="row" style="flex-wrap:nowrap"><input id="ren-sup" value="${esc(sp)}" maxlength="60" aria-label="Tedarikçinin yeni adı" style="flex:1;min-width:0"><button class="primary" data-act="renSupSave" data-sup="${esc(sp)}">Kaydet</button><button data-act="renSupCancel">Vazgeç</button></div>`
+        : `<div class="row between"><b>${esc(sp)}</b><span class="row"><span class="small muted">${d.length?`haftada ${d.length} kez`:"gün seçilmedi"}</span><button class="link" data-act="renSup" data-sup="${esc(sp)}">Adını değiştir</button></span></div>`}${supDays(sp)}
         <label class="row" style="flex-direction:row;gap:8px;align-items:center;flex-wrap:nowrap"><span class="small" style="flex:none">Siparişi ne zaman veriyorsun?</span><select id="lead-${supKey(sp)}" data-lead="${esc(sp)}">${[[0,"Araç gelince"],[1,"1 gün önce"],[2,"2 gün önce"]].map(([v,l])=>`<option value="${v}" ${ld===v?"selected":""}>${l}</option>`).join("")}</select></label></div>`; }).join('<hr class="sep">')
       : `<p class="small muted">Ürünlere tedarikçi adı girince burada listelenir.</p>`}
   </section>
@@ -1172,6 +1198,7 @@ function lineChart(pts, o={}){ // pts: [{v, l, mark}]
 
 /* ---------- Yardımcılar ---------- */
 const isMade = p => Array.isArray(p.recipe) && p.recipe.length>0;
+const usedIn = id => S.products.filter(x=>isMade(x) && x.recipe.some(r=>r.id===id));
 const stockP = () => S.products.filter(p=>!isMade(p));
 const MENU_TABS = ["menu","stok","plan","maliyet","kar","fire","urunler","ayarlar"];
 function dayWeight(t){ const w=dayW(), m=w.reduce((x,y)=>x+y,0)/7||1, sd=specials().find(x=>x.d===ymd(t)); return sd ? (SPECIAL[sd.k]?.w??1) : w[new Date(t).getDay()]/m; }
@@ -1182,7 +1209,7 @@ function curStock(p, st){
   if (st.estStock!=null) return {v:st.estStock, known:true};
   const s = stockNow(p, st); return s==null ? {v:null, known:false} : {v:Math.max(0,s), known:true};
 }
-const unitOf = p => p.unit || "tane";
+const unitOf = p => p?.unit || "tane";
 function stockStatus(p, st){
   const cur = curStock(p, st), rate = st.daily;
   const sch = st.sch, got = gotToday(p.id);
@@ -1557,8 +1584,9 @@ function viewHome(){
   const all = P.map(p=>({p, st:stats(p)}));
   const h = new Date().getHours(), hi = h<11?"Günaydın":h<17?"İyi günler":"İyi akşamlar";
   const sups = [...new Set(P.map(p=>p.supplier).filter(Boolean))];
-  const todaySup = sups.filter(sp=>{ const sc = schedule(sp); return sc && sc.a===0; });
-  const tomSup = sups.filter(sp=>{ const sc = schedule(sp); return sc && sc.a===1; });
+  const todaySup = sups.filter(sp=>truckIn(sp)===0);
+  const tomSup = sups.filter(sp=>truckIn(sp)===1);
+  const orderSup = sups.map(sp=>({sp, sc:schedule(sp)})).filter(x=>x.sc && x.sc.lead>0 && x.sc.orderIn===0);
   const nOrder = all.filter(x=>x.st.q>0).length;
   const st2 = all.map(x=>({...x, s:stockStatus(x.p, x.st)}));
   const nOut = st2.filter(x=>x.s.k==="out").length, nLow = st2.filter(x=>x.s.k==="low").length;
@@ -1568,7 +1596,7 @@ function viewHome(){
   html += `<div class="btiles">
     <button class="btile" data-act="goto" data-tab="siparis" data-plain="1"><span class="bi c1">${ic("truck",24)}</span><span class="bn num">${todaySup.length}</span><span class="bt">${todaySup.length?"araç bugün geliyor":"bugün araç yok"}</span><span class="bs">${esc(todaySup.slice(0,2).join(", ")||(tomSup.length?"yarın: "+tomSup.slice(0,2).join(", "):""))}</span></button>
     <button class="btile" data-act="goto" data-tab="siparis" data-plain="1"><span class="bi c4">${ic("list",24)}</span><span class="bn num">${nOrder}</span><span class="bt">ürün sipariş bekliyor</span></button>
-    <button class="btile" data-act="stockGo" data-f="${nOut?"out":"low"}"><span class="bi ${nOut?"c3":"c2"}">${ic("box",24)}</span><span class="bn num">${nOut}${nLow?`<small>+${nLow}</small>`:""}</span><span class="bt">rafta bitti${nLow?` · ${nLow} azalıyor`:""}</span></button>
+    <button class="btile" data-act="stockGo" data-f="${nOut?"out":"low"}"><span class="bi ${nOut?"c3":"c2"}">${ic("box",24)}</span><span class="bn num">${nOut||nLow}</span><span class="bt">${nOut?"ürün rafta bitti":nLow?"ürün azalıyor":"rafta biten yok"}</span>${nOut&&nLow?`<span class="bs">${nLow} ürün de azalıyor</span>`:""}</button>
     <button class="btile" data-act="goto" data-tab="veresiye" data-plain="1"><span class="bi c6">${ic("book",24)}</span><span class="bn num">${fmt(debt)}<small>₺</small></span><span class="bt">veresiye alacağı</span></button>
   </div>`;
   // yapılacaklar
@@ -1576,6 +1604,7 @@ function viewHome(){
   for (const sp of todaySup){ const got = all.some(x=>x.p.supplier===sp && gotToday(x.p.id));
     todo.push(got ? {i:"check", c:"c1", t:`${esc(sp)} geldi, faturası girildi.`, done:true}
       : {i:"truck", c:"c1", t:`<b>${esc(sp)}</b> aracı bugün geliyor: siparişe bak, mal gelince faturayı gir.`, a:`data-act="goto" data-tab="siparis" data-plain="1"`, b:"Sipariş"}); }
+  for (const {sp, sc} of orderSup) todo.push({i:"list", c:"c4", t:`<b>${esc(sp)}</b> siparişini bugün ver: araç ${sc.a===1?"yarın":DN[sc.next]} gelecek.`, a:`data-act="goto" data-tab="siparis" data-plain="1"`, b:"Sipariş"});
   const shelf = all.filter(x=>x.st.checkShelf).length;
   if (shelf) todo.push({i:"box", c:"c2", t:`<b>${shelf} ürünün</b> rafına bak ve sayıyı gir.`, a:`data-act="goto" data-tab="siparis" data-plain="1"`, b:"Say"});
   const price = all.filter(x=>x.st.priceUp>=0.03).length;
@@ -1611,7 +1640,7 @@ function viewMenu(){
 }
 
 /* ---------- Excel'e aktar ---------- */
-function loadScript(src){ return new Promise((res,rej)=>{ if (window.XLSX) return res(); const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+function loadScript(src){ return new Promise((res,rej)=>{ if (window.XLSX) return res(); const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=()=>{ s.remove(); rej(new Error("yok")); }; document.head.appendChild(s); }); }
 async function loadXLSX(){ if (!window.XLSX) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"); return window.XLSX; }
 const TYP = {gelen:"Gelen (fatura)", iade:"İade", fire:"Fire", ariza:"Arıza firesi", bos:"Rafta yoktu", sayim:"Raf sayımı", fireyok:"Fire yok"};
 const TYP_R = Object.fromEntries(Object.entries(TYP).map(([k,v])=>[norm(v),k]));
@@ -1663,7 +1692,7 @@ async function exportXlsx(){
     S.msg = how==="saved" ? {kind:"ok",text:"Excel dosyası kaydedildi."} : how==="shared" ? {kind:"ok",text:"Dosya paylaşıldı. Dosyalar'a ya da WhatsApp'a kaydedebilirsin."}
       : how==="tried" ? {kind:"ok",text:"İndirme başlatıldı. İndirilenler klasörüne bak."} : null;
     render();
-  }catch(e){ S.msg={kind:"bad",text:"Excel dosyası hazırlanamadı. İnternet bağlantını kontrol edip tekrar dene."}; render(); }
+  }catch(e){ S.msg={kind:"bad",text: window.XLSX ? "Excel dosyası hazırlanamadı. Tekrar dene." : "Excel yedeği için telefonun bir kez internete bağlanması gerekiyor. İnternet açılınca tekrar bas; kayıtların bu sırada telefonda güvende."}; render(); }
 }
 async function saveFile(name, buf, mime){
   try{ const dl = window.claude?.use ? await window.claude.use("downloads") : null;
@@ -1862,6 +1891,27 @@ function syncInv(){
 async function saveInvoice(){
   syncInv();
   const inv = S.inv;
+  // Kaydetmeden önce kontrol: hatalı satır varsa form açık kalır, satır işaretlenir
+  if (inv.date && inv.date > ymd(Date.now())){ S.invErr = "Fatura tarihi ileri bir gün olamaz. Bugünü ya da geçmiş bir günü seç."; render(); return; }
+  let bad = 0;
+  for (const l of inv.lines){ l.err = null;
+    if (!l.productId) continue;
+    const p0 = S.products.find(x=>x.id===l.productId);
+    if (l.productId==="__new" && !(l.newName||l.raw||"").trim()) l.err = "Yeni ürünün adını yaz.";
+    else if (l.qty==null || isNaN(l.qty)) l.err = "Miktarı yaz.";
+    else if (!(l.qty>0)) l.err = "Miktar 0'dan büyük olmalı.";
+    else if (p0 && unitOf(p0)==="tane" && !Number.isInteger(l.qty)) l.err = "Adet küsuratlı olamaz; tam sayı yaz.";
+    else if (l.price!=null && (isNaN(l.price) || l.price<0)) l.err = "Fiyat eksi olamaz.";
+    if (l.err) bad++; }
+  if (bad){ S.invErr = `${bad} satırda eksik ya da hatalı bilgi var. Kırmızı yazılı satırları düzelt; girdiklerin silinmedi.`; render(); return; }
+  S.invErr = null;
+  // K3: "Yeni ürün" adı zaten varsa (adı ya da faturadaki diğer adı) mevcut ürüne ekle
+  const merged = [];
+  for (const l of inv.lines){ if (l.productId!=="__new") continue;
+    const k = norm(l.newName||l.raw||"");
+    const ex = S.products.find(x=>!isMade(x) && (norm(x.name)===k || (x.aliases||[]).some(a=>norm(a)===k)));
+    if (ex){ l.productId = ex.id; if (!merged.includes(ex.name)) merged.push(ex.name); } }
+  const madeNow = {};
   const before = {};
   for (const l of inv.lines){ const p0 = S.products.find(x=>x.id===l.productId); if (p0 && !before[p0.id]){ const st0 = stats(p0); const rows0 = movements(p0, st0); const nr = rows0[rows0.length-1];
     before[p0.id] = {name:p0.name, days:nr.days, minus: nr.sold+nr.fire+nr.iade, shelf: nr.before, add:0}; } }
@@ -1871,11 +1921,12 @@ async function saveInvoice(){
   for (const l of inv.lines){
     if (!l.productId || !(l.qty>0)) continue;
     let p;
-    if (l.productId==="__new"){
+    if (l.productId==="__new" && madeNow[norm(l.newName||l.raw||"")]){ p = madeNow[norm(l.newName||l.raw||"")]; }
+    else if (l.productId==="__new"){
       const name = (l.newName||l.raw||"").trim(); if (!name) continue;
       p = {id:newId(), name, supplier:inv.supplier, caseSize:l.caseSize||1, intervalDays:7, perishable:false,
            initialWeekly:l.qty, createdAt:nowIso(), aliases: l.raw ? [l.raw] : [], outSince:null, createdByInv:invKey, buyPrice:l.price||null};
-      await store.saveProduct(p); created.push(p.id);
+      await store.saveProduct(p); created.push(p.id); madeNow[norm(name)] = p;
     } else {
       p = {...S.products.find(x=>x.id===l.productId)};
       let changed = false;
@@ -1896,14 +1947,17 @@ async function saveInvoice(){
   S.invSummary = Object.values(before).filter(x=>x.add>0);
   if (created.length) S.newProds = {ids:created, sup:inv.supplier||""};
   if (n) offerUndo(`Fatura kaydedildi (${n} kalem).`, ()=>deleteInvoice(invKey));
-  S.msg = {kind:"ok", text: n ? `Fatura kaydedildi: ${n} kalem.` : "Kaydedilecek kalem yoktu. Ürün seçip miktar girilen satırlar kaydedilir."};
+  S.msg = {kind:"ok", text: (n ? `Fatura kaydedildi: ${n} kalem.` : "Kaydedilecek kalem yoktu. Ürün seçip miktar girilen satırlar kaydedilir.") + (merged.length ? ` Bu ürünler zaten vardı, yeni kart açılmadı, mevcut ürüne eklendi: ${merged.join(", ")}.` : "")};
   S.tab = n ? "siparis" : "fatura"; render();
 }
 
 async function saveFire(){
-  const date = nowIso(), added = [];
+  const date = nowIso(), added = [], wrong = [];
+  for (const p of S.products){ const raw = document.getElementById("fire-"+p.id)?.value; if (raw==null || raw==="") continue;
+    const q = Number(String(raw).replace(",",".")); if (isNaN(q) || q<0 || (unitOf(p)==="tane" && !Number.isInteger(q))) wrong.push(p.name); }
+  if (wrong.length){ S.msg={kind:"bad",text:`Şu ürünlerde fire adedi hatalı (eksi ya da küsuratlı olamaz): ${wrong.join(", ")}. Düzeltip tekrar kaydet.`}; render(true); window.scrollTo(0,0); return; }
   for (const p of S.products){
-    const q = Number(document.getElementById("fire-"+p.id)?.value||0);
+    const q = Number(String(document.getElementById("fire-"+p.id)?.value||0).replace(",","."));
     if (!(q>0)) continue;
     const why = document.getElementById("fwhy-"+p.id)?.value || "tarih";
     const note = (document.getElementById("fnote-"+p.id)?.value || "").trim();
@@ -1943,7 +1997,7 @@ function orderText(sup){
   const list = stockP().filter(p => (p.supplier||"Tedarikçi belirtilmemiş")===sup)
     .map(p=>({p,st:stats(p)})).filter(x=>x.st.q>0).sort((a,b)=>a.p.name.localeCompare(b.p.name,"tr"));
   const sch = schedule(sup==="Tedarikçi belirtilmemiş"?"":sup);
-  return `Sipariş - ${sup}${sch?` (teslim: ${DN[sch.next]})`:""}\n` + list.map(x=>`- ${x.p.name}: ${x.st.q} adet${x.st.cases?` (≈${x.st.cases} koli)`:""}`).join("\n");
+  return `Sipariş - ${sup}${sch?` (teslim: ${DN[sch.next]})`:""}\n` + list.map(x=>`- ${x.p.name}: ${x.st.q} ${x.p.unit==="kg"?"kg":"adet"}${x.st.cases?` (${x.st.cases} koli${x.st.caseRem?` + ${x.st.caseRem}`:""})`:""}`).join("\n");
 }
 
 const SEED = [
@@ -1988,6 +2042,14 @@ document.addEventListener("click", async ev=>{
     else if (a==="applyN"){ const p=S.products.find(x=>x.id===id), n=Number(t.dataset.n)||1, prev=Number(p.everyN)||1; await store.saveProduct({...p, everyN:n}); S.msg={kind:"ok",text:`${p.name} artık ${n===1?"her teslimatta":n+" teslimatta bir"} sipariş edilecek.`}; offerUndo("Sipariş sıklığı değişti.", ()=>store.saveProduct({...S.products.find(x=>x.id===id), everyN:prev})); render(); }
     else if (a==="applyCore"){ const p=S.products.find(x=>x.id===id); await store.saveProduct({...p, core:true}); S.msg={kind:"ok",text:`${p.name} temel ürün yapıldı.`}; offerUndo("Temel ürün yapıldı.", ()=>store.saveProduct({...S.products.find(x=>x.id===id), core:false})); render(); }
     else if (a==="saveCost"){ const r=document.getElementById("c-rate").value, o=document.getElementById("c-ord").value; await store.saveSettings({...S.settings, monthlyRate: r===""?null:Number(r), orderCost: o===""?null:Number(o)}); S.msg={kind:"ok",text:"Varsayımlar kaydedildi, hesap yenilendi."}; render(); }
+    else if (a==="renSup"){ S.renSup=t.dataset.sup; render(true); document.getElementById("ren-sup")?.focus(); }
+    else if (a==="renSupCancel"){ S.renSup=null; render(); }
+    else if (a==="renSupSave"){ const from=t.dataset.sup, to=(document.getElementById("ren-sup")?.value||"").trim();
+      if (!to || to===from){ S.renSup=null; render(); return; }
+      const orr=S.suppliers[supKey(from)], nk=supKey(to), nr=S.suppliers[nk], ps=S.products.filter(x=>x.supplier===from);
+      S.quiet=true; try{ for (const p of ps) await store.saveProduct({...p, supplier:to});
+        await store.saveSupplier({...(orr||{days:[]}), ...(nr?.days?.length?{days:nr.days, lead:nr.lead}:{}), id:nk, name:to}); } finally{ S.quiet=false; }
+      S.renSup=null; S.msg={kind:"ok",text:`"${from}" adı "${to}" yapıldı (${ps.length} ürün). Araç günleri korundu.`}; render(); }
     else if (a==="saveShop"){ const v=document.getElementById("shop-name").value.trim(); await store.saveSettings({...S.settings, shopName: v||null}); S.msg={kind:"ok",text:"Kaydedildi."}; render(); }
     else if (a==="rcAdd"){ syncRc(); S.rcRows.push({id:"",qty:""}); render(true); }
     else if (a==="rcDel"){ syncRc(); S.rcRows.splice(Number(t.dataset.i),1); if (!S.rcRows.length) S.rcRows.push({id:"",qty:""}); render(); }
@@ -1999,6 +2061,10 @@ document.addEventListener("click", async ev=>{
     else if (a==="vQuick"){ const el=document.getElementById("v-amt"); if (!el) return; if (t.dataset.v==="all"){ el.value = String(custStats(S.customers[S.vCust]).bal); } else el.value = String((Number(el.value)||0) + Number(t.dataset.v)); const er=document.getElementById("v-err"); if (er) er.hidden=true; }
     else if (a==="vSave"){ const c=S.customers[S.vCust]; const amt=Number(String(document.getElementById("v-amt").value).replace(",",".")); const note=document.getElementById("v-note").value.trim(); const er=document.getElementById("v-err");
       if (!(amt>0)){ er.textContent="Tutarı yaz."; er.hidden=false; return; }
+      if (S.vMode==="odeme"){ const sb=custStats(c).bal; if (amt > Math.max(0,sb)+0.005 && S.overOk!==amt){ S.overOk=amt;
+        er.textContent = sb>0.005 ? `Borcu ${TLx(sb)}. ${TLx(amt)} alırsan ${TLx(amt-sb)} fazla ödeme olur. Tutar doğruysa tekrar Kaydet'e bas.` : `Bu müşterinin borcu yok. ${TLx(amt)} fazla ödeme olarak yazılır. Doğruysa tekrar Kaydet'e bas.`;
+        er.hidden=false; return; } }
+      S.overOk=null;
       const s0=custStats(c), type=S.vMode, eid=newId();
       await store.addEvent({id:eid, type, productId:"-", customerId:c.id, amount:Math.round(amt*100)/100, note:note||null, date:nowIso()});
       const nb = type==="borc" ? s0.bal+amt : s0.bal-amt;
@@ -2044,20 +2110,23 @@ document.addEventListener("click", async ev=>{
     else if (a==="seed"){ t.disabled=true; await seedDemo(); }
     else if (a==="out"){ const p=S.products.find(x=>x.id===id); await store.saveProduct({...p,outSince:nowIso()}); offerUndo(`${p.name}: bitti olarak işaretlendi.`, ()=>store.saveProduct({...S.products.find(x=>x.id===id), outSince:null})); }
     else if (a==="unout"){ const p=S.products.find(x=>x.id===id); await store.saveProduct({...p,outSince:null}); }
-    else if (a==="showcount"){ const p=S.products.find(x=>x.id===id); p.showCount=true; render(); }
-    else if (a==="count"){ const v=document.getElementById((t.dataset.src||"cnt-")+id).value; if (v==="") return; const cid = newId(); await store.addEvent({id:cid, type:"sayim",productId:id,qty:Number(v),date:nowIso()}); offerUndo("Raf sayısı kaydedildi.", ()=>store.deleteEvent(cid)); const p=S.products.find(x=>x.id===id); if(p) p.showCount=false; S.msg={kind:"ok",text:"Raf sayısı kaydedildi; öneri buna göre güncellendi."}; render(); }
+    else if (a==="showcount"){ const p=S.products.find(x=>x.id===id); p.showCount=true; render(true); const el=document.getElementById("cnt-"+id); if (el){ el.focus(); el.scrollIntoView?.({block:"center"}); } }
+    else if (a==="count"){ const v=document.getElementById((t.dataset.src||"cnt-")+id).value; if (v==="") return; const cq=Number(String(v).replace(",",".")), cp=S.products.find(x=>x.id===id);
+      if (isNaN(cq) || cq<0){ S.msg={kind:"bad",text:"Raf sayısı eksi olamaz. Rafta hiç yoksa 0 yaz."}; render(true); return; }
+      if (unitOf(cp)==="tane" && !Number.isInteger(cq)){ S.msg={kind:"bad",text:"Adet küsuratlı olamaz; tam sayı yaz."}; render(true); return; }
+      const cid = newId(); await store.addEvent({id:cid, type:"sayim",productId:id,qty:cq,date:nowIso()}); offerUndo("Raf sayısı kaydedildi.", ()=>store.deleteEvent(cid)); const p=S.products.find(x=>x.id===id); if(p) p.showCount=false; S.msg={kind:"ok",text:"Raf sayısı kaydedildi; öneri buna göre güncellendi."}; render(); }
     else if (a==="copy"){ const txt=orderText(t.dataset.sup); try{ await navigator.clipboard.writeText(txt); S.msg={kind:"ok",text:"Sipariş listesi kopyalandı. WhatsApp'tan plasiyere yapıştırabilirsin."}; }catch(_){ S.msg={kind:"warn",text:txt}; } render(); }
     else if (a==="closeInvSum2"){ S.invSummary=null; render(); }
-    else if (a==="manualInv"){ S.inv={supplier:"",no:"",date:nowIso().slice(0,10),lines:[{productId:"",qty:null,price:null,iade:false}],force:false}; S.msg=null; render(); }
+    else if (a==="manualInv"){ S.invErr=null; S.inv={supplier:"",no:"",date:nowIso().slice(0,10),lines:[{productId:"",qty:null,price:null,iade:false}],force:false}; S.msg=null; render(); }
     else if (a==="addLine"){ syncInv(); S.inv.lines.push({productId:"",qty:null,price:null,iade:false}); render(); }
     else if (a==="delLine"){ syncInv(); S.inv.lines.splice(Number(t.dataset.i),1); render(); }
-    else if (a==="cancelInv"){ S.inv=null; render(); }
+    else if (a==="cancelInv"){ S.inv=null; S.invErr=null; render(); }
     else if (a==="saveInv"){ t.disabled=true; await saveInvoice(); }
     else if (a==="saveFire"){ t.disabled=true; await saveFire(); }
     else if (a==="newProduct"){ S.editId="__new"; S.rcFor=null; S.msg=null; render(); }
     else if (a==="edit"){ if (t.dataset.totab) S.tab=t.dataset.totab; S.editId=id; S.rcFor=null; window.scrollTo(0,0); S.msg=null; S.confirmDel=null; render(); }
     else if (a==="cancelEdit"){ S.editId=null; render(); }
-    else if (a==="delProduct"){ if (S.confirmDel!==id){ S.confirmDel=id; render(); return; } const old={...S.products.find(x=>x.id===id)}; await store.deleteProduct(id); offerUndo(`${old.name} silindi.`, ()=>store.saveProduct(old)); S.editId=null; S.confirmDel=null; S.msg={kind:"ok",text:"Ürün silindi."}; render(); }
+    else if (a==="delProduct"){ if (S.confirmDel!==id){ S.confirmDel=id; render(); return; } const old={...S.products.find(x=>x.id===id)}, users=usedIn(id); await store.deleteProduct(id); offerUndo(`${old.name} silindi.`, ()=>store.saveProduct(old)); S.editId=null; S.confirmDel=null; S.msg={kind: users.length?"warn":"ok", text: users.length ? `Ürün silindi. ${users.map(x=>x.name).join(", ")} reçetesinden çıktı; reçeteyi kontrol et ya da Geri al'a bas.` : "Ürün silindi."}; render(); }
   }catch(e){ S.msg={kind:"bad",text:"Kaydedilemedi. Bağlantını kontrol edip tekrar dene."}; render(); }
 });
 document.addEventListener("keydown", ev=>{
@@ -2065,7 +2134,7 @@ document.addEventListener("keydown", ev=>{
 });
 document.addEventListener("input", ev=>{
   if (ev.target.id==="v-search"){ const q=norm(ev.target.value); let n=0; document.querySelectorAll("#clist .ccard").forEach(el=>{ const show=!q||el.dataset.name.includes(q); el.hidden=!show; if (show) n++; }); const cn=document.getElementById("cnone"); if (cn) cn.hidden = n>0; return; }
-  if (ev.target.id==="v-amt"){ const er=document.getElementById("v-err"); if (er) er.hidden=true; return; }
+  if (ev.target.id==="v-amt"){ S.overOk=null; const er=document.getElementById("v-err"); if (er) er.hidden=true; return; }
   if (ev.target.id==="vc-name"){ const er=document.getElementById("vc-err"); if (er) er.hidden=true; return; }
   const id = ev.target.dataset?.fire; if (!id) return;
   const d = document.getElementById("fd-"+id); if (d) d.hidden = !(Number(ev.target.value)>0);
@@ -2111,7 +2180,14 @@ document.addEventListener("submit", async ev=>{
       salePriceAt: (old && String(old.salePrice??"")===g("f-sale")) ? (old.salePriceAt||null) : nowIso(), buyPrice: g("f-buy")==="" ? null : Number(g("f-buy"))};
   }
   if (!p.name) return;
-  try{ await store.saveProduct(p); S.editId=null; S.rcFor=null; S.msg={kind:"ok",text:`${p.name} kaydedildi.`}; render(); }
+  let supMsg = "";
+  try{
+    if (!S.formMade && p.supplier && old?.supplier && supKey(old.supplier)!==supKey(p.supplier)){
+      const nr = S.suppliers[supKey(p.supplier)], orr = S.suppliers[supKey(old.supplier)];
+      if (!(nr?.days?.length) && orr?.days?.length){ await store.saveSupplier({...orr, id:supKey(p.supplier), name:p.supplier});
+        supMsg = ` ${old.supplier} için girdiğin araç günleri ${p.supplier} adına da aktarıldı; farklıysa Ayarlar'dan düzelt.`; }
+    }
+    await store.saveProduct(p); S.editId=null; S.rcFor=null; S.msg={kind:"ok",text:`${p.name} kaydedildi.${supMsg}`}; render(); }
   catch(e){ S.msg={kind:"bad",text:"Kaydedilemedi. Bağlantını kontrol edip tekrar dene."}; render(); }
 });
 
@@ -2238,6 +2314,8 @@ async function switchShared(on){
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}
 render(); boot();
+// Excel kütüphanesini internet varken arka planda indir: sonra internet gitse de yedek alınabilir
+setTimeout(()=>{ if (navigator.onLine!==false) loadXLSX().catch(()=>{}); }, 2500);
 })();
 </script>
 

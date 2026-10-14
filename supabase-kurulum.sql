@@ -74,6 +74,17 @@ create table if not exists public.signup_requests (
 );
 create unique index if not exists signup_pending_user on public.signup_requests(username) where status = 'pending';
 
+-- Hesaba özel PIN (telefonu açarken / bekleme kilidinde). Sadece şifrelenmiş (bcrypt) saklanır,
+-- tabloya kimse doğrudan erişemez (yönetici dahil); sadece aşağıdaki fonksiyonlar.
+create table if not exists public.user_pins (
+  user_id      uuid primary key references auth.users(id) on delete cascade,
+  pin_hash     text not null,
+  set_at       timestamptz not null default now(),
+  mins         int not null default 60 check (mins in (15,30,60,240)),
+  fails        int not null default 0,
+  locked_until timestamptz
+);
+
 -- ---------- Yardımcılar ----------
 create or replace function public.is_admin() returns boolean
 language sql stable security definer set search_path = public as $$
@@ -115,6 +126,7 @@ alter table public.profiles enable row level security;
 alter table public.members  enable row level security;
 alter table public.docs     enable row level security;
 alter table public.signup_requests enable row level security; -- kural yok: tabloya sadece fonksiyonlar erişir
+alter table public.user_pins enable row level security;       -- kural yok: tabloya sadece fonksiyonlar erişir
 
 drop policy if exists shops_read on public.shops;
 create policy shops_read on public.shops for select to authenticated
@@ -139,7 +151,7 @@ create policy docs_update on public.docs for update to authenticated
 
 -- Girişsiz ziyaretçi hiçbir tabloya dokunamaz; tablolara doğrudan yazma da kapalı
 revoke all on public.shops, public.profiles, public.members, public.docs from anon;
-revoke all on public.signup_requests from anon, authenticated;
+revoke all on public.signup_requests, public.user_pins from anon, authenticated;
 revoke insert, update, delete on public.shops, public.profiles, public.members from authenticated;
 grant select on public.shops, public.profiles, public.members to authenticated;
 grant select, insert, update on public.docs to authenticated;
@@ -224,6 +236,9 @@ language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
     'user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'is_admin', p.is_admin, 'must_change', p.must_change,
     'temp_left', case when p.must_change then greatest(0, floor(extract(epoch from (p.temp_set_at + make_interval(mins => bd_temp_minutes()) - now()))))::int end,
+    'has_pin', exists (select 1 from user_pins x where x.user_id = p.user_id),
+    'pin_set_at', (select x.set_at from user_pins x where x.user_id = p.user_id),
+    'pin_mins', coalesce((select x.mins from user_pins x where x.user_id = p.user_id), 60),
     'pending_signups', case when p.is_admin then (select count(*) from signup_requests r where r.status = 'pending') else 0 end,
     'shops', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'name', s.name, 'role', m.role, 'active', s.active) order by s.name)
                         from members m join shops s on s.id = m.shop_id where m.user_id = p.user_id), '[]'::jsonb))
@@ -285,6 +300,8 @@ begin
   end if;
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_user;
   update profiles set must_change = (p_user <> auth.uid()), temp_set_at = case when p_user <> auth.uid() then now() end where user_id = p_user;
+  -- Şifresi yenilenen kişi PIN'ini de yeniden belirler (PIN'ini unutan buradan döner)
+  if p_user <> auth.uid() then delete from user_pins where user_id = p_user; end if;
 end $$;
 
 -- Kendi şifreni değiştir (tek kullanımlık şifreden sonra da bu kullanılır)
@@ -353,6 +370,62 @@ begin
         'temp', case when not p.must_change then null when p.temp_set_at < now() - make_interval(mins => bd_temp_minutes()) then 'expired' else 'waiting' end) order by m.role, p.username)
                   from members m join profiles p on p.user_id = m.user_id where m.shop_id = s.id), '[]'::jsonb)
     ) as x from shops s) t), '[]'::jsonb);
+end $$;
+
+-- ---------- PIN ----------
+-- PIN koy / değiştir. Kolay tahmin edilenler (1111, 1234, 4321...) kabul edilmez.
+create or replace function public.set_my_pin(p_pin text, p_mins int default null)
+returns timestamptz language plpgsql security definer set search_path = public, extensions as $$
+declare t timestamptz := now(); d int[]; asc_ok boolean := true; desc_ok boolean := true; i int;
+begin
+  if auth.uid() is null then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
+  if not pw_ok() then raise exception 'Önce kendi şifreni belirle.' using errcode = '42501'; end if;
+  if coalesce(p_pin,'') !~ '^[0-9]{4}$' then raise exception 'PIN 4 rakam olmalı.' using errcode = 'P0001'; end if;
+  if p_mins is not null and p_mins not in (15,30,60,240) then raise exception 'Süre hatalı.' using errcode = 'P0001'; end if;
+  select array_agg(substr(p_pin, g, 1)::int order by g) into d from generate_series(1,4) g;
+  for i in 2..4 loop
+    if d[i] <> d[i-1] + 1 then asc_ok := false; end if;
+    if d[i] <> d[i-1] - 1 then desc_ok := false; end if;
+  end loop;
+  if p_pin ~ '^(.)\1{3}$' or asc_ok or desc_ok then
+    raise exception 'Bu PIN çok kolay tahmin edilir. Başka bir PIN seç.' using errcode = 'P0001';
+  end if;
+  insert into user_pins (user_id, pin_hash, set_at, mins, fails, locked_until)
+  values (auth.uid(), crypt(p_pin, gen_salt('bf')), t, coalesce(p_mins, 60), 0, null)
+  on conflict (user_id) do update set pin_hash = excluded.pin_hash, set_at = t,
+    mins = coalesce(p_mins, user_pins.mins), fails = 0, locked_until = null;
+  return t;
+end $$;
+
+-- Kaç dakika boş kalınca kilitlensin
+create or replace function public.set_my_pin_mins(p_mins int)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if p_mins is null or p_mins not in (15,30,60,240) then raise exception 'Süre hatalı.' using errcode = 'P0001'; end if;
+  update user_pins set mins = p_mins where user_id = auth.uid();
+end $$;
+
+-- PIN doğrula. 5 yanlışta 5 dakika bekletir.
+create or replace function public.verify_my_pin(p_pin text)
+returns jsonb language plpgsql security definer set search_path = public, extensions as $$
+declare r user_pins; maxf int := 5;
+begin
+  if auth.uid() is null then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
+  select * into r from user_pins where user_id = auth.uid() for update;
+  if r.user_id is null then return jsonb_build_object('ok', false, 'reason', 'none'); end if;
+  if r.locked_until is not null and r.locked_until > now() then
+    return jsonb_build_object('ok', false, 'reason', 'cool', 'wait', ceil(extract(epoch from (r.locked_until - now())))::int);
+  end if;
+  if r.pin_hash = crypt(coalesce(p_pin,''), r.pin_hash) then
+    update user_pins set fails = 0, locked_until = null where user_id = auth.uid();
+    return jsonb_build_object('ok', true, 'set_at', r.set_at, 'mins', r.mins);
+  end if;
+  if r.fails + 1 >= maxf then
+    update user_pins set fails = 0, locked_until = now() + interval '5 minutes' where user_id = auth.uid();
+    return jsonb_build_object('ok', false, 'reason', 'max', 'left', 0, 'wait', 300);
+  end if;
+  update user_pins set fails = r.fails + 1 where user_id = auth.uid();
+  return jsonb_build_object('ok', false, 'reason', 'wrong', 'left', maxf - r.fails - 1);
 end $$;
 
 -- ---------- Kayıt başvurusu ----------
@@ -437,7 +510,8 @@ begin
     'public.shop_members(uuid)', 'public.reset_password(uuid,text)', 'public.remove_member(uuid,uuid)',
     'public.admin_set_shop_active(uuid,boolean)', 'public.rename_shop(uuid,text)', 'public.admin_overview()',
     'public.is_admin()', 'public.is_member(uuid)', 'public.is_owner(uuid)',
-    'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)', 'public.change_my_password(text)', 'public.pw_ok()'] loop
+    'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)', 'public.change_my_password(text)', 'public.pw_ok()',
+    'public.set_my_pin(text,integer)', 'public.set_my_pin_mins(integer)', 'public.verify_my_pin(text)'] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
   end loop;

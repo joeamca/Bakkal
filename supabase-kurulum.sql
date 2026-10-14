@@ -494,7 +494,7 @@ begin
   if char_length(trim(coalesce(p_full_name,''))) = 0 then raise exception 'Adını soyadını yaz.' using errcode = 'P0001'; end if;
   if char_length(trim(coalesce(p_shop_name,''))) > 60 or char_length(trim(p_full_name)) > 60 then raise exception 'Ad çok uzun.' using errcode = 'P0001'; end if;
   if not bd_valid_email(e) then raise exception 'E-posta adresini doğru yaz (örn. mert@gmail.com).' using errcode = 'P0001'; end if;
-  if ph is not null and char_length(regexp_replace(ph, '[^0-9]', '', 'g')) < 10 then raise exception 'Telefon numarası eksik. İstersen boş bırak.' using errcode = 'P0001'; end if;
+  if char_length(regexp_replace(coalesce(ph,''), '[^0-9]', '', 'g')) < 10 then raise exception 'Telefon numaranı yaz (onaylanınca sana haber verilecek).' using errcode = 'P0001'; end if;
   if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
   if exists (select 1 from auth.users where lower(email) = e) or exists (select 1 from signup_requests where email = e and status = 'pending') then
     raise exception 'Bu e-posta ile bir hesap ya da bekleyen başvuru var. Şifreni unuttuysan giriş ekranındaki "Şifremi unuttum"u kullan.' using errcode = 'P0001';

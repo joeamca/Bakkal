@@ -35,6 +35,15 @@ alter table public.profiles add column if not exists temp_set_at timestamptz;
 -- Tek kullanımlık şifre kaç dakika geçerli
 create or replace function public.bd_temp_minutes() returns int language sql immutable set search_path = public as $$ select 5 $$;
 
+-- Gerçek e-posta mı? (uygulamanın kendi uydurma adresleri sayılmaz)
+create or replace function public.bd_valid_email(e text) returns boolean language sql immutable set search_path = public as $$
+  select coalesce(e,'') ~ '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$' and char_length(e) <= 120
+     and e not like '%@' || bd_email_domain()
+$$;
+create or replace function public.bd_real_email(e text) returns text language sql immutable set search_path = public as $$
+  select case when e like '%@' || bd_email_domain() then null else e end
+$$;
+
 create table if not exists public.members (
   shop_id     uuid not null references public.shops(id) on delete cascade,
   user_id     uuid not null references auth.users(id) on delete cascade,
@@ -73,6 +82,7 @@ create table if not exists public.signup_requests (
   shop_id       uuid references public.shops(id) on delete set null
 );
 create unique index if not exists signup_pending_user on public.signup_requests(username) where status = 'pending';
+alter table public.signup_requests add column if not exists email text check (email is null or char_length(email) <= 120);
 
 -- Hesaba özel PIN (telefonu açarken / bekleme kilidinde). Sadece şifrelenmiş (bcrypt) saklanır,
 -- tabloya kimse doğrudan erişemez (yönetici dahil); sadece aşağıdaki fonksiyonlar.
@@ -157,13 +167,18 @@ grant select on public.shops, public.profiles, public.members to authenticated;
 grant select, insert, update on public.docs to authenticated;
 
 -- ---------- Hesap açma (iç fonksiyon, dışarıdan çağrılamaz) ----------
-create or replace function public.bd_create_user_hashed(p_username text, p_hash text, p_full_name text)
+drop function if exists public.bd_create_user_hashed(text, text, text);
+create or replace function public.bd_create_user_hashed(p_username text, p_hash text, p_full_name text, p_email text default null)
 returns uuid language plpgsql security definer set search_path = public, extensions as $$
 declare
   u text := lower(trim(p_username));
   uid uuid := gen_random_uuid();
   em text;
+  re text := nullif(lower(trim(coalesce(p_email,''))), '');
 begin
+  if re is not null and not bd_valid_email(re) then
+    raise exception 'E-posta adresi hatalı: %', re using errcode = 'P0001';
+  end if;
   if u !~ '^[a-z0-9._-]{3,24}$' then
     raise exception 'Kullanıcı adı 3-24 karakter olmalı; sadece İngilizce harf, rakam, nokta, tire.' using errcode = 'P0001';
   end if;
@@ -173,8 +188,9 @@ begin
   if exists (select 1 from profiles where username = u) then
     raise exception 'Bu kullanıcı adı alınmış: %', u using errcode = 'P0001';
   end if;
-  em := u || '@' || bd_email_domain();
-  if exists (select 1 from auth.users where email = em) then
+  em := coalesce(re, u || '@' || bd_email_domain());
+  if exists (select 1 from auth.users where lower(email) = em) then
+    if re is not null then raise exception 'Bu e-posta ile açılmış bir hesap var: %', re using errcode = 'P0001'; end if;
     raise exception 'Bu kullanıcı adı alınmış: %', u using errcode = 'P0001';
   end if;
   insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -191,9 +207,10 @@ begin
   insert into profiles (user_id, username, full_name) values (uid, u, nullif(trim(p_full_name), ''));
   return uid;
 end $$;
-revoke all on function public.bd_create_user_hashed(text, text, text) from public, anon, authenticated;
+revoke all on function public.bd_create_user_hashed(text, text, text, text) from public, anon, authenticated;
 
-create or replace function public.bd_create_user(p_username text, p_password text, p_full_name text)
+drop function if exists public.bd_create_user(text, text, text);
+create or replace function public.bd_create_user(p_username text, p_password text, p_full_name text, p_email text default null)
 returns uuid language plpgsql security definer set search_path = public, extensions as $$
 begin
   if char_length(coalesce(p_password,'')) < 6 then
@@ -203,12 +220,12 @@ begin
     raise exception 'Bu kullanıcı adıyla bekleyen bir başvuru var: %', lower(trim(p_username)) using errcode = 'P0001';
   end if;
   declare uid uuid; begin
-    uid := bd_create_user_hashed(p_username, crypt(p_password, gen_salt('bf')), p_full_name);
+    uid := bd_create_user_hashed(p_username, crypt(p_password, gen_salt('bf')), p_full_name, p_email);
     update profiles set must_change = true, temp_set_at = now() where user_id = uid;
     return uid;
   end;
 end $$;
-revoke all on function public.bd_create_user(text, text, text) from public, anon, authenticated;
+revoke all on function public.bd_create_user(text, text, text, text) from public, anon, authenticated;
 
 -- ---------- İlk yönetici (sadece SQL Editor'den, bir kez) ----------
 -- Kullanım:  select public.bootstrap_admin('berk', 'güçlü-şifre', 'Berk', 'Berk''in dükkânı');
@@ -236,6 +253,7 @@ language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
     'user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'is_admin', p.is_admin, 'must_change', p.must_change,
     'temp_left', case when p.must_change then greatest(0, floor(extract(epoch from (p.temp_set_at + make_interval(mins => bd_temp_minutes()) - now()))))::int end,
+    'email', (select bd_real_email(au.email) from auth.users au where au.id = p.user_id),
     'has_pin', exists (select 1 from user_pins x where x.user_id = p.user_id),
     'pin_set_at', (select x.set_at from user_pins x where x.user_id = p.user_id),
     'pin_mins', coalesce((select x.mins from user_pins x where x.user_id = p.user_id), 60),
@@ -251,26 +269,28 @@ language sql security definer set search_path = public as $$
 $$;
 
 -- Yönetici: yeni dükkân + sahibinin hesabı
-create or replace function public.admin_create_shop(p_shop_name text, p_username text, p_password text, p_full_name text)
+drop function if exists public.admin_create_shop(text, text, text, text);
+create or replace function public.admin_create_shop(p_shop_name text, p_username text, p_password text, p_full_name text, p_email text default null)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare uid uuid; sid uuid;
 begin
   if not is_admin() then raise exception 'Bu işlem için yönetici olmalısın.' using errcode = '42501'; end if;
   if char_length(trim(coalesce(p_shop_name,''))) = 0 then raise exception 'Dükkân adını yaz.' using errcode = 'P0001'; end if;
   insert into shops (name, created_by) values (trim(p_shop_name), auth.uid()) returning id into sid;
-  uid := bd_create_user(p_username, p_password, p_full_name);
+  uid := bd_create_user(p_username, p_password, p_full_name, p_email);
   insert into members (shop_id, user_id, role) values (sid, uid, 'owner');
   return sid;
 end $$;
 
 -- Dükkân sahibi ya da yönetici: çalışan ekler (rol: staff ya da owner)
-create or replace function public.add_member(p_shop uuid, p_username text, p_password text, p_full_name text, p_role text default 'staff')
+drop function if exists public.add_member(uuid, text, text, text, text);
+create or replace function public.add_member(p_shop uuid, p_username text, p_password text, p_full_name text, p_role text default 'staff', p_email text default null)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare uid uuid;
 begin
   if not (is_owner(p_shop) or is_admin()) then raise exception 'Bu dükkâna kişi ekleme yetkin yok.' using errcode = '42501'; end if;
   if p_role not in ('owner','staff') then raise exception 'Rol hatalı.' using errcode = 'P0001'; end if;
-  uid := bd_create_user(p_username, p_password, p_full_name);
+  uid := bd_create_user(p_username, p_password, p_full_name, p_email);
   insert into members (shop_id, user_id, role) values (p_shop, uid, p_role);
   return uid;
 end $$;
@@ -312,7 +332,8 @@ begin
   if auth.uid() is null then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
   if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
   if exists (select 1 from profiles where user_id = auth.uid() and must_change
-             and temp_set_at < now() - make_interval(mins => bd_temp_minutes())) then
+             and temp_set_at < now() - make_interval(mins => bd_temp_minutes()))
+     and not coalesce(auth.jwt()->'amr', '[]'::jsonb) @> '[{"method":"recovery"}]'::jsonb then
     raise exception 'Tek kullanımlık şifrenin süresi doldu. Yöneticiden ya da dükkân sahibinden yeni şifre iste.' using errcode = 'P0001';
   end if;
   select encrypted_password into cur from auth.users where id = auth.uid();
@@ -367,9 +388,29 @@ begin
       'events', (select count(*) from docs d where d.shop_id = s.id and d.kind = 'event' and not d.deleted),
       'last_write', (select max(updated_at) from docs d where d.shop_id = s.id),
       'members', coalesce((select jsonb_agg(jsonb_build_object('user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'role', m.role, 'last_seen', p.last_seen,
+        'email', (select bd_real_email(au.email) from auth.users au where au.id = p.user_id),
         'temp', case when not p.must_change then null when p.temp_set_at < now() - make_interval(mins => bd_temp_minutes()) then 'expired' else 'waiting' end) order by m.role, p.username)
                   from members m join profiles p on p.user_id = m.user_id where m.shop_id = s.id), '[]'::jsonb)
     ) as x from shops s) t), '[]'::jsonb);
+end $$;
+
+-- Kendi e-postanı ekle / değiştir (şifreni unutunca bağlantı buraya gelir). Boş bırakılırsa silinir.
+create or replace function public.set_my_email(p_email text)
+returns text language plpgsql security definer set search_path = public as $$
+declare e text := nullif(lower(trim(coalesce(p_email,''))), ''); u text;
+begin
+  if auth.uid() is null or not pw_ok() then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
+  select username into u from profiles where user_id = auth.uid();
+  if e is null then e := u || '@' || bd_email_domain();
+  else
+    if not bd_valid_email(e) then raise exception 'E-posta adresi hatalı.' using errcode = 'P0001'; end if;
+    if exists (select 1 from auth.users where lower(email) = e and id <> auth.uid()) then
+      raise exception 'Bu e-posta başka bir hesapta kayıtlı.' using errcode = 'P0001'; end if;
+  end if;
+  update auth.users set email = e, email_confirmed_at = coalesce(email_confirmed_at, now()), updated_at = now() where id = auth.uid();
+  update auth.identities set identity_data = identity_data || jsonb_build_object('email', e), updated_at = now()
+    where user_id = auth.uid() and provider = 'email';
+  return bd_real_email(e);
 end $$;
 
 -- ---------- PIN ----------
@@ -430,25 +471,41 @@ end $$;
 
 -- ---------- Kayıt başvurusu ----------
 -- Herkes (girişsiz) başvurabilir. Sahte başvuru yağmuruna karşı sınır var.
-create or replace function public.request_signup(p_shop_name text, p_full_name text, p_phone text, p_username text, p_password text, p_note text default null)
+drop function if exists public.request_signup(text, text, text, text, text, text);
+-- Kullanıcı adını e-postadan üret (girişte e-posta kullanılır; kullanıcı adı sadece içeride)
+create or replace function public.bd_free_username(p_base text) returns text
+language plpgsql stable security definer set search_path = public as $$
+declare b text := left(regexp_replace(lower(coalesce(p_base,'')), '[^a-z0-9._-]', '', 'g'), 20); c text; i int := 1;
+begin
+  if char_length(b) < 3 then b := rpad(b || 'bakkal', 6, 'x'); end if;
+  c := b;
+  while exists (select 1 from profiles where username = c) or exists (select 1 from signup_requests where username = c and status = 'pending') loop
+    i := i + 1; c := b || i;
+  end loop;
+  return c;
+end $$;
+revoke all on function public.bd_free_username(text) from public, anon, authenticated;
+
+create or replace function public.request_signup(p_shop_name text, p_full_name text, p_email text, p_password text, p_phone text default null, p_note text default null)
 returns text language plpgsql security definer set search_path = public, extensions as $$
-declare u text := lower(trim(coalesce(p_username,'')));
+declare e text := lower(trim(coalesce(p_email,''))); ph text := nullif(trim(coalesce(p_phone,'')), ''); u text;
 begin
   if char_length(trim(coalesce(p_shop_name,''))) = 0 then raise exception 'Dükkânının adını yaz.' using errcode = 'P0001'; end if;
   if char_length(trim(coalesce(p_full_name,''))) = 0 then raise exception 'Adını soyadını yaz.' using errcode = 'P0001'; end if;
   if char_length(trim(coalesce(p_shop_name,''))) > 60 or char_length(trim(p_full_name)) > 60 then raise exception 'Ad çok uzun.' using errcode = 'P0001'; end if;
-  if char_length(regexp_replace(coalesce(p_phone,''), '[^0-9]', '', 'g')) < 10 then raise exception 'Telefon numaranı yaz (onaylanınca sana haber verilecek).' using errcode = 'P0001'; end if;
-  if u !~ '^[a-z0-9._-]{3,24}$' then raise exception 'Kullanıcı adı 3-24 karakter olmalı; sadece İngilizce harf, rakam, nokta, tire.' using errcode = 'P0001'; end if;
+  if not bd_valid_email(e) then raise exception 'E-posta adresini doğru yaz (örn. mert@gmail.com).' using errcode = 'P0001'; end if;
+  if ph is not null and char_length(regexp_replace(ph, '[^0-9]', '', 'g')) < 10 then raise exception 'Telefon numarası eksik. İstersen boş bırak.' using errcode = 'P0001'; end if;
   if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
-  if exists (select 1 from profiles where username = u) or exists (select 1 from signup_requests where username = u and status = 'pending') then
-    raise exception 'Bu kullanıcı adı alınmış: %. Başka bir ad seç.', u using errcode = 'P0001';
+  if exists (select 1 from auth.users where lower(email) = e) or exists (select 1 from signup_requests where email = e and status = 'pending') then
+    raise exception 'Bu e-posta ile bir hesap ya da bekleyen başvuru var. Şifreni unuttuysan giriş ekranındaki "Şifremi unuttum"u kullan.' using errcode = 'P0001';
   end if;
   if (select count(*) from signup_requests where created_at > now() - interval '10 minutes') >= 20
      or (select count(*) from signup_requests where status = 'pending') >= 300 then
     raise exception 'Şu an çok fazla başvuru var. Biraz sonra tekrar dene.' using errcode = 'P0001';
   end if;
-  insert into signup_requests (shop_name, full_name, phone, note, username, password_hash)
-  values (trim(p_shop_name), trim(p_full_name), left(trim(p_phone), 30), nullif(left(trim(coalesce(p_note,'')), 300), ''), u, crypt(p_password, gen_salt('bf')));
+  u := bd_free_username(split_part(e, '@', 1));
+  insert into signup_requests (shop_name, full_name, phone, email, note, username, password_hash)
+  values (trim(p_shop_name), trim(p_full_name), left(ph, 30), e, nullif(left(trim(coalesce(p_note,'')), 300), ''), u, crypt(p_password, gen_salt('bf')));
   return 'ok';
 end $$;
 
@@ -456,9 +513,17 @@ end $$;
 create or replace function public.signup_status(p_username text) returns text
 language sql stable security definer set search_path = public as $$
   select r.status from signup_requests r
-  where r.username = lower(trim(coalesce(p_username,''))) and r.status in ('pending','rejected')
+  where (r.username = lower(trim(coalesce(p_username,''))) or r.email = lower(trim(coalesce(p_username,'')))) and r.status in ('pending','rejected')
     and not exists (select 1 from profiles p where p.username = r.username)
   order by r.created_at desc limit 1
+$$;
+
+-- Kullanıcı adıyla giremeyen kişiye ipucu: hesabı e-postaya bağlıysa adresin bir kısmını göster (b***@gmail.com)
+create or replace function public.login_hint(p_login text) returns text
+language sql stable security definer set search_path = public as $$
+  select left(u.email, 1) || '***@' || split_part(u.email, '@', 2)
+  from profiles p join auth.users u on u.id = p.user_id
+  where p.username = lower(trim(coalesce(p_login,''))) and bd_real_email(u.email) is not null
 $$;
 
 -- Yönetici: bekleyen başvurular
@@ -467,7 +532,7 @@ language plpgsql stable security definer set search_path = public as $$
 begin
   if not is_admin() then raise exception 'Bu işlem için yönetici olmalısın.' using errcode = '42501'; end if;
   return coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'shop_name', r.shop_name, 'full_name', r.full_name, 'phone', r.phone,
-      'note', r.note, 'username', r.username, 'created_at', r.created_at) order by r.created_at)
+      'note', r.note, 'username', r.username, 'email', r.email, 'created_at', r.created_at) order by r.created_at)
     from signup_requests r where r.status = 'pending'), '[]'::jsonb);
 end $$;
 
@@ -481,20 +546,20 @@ begin
   if r.id is null then raise exception 'Başvuru bulunamadı.' using errcode = 'P0001'; end if;
   if r.status <> 'pending' then raise exception 'Bu başvuru zaten sonuçlanmış.' using errcode = 'P0001'; end if;
   if p_approve then
-    uid := bd_create_user_hashed(r.username, r.password_hash, r.full_name);
+    uid := bd_create_user_hashed(r.username, r.password_hash, r.full_name, r.email);
     insert into shops (name, created_by) values (r.shop_name, auth.uid()) returning id into sid;
     insert into members (shop_id, user_id, role) values (sid, uid, 'owner');
   end if;
   update signup_requests set status = case when p_approve then 'approved' else 'rejected' end,
     decided_at = now(), decided_by = auth.uid(), shop_id = sid, password_hash = '' where id = p_id;
   return jsonb_build_object('status', case when p_approve then 'approved' else 'rejected' end,
-    'username', r.username, 'full_name', r.full_name, 'shop_name', r.shop_name, 'phone', r.phone, 'shop_id', sid);
+    'username', r.username, 'email', r.email, 'full_name', r.full_name, 'shop_name', r.shop_name, 'phone', r.phone, 'shop_id', sid);
 end $$;
 
 do $$
 declare f text;
 begin
-  foreach f in array array['public.request_signup(text,text,text,text,text,text)', 'public.signup_status(text)'] loop
+  foreach f in array array['public.request_signup(text,text,text,text,text,text)', 'public.signup_status(text)', 'public.login_hint(text)'] loop
     execute format('revoke all on function %s from public', f);
     execute format('grant execute on function %s to anon, authenticated', f);
   end loop;
@@ -506,7 +571,7 @@ declare f text;
 begin
   foreach f in array array[
     'public.my_context()', 'public.touch()',
-    'public.admin_create_shop(text,text,text,text)', 'public.add_member(uuid,text,text,text,text)',
+    'public.admin_create_shop(text,text,text,text,text)', 'public.add_member(uuid,text,text,text,text,text)', 'public.set_my_email(text)',
     'public.shop_members(uuid)', 'public.reset_password(uuid,text)', 'public.remove_member(uuid,uuid)',
     'public.admin_set_shop_active(uuid,boolean)', 'public.rename_shop(uuid,text)', 'public.admin_overview()',
     'public.is_admin()', 'public.is_member(uuid)', 'public.is_owner(uuid)',

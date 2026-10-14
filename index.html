@@ -666,9 +666,9 @@ function render(keep){
     b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="goto" data-tab="yonetim" data-plain="1">Bak</button></div>`;
   $("#banner").innerHTML = b;
   const v = $("#view");
-  const gated = ["login","pickshop","noshop","paused","newpass","setpin"].includes(S.mode) || (S.mode==="cloud" && S.locked);
+  const gated = ["login","pickshop","noshop","paused","newpass","setpin","recover"].includes(S.mode) || (S.mode==="cloud" && S.locked);
   document.body.classList.toggle("gated", gated);
-  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : "Giriş") : S.mode==="newpass" ? "Yeni şifre" : S.mode==="setpin" ? "PIN belirle" : S.locked ? "Kilitli" : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : viewLogin()) : S.locked ? viewLock() : viewGate(); return; }
+  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : S.forgot ? "Şifremi unuttum" : "Giriş") : S.mode==="newpass" || S.mode==="recover" ? "Yeni şifre" : S.mode==="setpin" ? "PIN belirle" : S.locked ? "Kilitli" : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : S.forgot ? viewForgot() : viewLogin()) : S.locked ? viewLock() : viewGate(); return; }
   if (S.mode==="loading"){ return; }
   $("#guideBtn").setAttribute("aria-pressed", S.guide ? "true" : "false");
   $("#setBtn").setAttribute("aria-pressed", S.tab==="ayarlar" ? "true" : "false");
@@ -2376,6 +2376,12 @@ const SITE = () => location.origin + location.pathname;
 const TRMAP = {"ç":"c","ğ":"g","ı":"i","İ":"i","ö":"o","ş":"s","ü":"u","Ç":"c","Ğ":"g","Ö":"o","Ş":"s","Ü":"u"};
 function normUser(u){ return String(u||"").replace(/[çğıİöşüÇĞÖŞÜ]/g, ch=>TRMAP[ch]).toLowerCase().replace(/\s+/g,"").replace(/[^a-z0-9._-]/g,""); }
 const toEmail = u => normUser(u) + "@" + CLOUD.emailDomain;
+const EMAIL_RE = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+const normEmail = e => String(e||"").trim().toLowerCase();
+const loginEmail = x => String(x||"").includes("@") ? normEmail(x) : toEmail(x);
+// E-postadaki "şifremi unuttum" bağlantısıyla mı gelindi? (kütüphane adres çubuğunu temizlemeden önce bakılır)
+const RECOVERY = /type=recovery/.test(location.hash);
+const LINK_ERR = /error_code=|error=access_denied/.test(location.hash);
 const ROLE = {owner:"dükkân sahibi", staff:"çalışan"};
 const WORDS = ["simit","elma","armut","zeytin","peynir","limon","incir","nane","kiraz","ceviz","findik","lokum"];
 const genPass = () => WORDS[Math.floor(Math.random()*WORDS.length)] + "-" + String(1000 + Math.floor(Math.random()*9000));
@@ -2477,7 +2483,9 @@ const whoTag = (kind, id) => { if (S.mode!=="cloud" || C.people.length < 2) retu
 
 /* --- açılış, giriş, çıkış --- */
 async function cloudBoot(){
-  const c = cloudRead();
+  const c = RECOVERY ? null : cloudRead();
+  C.recovery = RECOVERY;
+  if (LINK_ERR){ C.loginErr = "Şifre yenileme bağlantısının süresi dolmuş ya da daha önce kullanılmış. \"Şifremi unuttum\"a basıp yeni bağlantı iste."; try{ history.replaceState(null, "", SITE()); }catch(_){} }
   if (c && c.uid && c.shop){
     C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[];
     const d = c.data||{}; S.products = d.products||[]; S.events = d.events||[]; S.suppliers = d.suppliers||{}; S.customers = d.customers||{}; if (d.settings) S.settings = d.settings;
@@ -2490,7 +2498,10 @@ async function cloudBoot(){
   }
   client();
   let session = null; try{ session = (await SB.auth.getSession()).data.session; }catch(_){}
-  if (!session){ if (S.mode!=="cloud" || !C.user){ S.mode = "login"; render(); } else { C.online = false; saving(); } return; }
+  if (RECOVERY) try{ history.replaceState(null, "", SITE()); }catch(_){}
+  if (!session){ C.recovery = false; if (RECOVERY && !LINK_ERR) C.loginErr = "Şifre yenileme bağlantısı açılamadı. \"Şifremi unuttum\"a basıp yeni bağlantı iste.";
+    if (S.mode!=="cloud" || !C.user){ S.mode = "login"; render(); } else { C.online = false; saving(); } return; }
+  if (C.recovery) markActive(true);
   try{ await afterLogin(session.user); }
   catch(e){ if (isNetErr(e) && S.mode==="cloud"){ C.online = false; saving(); } else { C.loginErr = sbMsg(e); S.mode = "login"; render(); } }
 }
@@ -2500,6 +2511,7 @@ async function afterLogin(user){
   const {data:ctx, error} = await SB.rpc("my_context"); if (error) throw error;
   if (!ctx) throw new Error("Hesap bilgisi bulunamadı. Yöneticiye haber ver.");
   C.ctx = ctx; SB.rpc("touch").then(()=>{}, ()=>{});
+  if (C.recovery){ S.locked = false; S.mode = "recover"; render(); return; }      // e-postadaki bağlantıyla geldi: yeni şifre
   if (ctx.must_change){                                           // tek kullanımlık şifre: önce kendi şifresini koysun
     if (!(ctx.temp_left > 0) && ctx.temp_left !== undefined && ctx.temp_left !== null){ C.loginErr = "Tek kullanımlık şifrenin 5 dakikalık süresi doldu. Yöneticiden ya da dükkân sahibinden yeni şifre iste."; await doLogout(true); return; }
     C.tempDeadline = ctx.temp_left > 0 ? Date.now() + ctx.temp_left*1000 : null; S.mode = "newpass"; render(); return; }
@@ -2528,49 +2540,63 @@ async function openShop(sh){
   subscribe(); C.ready = true; flush(); loadPeople().then(()=>renderData()); cloudSaveNow(); render(); saving();
 }
 async function doLogin(){
-  const u = normUser(document.getElementById("lg-user")?.value), p = document.getElementById("lg-pass")?.value || "";
+  const raw = String(document.getElementById("lg-user")?.value||"").trim(), u = raw.includes("@") ? normEmail(raw) : normUser(raw), p = document.getElementById("lg-pass")?.value || "";
   if (!u || !p){ C.loginErr = "Kullanıcı adını ve şifreni yaz."; render(); return; }
   C.busy = true; C.loginErr = null; render();
   try{
     await loadSB(); client();
-    const {data, error} = await SB.auth.signInWithPassword({email: toEmail(u), password: p});
+    const {data, error} = await SB.auth.signInWithPassword({email: loginEmail(u), password: p});
     if (error) throw error;
     C.busy = false; markActive(true); await afterLogin(data.user);
   }catch(e){
-    C.loginErr = /invalid login|invalid_credentials|Invalid/i.test(e?.message||"") ? "Kullanıcı adı ya da şifre yanlış." : sbMsg(e);
+    C.loginErr = /invalid login|invalid_credentials|Invalid/i.test(e?.message||"") ? (u.includes("@") ? "E-posta ya da şifre yanlış." : "Kullanıcı adı ya da şifre yanlış.") : sbMsg(e);
     if (SB && /yanlış/.test(C.loginErr)){ try{ const {data:st} = await SB.rpc("signup_status", {p_username:u});
       if (st==="pending") C.loginErr = "Başvurun henüz onaylanmadı. Onaylanınca telefonuna haber gelecek; sonra bu kullanıcı adı ve şifreyle girebilirsin.";
-      else if (st==="rejected") C.loginErr = "Başvurun onaylanmadı. Bilgi için yöneticiyle görüş."; }catch(_){} }
+      else if (st==="rejected") C.loginErr = "Başvurun onaylanmadı. Bilgi için yöneticiyle görüş.";
+      else if (!u.includes("@")){ const {data:h} = await SB.rpc("login_hint", {p_login:u}); if (h) C.loginErr = `Bu hesap e-postayla giriş yapıyor (${h}). Kullanıcı adı yerine e-posta adresini yaz.`; } }catch(_){} }
     S.mode = "login";
   }
   C.busy = false; render();
 }
 async function doSignup(){
   const g = k => (document.getElementById(k)?.value || "").trim();
-  const f = {shop:g("sg-shop"), name:g("sg-name"), phone:g("sg-phone"), user:normUser(g("sg-user")), pass:document.getElementById("sg-pass")?.value||"", pass2:document.getElementById("sg-pass2")?.value||"", note:g("sg-note")};
+  const f = {shop:g("sg-shop"), name:g("sg-name"), phone:g("sg-phone"), email:normEmail(g("sg-email")), pass:document.getElementById("sg-pass")?.value||"", pass2:document.getElementById("sg-pass2")?.value||"", note:g("sg-note")};
   S.sgForm = {...f, pass:"", pass2:""};
   const err = t => { C.signupErr = t; render(true); window.scrollTo(0,0); };
-  if (g("sg-web")) { S.signup = "done"; S.sgUser = f.user; render(); return; }            // bot tuzağı
+  if (g("sg-web")) { S.signup = "done"; S.sgUser = f.email; render(); return; }            // bot tuzağı
   if (!f.shop) return err("Dükkânının adını yaz.");
   if (!f.name) return err("Adını soyadını yaz.");
-  if (f.phone.replace(/\D/g,"").length < 10) return err("Telefon numaranı yaz; onaylanınca sana buradan haber verilecek.");
-  if (!/^[a-z0-9._-]{3,24}$/.test(f.user)) return err("Kullanıcı adı 3-24 karakter olmalı: harf, rakam, nokta, tire. Türkçe harf ve boşluk olmasın.");
+  if (!EMAIL_RE.test(f.email)) return err("E-posta adresini doğru yaz (örn. mert@gmail.com). Girişte ve şifreni unutunca bu kullanılacak.");
+  if (f.phone && f.phone.replace(/\D/g,"").length < 10) return err("Telefon numarası eksik görünüyor. İstersen boş bırakabilirsin.");
   if (f.pass.length < 6) return err("Şifre en az 6 karakter olmalı.");
   if (f.pass !== f.pass2) return err("İki şifre aynı değil.");
   if (!document.getElementById("sg-ok")?.checked) return err("Devam etmek için bilgilerinin saklanmasını onayla.");
   C.busy = true; C.signupErr = null; render(true);
   try{
     await loadSB(); client();
-    const {error} = await SB.rpc("request_signup", {p_shop_name:f.shop, p_full_name:f.name, p_phone:f.phone, p_username:f.user, p_password:f.pass, p_note:f.note||null});
+    const {error} = await SB.rpc("request_signup", {p_shop_name:f.shop, p_full_name:f.name, p_email:f.email, p_password:f.pass, p_phone:f.phone||null, p_note:f.note||null});
     if (error) throw error;
-    S.signup = "done"; S.sgUser = f.user; S.sgForm = null;
+    S.signup = "done"; S.sgUser = f.email; S.sgForm = null;
   }catch(e){ C.signupErr = sbMsg(e); }
   C.busy = false; render(); window.scrollTo(0,0);
+}
+async function doForgot(){
+  const e = normEmail(document.getElementById("fg-email")?.value);
+  if (!EMAIL_RE.test(e)){ C.loginErr = "Hesabına kayıtlı e-posta adresini yaz."; render(true); return; }
+  C.busy = true; C.loginErr = null; render(true);
+  try{
+    await loadSB(); client();
+    const {error} = await SB.auth.resetPasswordForEmail(e, {redirectTo: SITE()});
+    if (error && /rate|limit|seconds/i.test(error.message||"")) throw new Error("Çok sık denendi. Birkaç dakika sonra tekrar dene.");
+    if (error && isNetErr(error)) throw error;
+    S.forgot = "sent"; S.fgEmail = e;
+  }catch(err){ C.loginErr = sbMsg(err); }
+  C.busy = false; render();
 }
 function resetCloud(clearCache){
   if (RT && SB) try{ SB.removeChannel(RT); }catch(_){} RT = null;
   if (clearCache) try{ localStorage.removeItem(BKEY); }catch(_){}
-  const msg = C.loginErr; C = newC(); C.loginErr = msg; S.cloud = C; clearData(); S.mode = "login"; S.tab = "ana"; S.locked = false; S.pinForgot = false; S.pinCoolUntil = 0; S.pinSetup = false; render();
+  const msg = C.loginErr; C = newC(); C.loginErr = msg; S.cloud = C; clearData(); S.mode = "login"; S.tab = "ana"; S.forgot = null; S.locked = false; S.pinForgot = false; S.pinCoolUntil = 0; S.pinSetup = false; render();
 }
 async function doLogout(force){
   if (C.queue.length && !force){ S.confirmOut = true; render(); return; }
@@ -2748,35 +2774,48 @@ function signupCards(){
   const L = C.signups || [];
   if (!L.length) return "";
   return `<section class="card stack signups"><h2>Bekleyen başvurular <span class="pill warn">${L.length}</span></h2>
-    <p class="small muted">Onaylayınca dükkânı ve hesabı açılır; bakkal başvururken seçtiği kullanıcı adı ve şifreyle girer. Şifresini sen de göremezsin.</p>
+    <p class="small muted">Onaylayınca dükkânı ve hesabı açılır; bakkal başvururken yazdığı e-posta ve şifreyle girer. Şifresini sen de göremezsin.</p>
     ${L.map(r=>`<div class="prow"><div><b>${esc(r.shop_name)}</b> <span class="small muted">· ${esc(r.full_name)}</span><br>
-        <span class="small muted">@${esc(r.username)} · <a href="tel:${esc(String(r.phone||"").replace(/[^0-9+]/g,""))}">${esc(r.phone||"")}</a> · ${agoShort(r.created_at).replace("hiç girmedi","")}</span>
+        <span class="small muted">${r.email ? `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : "@" + esc(r.username)}${r.phone ? ` · <a href="tel:${esc(String(r.phone).replace(/[^0-9+]/g,""))}">${esc(r.phone)}</a>` : ""} · ${agoShort(r.created_at).replace("hiç girmedi","")}</span>
         ${r.note ? `<br><span class="small">“${esc(r.note)}”</span>` : ""}</div>
       <div class="row"><button class="primary" data-act="sgApprove" data-id="${r.id}">${ic("check",18)} Onayla</button>
         <button class="${S.confirmRej===r.id?"danger":""}" data-act="sgReject" data-id="${r.id}">${S.confirmRej===r.id?"Emin misin? Reddet":"Reddet"}</button></div></div>`).join("")}
   </section>`;
 }
 const waNum = ph => { let d = String(ph||"").replace(/\D/g,""); if (d.startsWith("0")) d = "90" + d.slice(1); else if (d.length===10 && d.startsWith("5")) d = "90" + d; return d; };
-const shareText = (shop, u, p) => `Bakkal Defteri hesabın ${p ? "hazır" : "onaylandı"}.\nDükkân: ${shop}\nAdres: ${SITE()}\nKullanıcı adı: ${u}\nŞifre: ${p || "başvururken yazdığın şifre"}${p ? "\n(Bu şifre tek kullanımlıktır ve 5 dakika geçerlidir; hemen girip kendi şifreni belirle.)" : ""}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
+const shareText = (shop, u, p, email) => `Bakkal Defteri hesabın ${p ? "hazır" : "onaylandı"}.\nDükkân: ${shop}\nAdres: ${SITE()}\n${email ? `E-posta: ${email}` : `Kullanıcı adı: ${u}`}\nŞifre: ${p || "başvururken yazdığın şifre"}${p ? "\n(Bu şifre tek kullanımlıktır ve 5 dakika geçerlidir; hemen girip kendi şifreni belirle.)" : ""}${email ? "\nŞifreni unutursan giriş ekranındaki \"Şifremi unuttum\"a bas; e-postana yenileme bağlantısı gelir." : ""}\n\nAdresi telefonunda Chrome ya da Safari ile aç, giriş yap. Sonra üç noktadan "Ana ekrana ekle" de; bir dahakine simgesine basman yeter.`;
 
 function viewLogin(){
   return `<div class="card stack login">
     <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("book",26)}</span><h2>Bakkal Defteri</h2><p class="small muted">Dükkânının hesabına giriş yap</p></div>
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
     <form id="lgform" class="stack" autocomplete="on">
-      <label>Kullanıcı adı<input id="lg-user" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" placeholder="örn. mertbakkal"></label>
+      <label>E-posta ya da kullanıcı adı<input id="lg-user" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="email" placeholder="örn. mert@gmail.com"></label>
       <label>Şifre<input id="lg-pass" name="password" type="password" autocomplete="current-password"></label>
       <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Giriş yapılıyor':"Giriş yap"}</button>
     </form>
     <div class="stack" style="gap:6px;border-top:1px solid var(--line);padding-top:12px"><span class="small muted" style="text-align:center">Hesabın yok mu?</span>
       <button data-act="signupOpen">${ic("plus",18)} Dükkânımı kaydet</button></div>
-    <details class="how"><summary>Şifremi unuttum</summary><p class="small" style="margin-top:8px">Dükkân sahibine ya da yöneticiye söyle, sana yeni bir şifre versin. Çalışansan dükkân sahibin de yenileyebilir.</p></details>
+    <button class="link" data-act="forgotOpen">Şifremi unuttum</button>
   </div>`;
+}
+function viewForgot(){
+  if (S.forgot==="sent") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>E-postana bak</h2></div>
+    <p>Bu adres bir hesaba kayıtlıysa <b>${esc(S.fgEmail||"")}</b> adresine şifre yenileme bağlantısı gönderdik. Bağlantıya bas, yeni şifreni koy.</p>
+    <p class="small muted">Birkaç dakikada gelmezse "Spam" ya da "Gereksiz" klasörüne bak. Bağlantı 1 saat geçerli ve bir kez kullanılır.</p>
+    <button class="primary" data-act="forgotBack">Giriş ekranına dön</button></div>`;
+  return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Şifremi unuttum</h2></div>
+    <p class="small">Hesabına kayıtlı e-posta adresini yaz; yeni şifre koyman için bir bağlantı gönderelim.</p>
+    ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
+    <form id="fgform" class="stack"><label>E-posta<input id="fg-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="örn. mert@gmail.com"></label>
+      <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Gönderiliyor':"Bağlantı gönder"}</button></form>
+    <p class="small muted">Hesabında e-posta yoksa (ör. çalışan hesabı) dükkân sahibine ya da yöneticiye söyle; sana yeni şifre versin.</p>
+    <button class="link" data-act="forgotBack">← Giriş ekranına dön</button></div>`;
 }
 function viewSignup(){
   if (S.signup==="done") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Başvurun alındı</h2></div>
-    <p>Yönetici başvurunu inceleyip onaylayınca telefonuna haber gelecek.</p>
-    <p>Onaydan sonra bu bilgilerle gir:<br>Kullanıcı adı: <b class="num">${esc(S.sgUser||"")}</b><br>Şifre: başvururken yazdığın şifre</p>
+    <p>Yönetici başvurunu inceleyip onaylayınca sana haber verilecek.</p>
+    <p>Onaydan sonra bu bilgilerle gir:<br>E-posta: <b>${esc(S.sgUser||"")}</b><br>Şifre: başvururken yazdığın şifre</p>
     <button class="primary" data-act="signupBack">Giriş ekranına dön</button></div>`;
   const v = S.sgForm || {};
   return `<div class="card stack login">
@@ -2785,14 +2824,14 @@ function viewSignup(){
     <form id="sgform" class="stack" autocomplete="on">
       <label>Dükkânının adı<input id="sg-shop" maxlength="60" value="${esc(v.shop||"")}" placeholder="örn. Yıldız Bakkal"></label>
       <label>Adın soyadın<input id="sg-name" maxlength="60" autocomplete="name" value="${esc(v.name||"")}" placeholder="örn. Mert Yılmaz"></label>
-      <label>Telefonun (WhatsApp)<input id="sg-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="${esc(v.phone||"")}" placeholder="0532 123 45 67"></label>
-      <label>İstediğin kullanıcı adı<input id="sg-user" maxlength="24" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(v.user||"")}" placeholder="örn. yildizbakkal"></label>
-      <span class="small muted" style="margin-top:-4px">Türkçe harf ve boşluk olmadan: harf, rakam, nokta, tire.</span>
+      <label>E-posta adresin<input id="sg-email" type="email" inputmode="email" maxlength="120" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(v.email||"")}" placeholder="örn. mert@gmail.com"></label>
+      <span class="small muted" style="margin-top:-4px">Girişte bunu yazacaksın. Şifreni unutursan yenileme bağlantısı buraya gelir.</span>
+      <label>Telefonun (isteğe bağlı)<input id="sg-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="${esc(v.phone||"")}" placeholder="0532 123 45 67"></label>
       <label>Şifre<input id="sg-pass" type="password" autocomplete="new-password" minlength="6"></label>
       <label>Şifre (tekrar)<input id="sg-pass2" type="password" autocomplete="new-password"></label>
       <label>Not (isteğe bağlı)<input id="sg-note" maxlength="300" value="${esc(v.note||"")}" placeholder="örn. hangi semtte, kim önerdi"></label>
       <input id="sg-web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
-      <label class="check"><input id="sg-ok" type="checkbox"> Adımın, telefonumun ve dükkân bilgilerimin hesap açmak için saklanmasını kabul ediyorum.</label>
+      <label class="check"><input id="sg-ok" type="checkbox"> Adımın, e-postamın, (yazdıysam) telefonumun ve dükkân bilgilerimin hesap açmak için saklanmasını kabul ediyorum.</label>
       <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Gönderiliyor':"Başvuruyu gönder"}</button>
     </form>
     <button class="link" data-act="signupBack">← Hesabım var, giriş yap</button>
@@ -2804,6 +2843,13 @@ setInterval(()=>{ if (S.mode!=="newpass" || !C.tempDeadline) return; const el = 
 function viewGate(){
   if (S.mode==="setpin") return viewSetPin();
   const out = `<button data-act="logout">Çıkış yap</button>`;
+  if (S.mode==="recover") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Yeni şifreni belirle</h2>
+      <p class="small muted">${esc(C.ctx?.email || C.ctx?.username || "")}</p></div>
+    ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
+    <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="6"></label>
+    <label>Yeni şifre (tekrar)<input id="nw-2" type="password" autocomplete="new-password"></label>
+    <span class="small muted" style="margin-top:-4px">En az 6 karakter. Kimseyle paylaşma.</span>
+    <button class="primary" data-act="recoverSave">Şifremi kaydet ve devam et</button>${out}</div>`;
   if (S.mode==="newpass") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kendi şifreni belirle</h2></div>
     <p>Sana verilen şifre <b>tek kullanımlıktı</b>. Devam etmek için sadece senin bileceğin yeni bir şifre koy.</p>
     ${C.tempDeadline ? `<p class="notice warn">Bu ekranın süresi: <b id="tmpLeft" class="num">${fmtLeft()}</b>. Süre dolarsa yeni şifre istemen gerekir.</p>` : ""}
@@ -2825,6 +2871,9 @@ function accountCards(){
   let h = `<section class="card stack"><h2>Hesap</h2>
     <div class="row"><span class="bi c1">${ic("user",20)}</span><span><b>${esc(ctx.full_name||ctx.username||"")}</b> <span class="small muted">@${esc(ctx.username||"")}</span><br>
       <span class="small muted">${sh?`${esc(sh.name)} · ${ROLE[me?.role]||"yönetici"}`:"Dükkân seçilmedi"}${ctx.is_admin?" · yönetici":""}</span></span></div>
+    ${S.emailOpen ? `<div class="stack" style="gap:6px"><label>E-posta adresin<input id="em-new" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" value="${esc(ctx.email||"")}" placeholder="örn. mert@gmail.com"></label>
+        <div class="row"><button class="primary" data-act="emailSave">Kaydet</button><button data-act="emailCancel">Vazgeç</button></div></div>`
+      : `<p class="small">${ctx.email ? `E-posta: <b>${esc(ctx.email)}</b> <button class="link" data-act="emailOpen">Değiştir</button>` : `<span class="muted">E-posta kayıtlı değil. Eklersen şifreni unutunca kendin yenileyebilirsin.</span> <button class="link" data-act="emailOpen">E-posta ekle</button>`}</p>`}
     <p class="small muted">Kayıtların internette, dükkânın hesabında duruyor; telefon değişse de kaybolmaz. İnternet yokken girdiklerin telefonda bekler, bağlantı gelince kendiliğinden gönderilir.${wait?` <b>Şu an ${wait} kayıt gönderilmeyi bekliyor.</b>`:""}</p>
     ${S.pwOpen ? `<div class="stack" style="gap:6px"><label>Yeni şifre<input id="pw-new" type="password" autocomplete="new-password" minlength="6"></label>
         <label>Yeni şifre (tekrar)<input id="pw-new2" type="password" autocomplete="new-password"></label>
@@ -2848,7 +2897,7 @@ function accountCards(){
   return h;
 }
 function personRow(p, shopId, canManage){
-  return `<div class="prow"><div><b>${esc(p.full_name||p.username)}</b> <span class="small muted">@${esc(p.username)} · ${ROLE[p.role]||p.role}</span><br><span class="small muted">Son giriş: ${agoShort(p.last_seen)}</span>
+  return `<div class="prow"><div><b>${esc(p.full_name||p.username)}</b> <span class="small muted">@${esc(p.username)} · ${ROLE[p.role]||p.role}</span><br><span class="small muted">${p.email ? esc(p.email) + " · " : ""}Son giriş: ${agoShort(p.last_seen)}</span>
     ${p.temp==="waiting" ? ` <span class="pill warn">geçici şifre bekliyor</span>` : p.temp==="expired" ? ` <span class="pill bad">geçici şifrenin süresi doldu</span>` : ""}</div>
     ${canManage ? `<div class="row">${S.resetFor===p.user_id ? "" : `<button class="link" data-act="resetOpen" data-id="${p.user_id}">Şifre yenile</button>`}
       <button class="link ${S.confirmRm===p.user_id?"dangerLink":""}" data-act="rmPerson" data-id="${p.user_id}" data-shop="${shopId}">${S.confirmRm===p.user_id?"Emin misin? Çıkar":"Çıkar"}</button></div>` : ""}
@@ -2861,6 +2910,7 @@ function personForm(shopId, newShop){
     <label>${newShop?"Dükkân sahibinin adı":"Adı"}<input id="np-name" maxlength="60" placeholder="örn. ${newShop?"Mert Yılmaz":"Ahmet"}"></label>
     <label>Kullanıcı adı<input id="np-user" maxlength="24" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="örn. ${newShop?"mertbakkal":"ahmet.cirak"}"></label>
     <span class="small muted" style="margin-top:-4px">Türkçe harf ve boşluk olmadan: harf, rakam, nokta, tire. 3-24 karakter.</span>
+    <label>E-posta (isteğe bağlı)<input id="np-email" type="email" inputmode="email" maxlength="120" autocapitalize="none" spellcheck="false" placeholder="varsa: şifresini unutunca kendi yeniler"></label>
     <label>Şifre<input id="np-pass" value="${genPass()}" maxlength="60"></label>
     ${newShop ? "" : `<label>Görevi<select id="np-role"><option value="staff">Çalışan (sadece kayıt girer)</option><option value="owner">Dükkân sahibi (kişi ekler, şifre yeniler)</option></select></label>`}
     <div class="row"><button class="primary" data-act="${newShop?"newShopSave":"addPersonSave"}" data-shop="${shopId||""}">${newShop?"Dükkânı ve hesabı aç":"Hesabı aç"}</button><button data-act="addPersonCancel">Vazgeç</button></div></div>`;
@@ -2868,9 +2918,10 @@ function personForm(shopId, newShop){
 function createdCard(){
   const x = S.created;
   return `<div class="notice ok stack"><b>${x.p ? `Hesap hazır. ${esc(x.name||x.u)} için giriş bilgileri; kopyalayıp gönder:` : `${esc(x.name||x.u)} onaylandı. Haber vermek için gönder:`}</b>
-    <pre class="small" style="white-space:pre-wrap;margin:0;font-family:var(--mono)">${esc(shareText(x.shop, x.u, x.p))}</pre>
+    <pre class="small" style="white-space:pre-wrap;margin:0;font-family:var(--mono)">${esc(shareText(x.shop, x.u, x.p, x.email))}</pre>
     ${x.p ? `<span class="small"><b>Şifre 5 dakika geçerli.</b> Kişi hemen girmeli; süre dolarsa "Şifre yenile"ye bas.</span>` : ""}
-    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Mesajı kopyala</button><a class="btn" href="https://wa.me/${x.phone ? waNum(x.phone) : ""}?text=${encodeURIComponent(shareText(x.shop, x.u, x.p))}" target="_blank" rel="noopener">${x.phone ? "WhatsApp'tan gönder" : "WhatsApp'ta aç"}</a><button class="link" data-act="closeCreated">Kapat</button></div></div>`;
+    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Mesajı kopyala</button>${x.email ? `<a class="btn" href="mailto:${esc(x.email)}?subject=${encodeURIComponent("Bakkal Defteri hesabın")}&body=${encodeURIComponent(shareText(x.shop, x.u, x.p, x.email))}">E-postayla gönder</a>` : ""}
+      ${x.phone || !x.email ? `<a class="btn" href="https://wa.me/${x.phone ? waNum(x.phone) : ""}?text=${encodeURIComponent(shareText(x.shop, x.u, x.p, x.email))}" target="_blank" rel="noopener">${x.phone ? "WhatsApp'tan gönder" : "WhatsApp'ta aç"}</a>` : ""}<button class="link" data-act="closeCreated">Kapat</button></div></div>`;
 }
 function viewAdmin(){
   if (S.mode!=="cloud" || !C.ctx?.is_admin) return `<p class="notice bad">Bu bölüm sadece yönetici içindir.</p>`;
@@ -2926,19 +2977,20 @@ async function cloudAct(a, t, id){
   if (a==="addPersonCancel"){ S.addPerson = null; render(); return true; }
   if (a==="addPersonSave" || a==="newShopSave"){
     const g = k => (document.getElementById(k)?.value||"").trim();
-    const u = normUser(g("np-user")), p = g("np-pass"), name = g("np-name"), shopName = g("np-shop");
+    const u = normUser(g("np-user")), p = g("np-pass"), name = g("np-name"), shopName = g("np-shop"), em = normEmail(g("np-email")) || null;
+    if (em && !EMAIL_RE.test(em)){ S.msg = {kind:"bad", text:"E-posta adresi hatalı. İstersen boş bırak."}; render(true); return true; }
     if (a==="newShopSave" && !shopName){ S.msg = {kind:"bad", text:"Dükkânın adını yaz."}; render(true); return true; }
     if (!/^[a-z0-9._-]{3,24}$/.test(u)){ S.msg = {kind:"bad", text:"Kullanıcı adı 3-24 karakter olmalı; harf, rakam, nokta, tire."}; render(true); return true; }
     if (p.length < 6){ S.msg = {kind:"bad", text:"Şifre en az 6 karakter olmalı."}; render(true); return true; }
     t.disabled = true;
     const ok = a==="newShopSave"
-      ? await rpc("admin_create_shop", {p_shop_name:shopName, p_username:u, p_password:p, p_full_name:name||null})
-      : await rpc("add_member", {p_shop:t.dataset.shop, p_username:u, p_password:p, p_full_name:name||null, p_role:g("np-role")||"staff"});
+      ? await rpc("admin_create_shop", {p_shop_name:shopName, p_username:u, p_password:p, p_full_name:name||null, p_email:em})
+      : await rpc("add_member", {p_shop:t.dataset.shop, p_username:u, p_password:p, p_full_name:name||null, p_role:g("np-role")||"staff", p_email:em});
     if (ok){ const shName = a==="newShopSave" ? shopName : ((C.overview||[]).find(s=>s.id===t.dataset.shop)?.name || C.shop?.name || "");
-      S.created = {shop:shName, u, p, name}; S.addPerson = null; S.msg = {kind:"ok", text: a==="newShopSave" ? `${shopName} açıldı.` : `${name||u} eklendi.`};
+      S.created = {shop:shName, u, p, name, email:em}; S.addPerson = null; S.msg = {kind:"ok", text: a==="newShopSave" ? `${shopName} açıldı.` : `${name||u} eklendi.`};
       if (C.ctx?.is_admin) await loadOverview(); await loadPeople(); }
     render(); return true; }
-  if (a==="copyCreated"){ const x = S.created; try{ await navigator.clipboard.writeText(shareText(x.shop, x.u, x.p)); S.msg = {kind:"ok", text:"Mesaj kopyalandı; WhatsApp'tan gönderebilirsin."}; }catch(_){ S.msg = {kind:"warn", text:"Kopyalanamadı; yazıyı seçip kopyala."}; } render(true); return true; }
+  if (a==="copyCreated"){ const x = S.created; try{ await navigator.clipboard.writeText(shareText(x.shop, x.u, x.p, x.email)); S.msg = {kind:"ok", text:"Mesaj kopyalandı; WhatsApp'tan gönderebilirsin."}; }catch(_){ S.msg = {kind:"warn", text:"Kopyalanamadı; yazıyı seçip kopyala."}; } render(true); return true; }
   if (a==="closeCreated"){ S.created = null; render(); return true; }
   if (a==="resetOpen"){ S.resetFor = id; render(true); return true; }
   if (a==="resetCancel"){ S.resetFor = null; render(); return true; }
@@ -2953,18 +3005,36 @@ async function cloudAct(a, t, id){
     if (await rpc("admin_set_shop_active", {p_shop:id, p_active:on}, on ? "Dükkân açıldı." : "Dükkân durduruldu; kayıtları silinmedi.")) await loadOverview();
     render(); return true; }
   if (a==="ovRefresh"){ await loadOverview(); return true; }
+  if (a==="forgotOpen"){ S.forgot = "form"; C.loginErr = null; render(); document.getElementById("fg-email")?.focus(); return true; }
+  if (a==="forgotBack"){ S.forgot = null; C.loginErr = null; render(); return true; }
+  if (a==="recoverSave"){ const p1 = document.getElementById("nw-1").value, p2 = document.getElementById("nw-2").value;
+    if (p1.length < 6){ C.loginErr = "Şifre en az 6 karakter olmalı."; render(); return true; }
+    if (p1!==p2){ C.loginErr = "İki şifre aynı değil."; render(); return true; }
+    t.disabled = true;
+    try{ const {error} = await SB.rpc("change_my_password", {p_password:p1}); if (error && !/aynı olamaz/.test(error.message||"")) throw error;
+      C.recovery = false; C.loginErr = null; if (C.ctx) C.ctx.must_change = false; S.msg = {kind:"ok", text:"Yeni şifren kaydedildi. Bundan sonra bu şifreyle gir."};
+      await afterLogin({id:C.user.id}); }
+    catch(e){ C.loginErr = sbMsg(e); render(); }
+    return true; }
+  if (a==="emailOpen"){ S.emailOpen = true; render(true); document.getElementById("em-new")?.focus(); return true; }
+  if (a==="emailCancel"){ S.emailOpen = false; render(); return true; }
+  if (a==="emailSave"){ const e = normEmail(document.getElementById("em-new")?.value);
+    if (e && !EMAIL_RE.test(e)){ S.msg = {kind:"bad", text:"E-posta adresi hatalı."}; render(true); window.scrollTo(0,0); return true; }
+    t.disabled = true; const r = await rpc("set_my_email", {p_email:e||null});
+    if (r){ C.ctx.email = r===true ? null : r; S.emailOpen = false; cloudSave(); S.msg = {kind:"ok", text: e ? `E-postan kaydedildi. Bundan sonra girişte kullanıcı adın yerine ${e} yazacaksın.` : "E-posta silindi; kullanıcı adınla gir."}; }
+    render(); window.scrollTo(0,0); return true; }
   if (a==="signupOpen"){ S.signup = "form"; C.signupErr = null; render(); window.scrollTo(0,0); document.getElementById("sg-shop")?.focus(); return true; }
   if (a==="signupBack"){ S.signup = null; C.signupErr = null; render(); window.scrollTo(0,0); return true; }
   if (a==="sgApprove" || a==="sgReject"){
     if (a==="sgReject" && S.confirmRej!==id){ S.confirmRej = id; render(true); return true; }
     S.confirmRej = null; t.disabled = true;
     const r = await rpc("admin_decide_signup", {p_id:id, p_approve: a==="sgApprove"});
-    if (r && r.status==="approved"){ S.created = {shop:r.shop_name, u:r.username, p:null, name:r.full_name, phone:r.phone}; S.msg = {kind:"ok", text:`${r.shop_name} onaylandı; dükkân ve hesap açıldı.`}; }
+    if (r && r.status==="approved"){ S.created = {shop:r.shop_name, u:r.username, p:null, name:r.full_name, phone:r.phone, email:r.email}; S.msg = {kind:"ok", text:`${r.shop_name} onaylandı; dükkân ve hesap açıldı.`}; }
     else if (r) S.msg = {kind:"ok", text:"Başvuru reddedildi."};
     await loadOverview(); window.scrollTo(0,0); return true; }
   return false;
 }
-document.addEventListener("submit", ev=>{ if (ev.target.id==="lgform"){ ev.preventDefault(); doLogin(); } else if (ev.target.id==="sgform"){ ev.preventDefault(); doSignup(); } });
+document.addEventListener("submit", ev=>{ if (ev.target.id==="fgform"){ ev.preventDefault(); doForgot(); } else if (ev.target.id==="lgform"){ ev.preventDefault(); doLogin(); } else if (ev.target.id==="sgform"){ ev.preventDefault(); doSignup(); } });
 // İnternetsiz açılıp sonradan bağlanınca: girişi tamamla (canlı eşitleme dahil), bekleyenleri gönder, kaçanları al
 async function resync(){
   if (!SB || !["cloud","paused"].includes(S.mode)) return;

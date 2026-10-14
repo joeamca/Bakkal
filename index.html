@@ -2803,6 +2803,7 @@ function viewForgot(){
   if (S.forgot==="sent") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>E-postana bak</h2></div>
     <p>Bu adres bir hesaba kayıtlıysa <b>${esc(S.fgEmail||"")}</b> adresine şifre yenileme bağlantısı gönderdik. Bağlantıya bas, yeni şifreni koy.</p>
     <p class="small muted">Birkaç dakikada gelmezse "Spam" ya da "Gereksiz" klasörüne bak. Bağlantı 1 saat geçerli ve bir kez kullanılır.</p>
+    <p class="small muted">Hiç gelmezse yöneticiye ya da dükkân sahibine haber ver; sana yeni şifre versin.</p>
     <p class="small muted">Yine de gelmezse dükkân sahibine ya da yöneticiye haber ver; sana WhatsApp'tan yeni şifre gönderir.</p>
     <button class="primary" data-act="forgotBack">Giriş ekranına dön</button></div>`;
   return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Şifremi unuttum</h2></div>

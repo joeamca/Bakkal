@@ -31,6 +31,9 @@ create table if not exists public.profiles (
 
 -- Tek kullanımlık şifre: hesabı başkası açtıysa ya da şifre yenilendiyse ilk girişte değiştirmek zorunlu
 alter table public.profiles add column if not exists must_change boolean not null default false;
+alter table public.profiles add column if not exists temp_set_at timestamptz;
+-- Tek kullanımlık şifre kaç dakika geçerli
+create or replace function public.bd_temp_minutes() returns int language sql immutable set search_path = public as $$ select 5 $$;
 
 create table if not exists public.members (
   shop_id     uuid not null references public.shops(id) on delete cascade,
@@ -74,18 +77,24 @@ create unique index if not exists signup_pending_user on public.signup_requests(
 -- ---------- Yardımcılar ----------
 create or replace function public.is_admin() returns boolean
 language sql stable security definer set search_path = public as $$
-  select coalesce((select p.is_admin from profiles p where p.user_id = auth.uid()), false)
+  select coalesce((select p.is_admin and not p.must_change from profiles p where p.user_id = auth.uid()), false)
+$$;
+
+-- Geçici (tek kullanımlık) şifreyle girilmişse: kendi şifresini koyana kadar hiçbir veriye erişim yok
+create or replace function public.pw_ok() returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce((select not p.must_change from profiles p where p.user_id = auth.uid()), true)
 $$;
 
 create or replace function public.is_member(s uuid) returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from members m join shops sh on sh.id = m.shop_id
-                 where m.shop_id = s and m.user_id = auth.uid() and sh.active)
+                 where m.shop_id = s and m.user_id = auth.uid() and sh.active) and pw_ok()
 $$;
 
 create or replace function public.is_owner(s uuid) returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (select 1 from members m where m.shop_id = s and m.user_id = auth.uid() and m.role = 'owner')
+  select exists (select 1 from members m where m.shop_id = s and m.user_id = auth.uid() and m.role = 'owner') and pw_ok()
 $$;
 
 -- Kim yazdıysa o yazsın, saat sunucudan gelsin
@@ -183,7 +192,7 @@ begin
   end if;
   declare uid uuid; begin
     uid := bd_create_user_hashed(p_username, crypt(p_password, gen_salt('bf')), p_full_name);
-    update profiles set must_change = true where user_id = uid;
+    update profiles set must_change = true, temp_set_at = now() where user_id = uid;
     return uid;
   end;
 end $$;
@@ -199,7 +208,7 @@ begin
     raise exception 'Yönetici zaten var.' using errcode = 'P0001';
   end if;
   uid := bd_create_user(p_username, p_password, p_full_name);
-  update profiles set is_admin = true, must_change = false where user_id = uid;
+  update profiles set is_admin = true, must_change = false, temp_set_at = null where user_id = uid;
   if p_shop_name is not null then
     insert into shops (name, created_by) values (p_shop_name, uid) returning id into sid;
     insert into members (shop_id, user_id, role) values (sid, uid, 'owner');
@@ -214,6 +223,7 @@ create or replace function public.my_context() returns jsonb
 language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
     'user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'is_admin', p.is_admin, 'must_change', p.must_change,
+    'temp_left', case when p.must_change then greatest(0, floor(extract(epoch from (p.temp_set_at + make_interval(mins => bd_temp_minutes()) - now()))))::int end,
     'pending_signups', case when p.is_admin then (select count(*) from signup_requests r where r.status = 'pending') else 0 end,
     'shops', coalesce((select jsonb_agg(jsonb_build_object('id', s.id, 'name', s.name, 'role', m.role, 'active', s.active) order by s.name)
                         from members m join shops s on s.id = m.shop_id where m.user_id = p.user_id), '[]'::jsonb))
@@ -265,16 +275,16 @@ create or replace function public.reset_password(p_user uuid, p_password text)
 returns void language plpgsql security definer set search_path = public, extensions as $$
 begin
   if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
-  if not (is_admin() or exists (
+  if not (is_admin() or (pw_ok() and exists (
       select 1 from members o join members t on t.shop_id = o.shop_id
-      where o.user_id = auth.uid() and o.role = 'owner' and t.user_id = p_user and t.role = 'staff')) then
+      where o.user_id = auth.uid() and o.role = 'owner' and t.user_id = p_user and t.role = 'staff'))) then
     raise exception 'Bu kişinin şifresini değiştirme yetkin yok.' using errcode = '42501';
   end if;
   if exists (select 1 from profiles where user_id = p_user and is_admin) and p_user <> auth.uid() then
     raise exception 'Yöneticinin şifresi buradan değiştirilemez.' using errcode = '42501';
   end if;
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_user;
-  update profiles set must_change = (p_user <> auth.uid()) where user_id = p_user;
+  update profiles set must_change = (p_user <> auth.uid()), temp_set_at = case when p_user <> auth.uid() then now() end where user_id = p_user;
 end $$;
 
 -- Kendi şifreni değiştir (tek kullanımlık şifreden sonra da bu kullanılır)
@@ -284,10 +294,14 @@ declare cur text;
 begin
   if auth.uid() is null then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
   if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
+  if exists (select 1 from profiles where user_id = auth.uid() and must_change
+             and temp_set_at < now() - make_interval(mins => bd_temp_minutes())) then
+    raise exception 'Tek kullanımlık şifrenin süresi doldu. Yöneticiden ya da dükkân sahibinden yeni şifre iste.' using errcode = 'P0001';
+  end if;
   select encrypted_password into cur from auth.users where id = auth.uid();
   if cur is not null and cur = crypt(p_password, cur) then raise exception 'Yeni şifre eskisiyle aynı olamaz.' using errcode = 'P0001'; end if;
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = auth.uid();
-  update profiles set must_change = false where user_id = auth.uid();
+  update profiles set must_change = false, temp_set_at = null where user_id = auth.uid();
 end $$;
 
 -- Dükkândan çıkar (başka dükkânı yoksa hesabı tamamen kapatır)
@@ -335,7 +349,8 @@ begin
       'products', (select count(*) from docs d where d.shop_id = s.id and d.kind = 'product' and not d.deleted),
       'events', (select count(*) from docs d where d.shop_id = s.id and d.kind = 'event' and not d.deleted),
       'last_write', (select max(updated_at) from docs d where d.shop_id = s.id),
-      'members', coalesce((select jsonb_agg(jsonb_build_object('user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'role', m.role, 'last_seen', p.last_seen) order by m.role, p.username)
+      'members', coalesce((select jsonb_agg(jsonb_build_object('user_id', p.user_id, 'username', p.username, 'full_name', p.full_name, 'role', m.role, 'last_seen', p.last_seen,
+        'temp', case when not p.must_change then null when p.temp_set_at < now() - make_interval(mins => bd_temp_minutes()) then 'expired' else 'waiting' end) order by m.role, p.username)
                   from members m join profiles p on p.user_id = m.user_id where m.shop_id = s.id), '[]'::jsonb)
     ) as x from shops s) t), '[]'::jsonb);
 end $$;
@@ -422,7 +437,7 @@ begin
     'public.shop_members(uuid)', 'public.reset_password(uuid,text)', 'public.remove_member(uuid,uuid)',
     'public.admin_set_shop_active(uuid,boolean)', 'public.rename_shop(uuid,text)', 'public.admin_overview()',
     'public.is_admin()', 'public.is_member(uuid)', 'public.is_owner(uuid)',
-    'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)', 'public.change_my_password(text)'] loop
+    'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)', 'public.change_my_password(text)', 'public.pw_ok()'] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
   end loop;

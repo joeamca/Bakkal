@@ -137,6 +137,11 @@ details.more>.stack{margin-top:8px}
 .toast{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;max-width:620px;margin:0 auto;background:var(--ink);color:var(--bg);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:15px}
 .toast button{background:transparent;border-color:var(--bg);color:var(--bg);min-height:40px;padding:6px 14px;font-weight:600}
 .toast[hidden]{display:none}
+.pindots{display:flex;justify-content:center;gap:14px;margin:4px 0 8px}
+.pindots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);display:block}
+.pindots i.on{background:var(--accent)}
+.pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto;width:100%}
+.pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
 .prow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
@@ -663,9 +668,9 @@ function render(keep){
     b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="goto" data-tab="yonetim" data-plain="1">Bak</button></div>`;
   $("#banner").innerHTML = b;
   const v = $("#view");
-  const gated = ["login","pickshop","noshop","paused","newpass"].includes(S.mode);
+  const gated = ["login","pickshop","noshop","paused","newpass"].includes(S.mode) || (S.mode==="cloud" && S.locked);
   document.body.classList.toggle("gated", gated);
-  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : "Giriş") : S.mode==="newpass" ? "Yeni şifre" : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : viewLogin()) : viewGate(); return; }
+  if (gated){ $("#banner").innerHTML = ""; $("#pageTitle").textContent = S.mode==="login" ? (S.signup ? "Kayıt" : "Giriş") : S.mode==="newpass" ? "Yeni şifre" : S.locked ? "Kilitli" : "Dükkân"; v.innerHTML = S.mode==="login" ? (S.signup ? viewSignup() : viewLogin()) : S.locked ? viewLock() : viewGate(); return; }
   if (S.mode==="loading"){ return; }
   $("#guideBtn").setAttribute("aria-pressed", S.guide ? "true" : "false");
   $("#setBtn").setAttribute("aria-pressed", S.tab==="ayarlar" ? "true" : "false");
@@ -2478,7 +2483,7 @@ async function cloudBoot(){
   if (c && c.uid && c.shop){
     C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[];
     const d = c.data||{}; S.products = d.products||[]; S.events = d.events||[]; S.suppliers = d.suppliers||{}; S.customers = d.customers||{}; if (d.settings) S.settings = d.settings;
-    setStore(cloudStore()); S.mode = c.ctx?.must_change ? "newpass" : c.shop.active===false ? "paused" : "cloud"; render(); saving();
+    setStore(cloudStore()); S.mode = c.ctx?.must_change ? "newpass" : c.shop.active===false ? "paused" : "cloud"; checkLock(); render(); saving();
   } else { S.mode = "loading"; render(); }
   try{ await loadSB(); }
   catch(e){
@@ -2529,7 +2534,7 @@ async function doLogin(){
     await loadSB(); client();
     const {data, error} = await SB.auth.signInWithPassword({email: toEmail(u), password: p});
     if (error) throw error;
-    C.busy = false; await afterLogin(data.user);
+    C.busy = false; markActive(true); await afterLogin(data.user);
   }catch(e){
     C.loginErr = /invalid login|invalid_credentials|Invalid/i.test(e?.message||"") ? "Kullanıcı adı ya da şifre yanlış." : sbMsg(e);
     if (SB && /yanlış/.test(C.loginErr)){ try{ const {data:st} = await SB.rpc("signup_status", {p_username:u});
@@ -2564,14 +2569,106 @@ async function doSignup(){
 function resetCloud(clearCache){
   if (RT && SB) try{ SB.removeChannel(RT); }catch(_){} RT = null;
   if (clearCache) try{ localStorage.removeItem(BKEY); }catch(_){}
-  const msg = C.loginErr; C = newC(); C.loginErr = msg; S.cloud = C; clearData(); S.mode = "login"; S.tab = "ana"; render();
+  const msg = C.loginErr; C = newC(); C.loginErr = msg; S.cloud = C; clearData(); S.mode = "login"; S.tab = "ana"; S.locked = false; S.pinForgot = false; render();
 }
 async function doLogout(force){
   if (C.queue.length && !force){ S.confirmOut = true; render(); return; }
-  S.confirmOut = false; C.leaving = true;
+  S.confirmOut = false; C.leaving = true; pinSave(null);
   try{ await SB?.auth.signOut({scope:"local"}); }catch(_){}
   resetCloud(true);
 }
+
+/* --- PIN ile ekran kilidi: PIN sadece bu telefonda, şifrelenmiş (PBKDF2) saklanır --- */
+const ACT_KEY = "bd-son-hareket", PIN_MAX = 5, PIN_COOL = 5*60000;
+const pinKey = () => C.user ? "bd-pin-" + C.user.id : null;
+function pinCfg(){ try{ const k = pinKey(); return k ? JSON.parse(localStorage.getItem(k) || "null") : null; }catch(_){ return null; } }
+function pinSave(cfg){ try{ const k = pinKey(); if (!k) return; if (cfg) localStorage.setItem(k, JSON.stringify(cfg)); else localStorage.removeItem(k); }catch(_){} }
+async function pinHash(pin, salt){
+  const enc = new TextEncoder(), key = await crypto.subtle.importKey("raw", enc.encode(pin), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({name:"PBKDF2", hash:"SHA-256", salt:enc.encode(salt), iterations:150000}, key, 256);
+  return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function markActive(force){ const n = Date.now(); if (!force && n - (markActive.last||0) < 10000) return; markActive.last = n; try{ localStorage.setItem(ACT_KEY, String(n)); }catch(_){} }
+function lastActive(){ try{ return Number(localStorage.getItem(ACT_KEY)) || 0; }catch(_){ return 0; } }
+function checkLock(){
+  if (S.mode!=="cloud" || S.locked) return;
+  const cfg = pinCfg(); if (!cfg) return;
+  if (Date.now() - lastActive() > cfg.mins*60000){ S.locked = true; S.pinBuf = ""; S.pinErr = null; S.pinForgot = false; render(); }
+}
+["pointerdown","keydown","touchstart"].forEach(ev => document.addEventListener(ev, ()=>{ if (S.mode==="cloud" && !S.locked) markActive(); }, {passive:true, capture:true}));
+setInterval(checkLock, 15000);
+document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="visible") checkLock(); });
+const PIN_MINS = [[15,"15 dakika"],[30,"30 dakika"],[60,"1 saat"],[240,"4 saat"]];
+const weakPin = p => /^(\d)\1{3}$/.test(p) || ["1234","4321","0123","1212","2580","1122","1004","2000"].includes(p);
+function viewLock(){
+  const cfg = pinCfg() || {}, cool = cfg.coolUntil && cfg.coolUntil > Date.now(), n = (S.pinBuf||"").length;
+  const keys = ["1","2","3","4","5","6","7","8","9","","0","del"];
+  return `<div class="card stack login lockcard">
+    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kilitli</h2>
+      <p class="small muted">${esc(C.ctx?.full_name || C.ctx?.username || "")}${C.shop ? " · " + esc(C.shop.name) : ""}</p></div>
+    ${cool ? `<p class="notice bad">Çok fazla yanlış deneme. ${Math.ceil((cfg.coolUntil-Date.now())/60000)} dakika sonra tekrar dene.</p>` : S.pinErr ? `<p class="notice bad">${esc(S.pinErr)}</p>` : `<p class="small" style="text-align:center">PIN'ini gir</p>`}
+    <div class="pindots" aria-label="${n} rakam girildi">${[0,1,2,3].map(i=>`<i class="${i<n?"on":""}"></i>`).join("")}</div>
+    <div class="pinpad">${keys.map(k => k==="" ? `<span></span>` : `<button class="pk" data-act="pinKey" data-k="${k}" ${cool?"disabled":""} aria-label="${k==="del"?"Sil":k}">${k==="del" ? "⌫" : k}</button>`).join("")}</div>
+    ${S.pinForgot ? `<p class="notice bad">${C.queue.length} kayıt henüz internete gönderilmedi. Şimdi çıkarsan kaybolur. Önce internete bağlanıp bekle.</p>
+        <div class="row"><button data-act="pinForgotCancel">Vazgeç</button><button class="danger" data-act="pinForgotForce">Yine de çık</button></div>`
+      : `<button class="link" data-act="pinForgot">PIN'imi unuttum (şifreyle gir)</button>`}
+  </div>`;
+}
+function pinCard(){
+  const cfg = pinCfg();
+  if (S.pinSetup) return `<section class="card stack"><h2>Ekran kilidi (PIN)</h2>
+    <p class="small muted">4 rakam seç. Uygulama seçtiğin süre boyunca kullanılmazsa kilitlenir; açmak için bu PIN istenir.</p>
+    <div class="grid2"><label>PIN<input id="pin-1" type="password" inputmode="numeric" maxlength="4" autocomplete="off" pattern="[0-9]*"></label>
+      <label>PIN (tekrar)<input id="pin-2" type="password" inputmode="numeric" maxlength="4" autocomplete="off" pattern="[0-9]*"></label></div>
+    <label>Kaç dakika kullanılmazsa kilitlensin?<select id="pin-mins">${PIN_MINS.map(([v,l])=>`<option value="${v}" ${v===(cfg?.mins||60)?"selected":""}>${l}</option>`).join("")}</select></label>
+    <div class="row"><button class="primary" data-act="pinSetupSave">PIN'i kaydet</button><button data-act="pinSetupCancel">Vazgeç</button></div></section>`;
+  if (!cfg) return `<section class="card stack"><h2>Ekran kilidi (PIN)</h2>
+    <p class="small muted">Kapalı. Telefon başkasının eline geçebiliyorsa aç: uygulama bir süre kullanılmayınca kilitlenir, 4 haneli PIN'le açılır.</p>
+    <button data-act="pinSetupOpen">${ic("user",18)} PIN belirle</button></section>`;
+  return `<section class="card stack"><h2>Ekran kilidi (PIN)</h2>
+    <p class="small"><b>Açık.</b> Uygulama <select id="pin-mins-live" data-pinmins="1" aria-label="Kilit süresi" style="display:inline-block;width:auto;min-height:36px;padding:4px 8px">${PIN_MINS.map(([v,l])=>`<option value="${v}" ${v===cfg.mins?"selected":""}>${l}</option>`).join("")}</select> kullanılmazsa kilitlenir.</p>
+    <p class="small muted">PIN sadece bu telefonda saklanır. 5 kez yanlış girilirse hesaptan çıkılır, kullanıcı adı ve şifreyle tekrar girilir.</p>
+    <div class="row"><button data-act="pinLockNow">Şimdi kilitle</button><button data-act="pinSetupOpen">PIN'i değiştir</button>
+      <button class="${S.pinOffConfirm?"danger":"link"}" data-act="pinOff">${S.pinOffConfirm?"Emin misin? Kapat":"Kilidi kapat"}</button></div></section>`;
+}
+async function pinAct(a, t){
+  if (a==="pinSetupOpen"){ S.pinSetup = true; S.pinOffConfirm = false; render(true); document.getElementById("pin-1")?.focus(); return true; }
+  if (a==="pinSetupCancel"){ S.pinSetup = false; render(); return true; }
+  if (a==="pinSetupSave"){
+    const p1 = document.getElementById("pin-1").value, p2 = document.getElementById("pin-2").value, mins = Number(document.getElementById("pin-mins").value)||60;
+    if (!/^\d{4}$/.test(p1)){ S.msg = {kind:"bad", text:"PIN 4 rakam olmalı."}; render(true); window.scrollTo(0,0); return true; }
+    if (p1!==p2){ S.msg = {kind:"bad", text:"İki PIN aynı değil."}; render(true); window.scrollTo(0,0); return true; }
+    if (weakPin(p1)){ S.msg = {kind:"bad", text:"Bu PIN kolay tahmin edilir (1234, 0000 gibi). Başka 4 rakam seç."}; render(true); window.scrollTo(0,0); return true; }
+    t.disabled = true;
+    try{ const salt = crypto.getRandomValues(new Uint32Array(4)).join("-"); pinSave({salt, hash: await pinHash(p1, salt), mins, fails:0, coolUntil:0});
+      markActive(true); S.pinSetup = false; S.msg = {kind:"ok", text:`Ekran kilidi açıldı. Uygulama ${PIN_MINS.find(x=>x[0]===mins)[1]} kullanılmazsa PIN sorulacak.`}; }
+    catch(e){ S.msg = {kind:"bad", text:"Bu tarayıcıda PIN kaydedilemedi."}; }
+    render(); window.scrollTo(0,0); return true; }
+  if (a==="pinOff"){ if (!S.pinOffConfirm){ S.pinOffConfirm = true; render(true); return true; } S.pinOffConfirm = false; pinSave(null); S.msg = {kind:"ok", text:"Ekran kilidi kapatıldı."}; render(); return true; }
+  if (a==="pinLockNow"){ if (pinCfg()){ S.locked = true; S.pinBuf = ""; S.pinErr = null; render(); } return true; }
+  if (a==="pinForgot"){ if (C.queue.length){ S.pinForgot = true; render(); return true; } C.loginErr = "Kullanıcı adın ve şifrenle gir. İstersen sonra yeni PIN belirle."; pinSave(null); await doLogout(true); return true; }
+  if (a==="pinForgotCancel"){ S.pinForgot = false; render(); return true; }
+  if (a==="pinForgotForce"){ C.loginErr = "Kullanıcı adın ve şifrenle gir."; pinSave(null); await doLogout(true); return true; }
+  if (a==="pinKey"){
+    const cfg = pinCfg(); if (!cfg){ S.locked = false; render(); return true; }
+    if (cfg.coolUntil && cfg.coolUntil > Date.now()) return true;
+    const k = t.dataset.k; S.pinErr = null;
+    if (k==="del"){ S.pinBuf = (S.pinBuf||"").slice(0,-1); render(); return true; }
+    if ((S.pinBuf||"").length >= 4) return true;
+    S.pinBuf = (S.pinBuf||"") + k; render();
+    if (S.pinBuf.length < 4) return true;
+    const ok = (await pinHash(S.pinBuf, cfg.salt)) === cfg.hash; S.pinBuf = "";
+    if (ok){ cfg.fails = 0; cfg.coolUntil = 0; pinSave(cfg); S.locked = false; markActive(true); render(); return true; }
+    cfg.fails = (cfg.fails||0) + 1;
+    if (cfg.fails >= PIN_MAX){
+      if (C.queue.length){ cfg.fails = 0; cfg.coolUntil = Date.now() + PIN_COOL; pinSave(cfg); S.pinErr = null; render(); return true; }   // kayıt kaybolmasın: çıkış yerine beklet
+      pinSave(null); C.loginErr = "5 kez yanlış PIN girildi. Güvenlik için çıkış yapıldı; kullanıcı adın ve şifrenle gir."; await doLogout(true); return true;
+    }
+    pinSave(cfg); S.pinErr = `PIN yanlış. ${PIN_MAX - cfg.fails} hakkın kaldı.`; render(); return true;
+  }
+  return false;
+}
+document.addEventListener("change", ev=>{ if (ev.target.dataset?.pinmins){ const cfg = pinCfg(); if (cfg){ cfg.mins = Number(ev.target.value)||60; pinSave(cfg); markActive(true); S.msg = {kind:"ok", text:`Kilit süresi: ${PIN_MINS.find(x=>x[0]===cfg.mins)[1]}.`}; render(true); } } });
 
 /* --- hesap ve kişi yönetimi --- */
 async function rpc(name, args, okText){
@@ -2674,6 +2771,7 @@ function accountCards(){
       : `<div class="row">${S.pwOpen?"":`<button data-act="pwOpen">Şifremi değiştir</button>`}${(ctx.shops||[]).length>1?`<button data-act="chooseShop">Dükkân değiştir</button>`:""}<button data-act="logout">Çıkış yap</button></div>`}
     ${ctx.is_admin ? `<button class="primary" data-act="goto" data-tab="yonetim" data-plain="1">${ic("grid",18)} Yönetici paneli</button>` : ""}
   </section>`;
+  h += pinCard();
   if (sh && SB && Date.now()-(C.peopleAt||0) > 15000 && !C.peopleLoading){ C.peopleLoading = true; setTimeout(()=>loadPeople().finally(()=>{ C.peopleLoading = false; renderData(); }), 0); }
   if (sh && owner){
     h += `<section class="card stack"><h2>Dükkândaki kişiler</h2>
@@ -2737,6 +2835,7 @@ function viewAdmin(){
 }
 
 async function cloudAct(a, t, id){
+  if (await pinAct(a, t)) return true;
   if (a==="logout"){ await doLogout(false); return true; }
   if (a==="logoutForce"){ await doLogout(true); return true; }
   if (a==="cancelOut"){ S.confirmOut = false; render(); return true; }

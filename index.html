@@ -2568,7 +2568,7 @@ async function doSignup(){
   if (!f.name) return err("Adını soyadını yaz.");
   if (!EMAIL_RE.test(f.email)) return err("E-posta adresini doğru yaz (örn. mert@gmail.com). Girişte ve şifreni unutunca bu kullanılacak.");
   if (f.phone.replace(/\D/g,"").length < 10) return err("Telefon numaranı yaz; onaylanınca sana buradan haber verilecek.");
-  if (f.pass.length < 6) return err("Şifre en az 6 karakter olmalı.");
+  if (f.pass.length < 8) return err("Şifre en az 8 karakter olmalı.");
   if (f.pass !== f.pass2) return err("İki şifre aynı değil.");
   if (!document.getElementById("sg-ok")?.checked) return err("Devam etmek için bilgilerinin saklanmasını onayla.");
   C.busy = true; C.signupErr = null; render(true);
@@ -2829,7 +2829,7 @@ function viewSignup(){
       <label>E-posta adresin<input id="sg-email" type="email" inputmode="email" maxlength="120" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(v.email||"")}" placeholder="örn. mert@gmail.com"></label>
       <span class="small muted" style="margin-top:-4px">Girişte bunu yazacaksın. Şifreni unutursan yenileme bağlantısı buraya gelir.</span>
       <label>Telefonun (WhatsApp)<input id="sg-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" value="${esc(v.phone||"")}" placeholder="0532 123 45 67"></label>
-      <label>Şifre<input id="sg-pass" type="password" autocomplete="new-password" minlength="6"></label>
+      <label>Şifre<input id="sg-pass" type="password" autocomplete="new-password" minlength="8"></label>
       <label>Şifre (tekrar)<input id="sg-pass2" type="password" autocomplete="new-password"></label>
       <label>Not (isteğe bağlı)<input id="sg-note" maxlength="300" value="${esc(v.note||"")}" placeholder="örn. hangi semtte, kim önerdi"></label>
       <input id="sg-web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
@@ -2848,17 +2848,17 @@ function viewGate(){
   if (S.mode==="recover") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Yeni şifreni belirle</h2>
       <p class="small muted">${esc(C.ctx?.email || C.ctx?.username || "")}</p></div>
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
-    <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="6"></label>
+    <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="8"></label>
     <label>Yeni şifre (tekrar)<input id="nw-2" type="password" autocomplete="new-password"></label>
-    <span class="small muted" style="margin-top:-4px">En az 6 karakter. Kimseyle paylaşma.</span>
+    <span class="small muted" style="margin-top:-4px">En az 8 karakter. Kimseyle paylaşma.</span>
     <button class="primary" data-act="recoverSave">Şifremi kaydet ve devam et</button>${out}</div>`;
   if (S.mode==="newpass") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kendi şifreni belirle</h2></div>
     <p>Sana verilen şifre <b>tek kullanımlıktı</b>. Devam etmek için sadece senin bileceğin yeni bir şifre koy.</p>
     ${C.tempDeadline ? `<p class="notice warn">Bu ekranın süresi: <b id="tmpLeft" class="num">${fmtLeft()}</b>. Süre dolarsa yeni şifre istemen gerekir.</p>` : ""}
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
-    <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="6"></label>
+    <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="8"></label>
     <label>Yeni şifre (tekrar)<input id="nw-2" type="password" autocomplete="new-password"></label>
-    <span class="small muted" style="margin-top:-4px">En az 6 karakter. Kimseyle paylaşma.</span>
+    <span class="small muted" style="margin-top:-4px">En az 8 karakter. Kimseyle paylaşma.</span>
     <button class="primary" data-act="newPassSave">Şifremi kaydet ve devam et</button>${out}</div>`;
   if (S.mode==="pickshop") return `<div class="card stack"><h2>Hangi dükkân?</h2><p class="small muted">Hesabın birden fazla dükkâna bağlı. Birini seç; sonra Ayarlar'dan değiştirebilirsin.</p>
     ${(C.ctx?.shops||[]).map(s=>`<button class="mtile" data-act="pickShop" data-id="${s.id}"><b>${esc(s.name)}</b><span class="small muted">${ROLE[s.role]||s.role}${s.active?"":" · durduruldu"}</span></button>`).join("")}${out}</div>`;
@@ -2877,7 +2877,7 @@ function accountCards(){
         <div class="row"><button class="primary" data-act="emailSave">Kaydet</button><button data-act="emailCancel">Vazgeç</button></div></div>`
       : `<p class="small">${ctx.email ? `E-posta: <b>${esc(ctx.email)}</b> <button class="link" data-act="emailOpen">Değiştir</button>` : `<span class="muted">E-posta kayıtlı değil. Eklersen şifreni unutunca kendin yenileyebilirsin.</span> <button class="link" data-act="emailOpen">E-posta ekle</button>`}</p>`}
     <p class="small muted">Kayıtların internette, dükkânın hesabında duruyor; telefon değişse de kaybolmaz. İnternet yokken girdiklerin telefonda bekler, bağlantı gelince kendiliğinden gönderilir.${wait?` <b>Şu an ${wait} kayıt gönderilmeyi bekliyor.</b>`:""}</p>
-    ${S.pwOpen ? `<div class="stack" style="gap:6px"><label>Yeni şifre<input id="pw-new" type="password" autocomplete="new-password" minlength="6"></label>
+    ${S.pwOpen ? `<div class="stack" style="gap:6px"><label>Yeni şifre<input id="pw-new" type="password" autocomplete="new-password" minlength="8"></label>
         <label>Yeni şifre (tekrar)<input id="pw-new2" type="password" autocomplete="new-password"></label>
         <div class="row"><button class="primary" data-act="pwSave">Şifremi değiştir</button><button data-act="pwCancel">Vazgeç</button></div></div>`
       : ""}
@@ -2961,12 +2961,12 @@ async function cloudAct(a, t, id){
   if (a==="pwOpen"){ S.pwOpen = true; render(true); return true; }
   if (a==="pwCancel"){ S.pwOpen = false; render(); return true; }
   if (a==="pwSave"){ const p1 = document.getElementById("pw-new").value, p2 = document.getElementById("pw-new2").value;
-    if (p1.length < 6){ S.msg = {kind:"bad", text:"Şifre en az 6 karakter olmalı."}; render(true); return true; }
+    if (p1.length < 8){ S.msg = {kind:"bad", text:"Şifre en az 8 karakter olmalı."}; render(true); return true; }
     if (p1!==p2){ S.msg = {kind:"bad", text:"İki şifre aynı değil."}; render(true); return true; }
     t.disabled = true; try{ const {error} = await SB.rpc("change_my_password", {p_password:p1}); if (error) throw error; S.pwOpen = false; S.msg = {kind:"ok", text:"Şifren değişti. Bir dahaki girişte yeni şifreni kullan."}; }catch(e){ S.msg = {kind:"bad", text:sbMsg(e)}; }
     render(); window.scrollTo(0,0); return true; }
   if (a==="newPassSave"){ const p1 = document.getElementById("nw-1").value, p2 = document.getElementById("nw-2").value;
-    if (p1.length < 6){ C.loginErr = "Şifre en az 6 karakter olmalı."; render(); return true; }
+    if (p1.length < 8){ C.loginErr = "Şifre en az 8 karakter olmalı."; render(); return true; }
     if (p1!==p2){ C.loginErr = "İki şifre aynı değil."; render(); return true; }
     t.disabled = true;
     try{ const {error} = await SB.rpc("change_my_password", {p_password:p1}); if (error) throw error;
@@ -2983,7 +2983,7 @@ async function cloudAct(a, t, id){
     if (em && !EMAIL_RE.test(em)){ S.msg = {kind:"bad", text:"E-posta adresi hatalı. İstersen boş bırak."}; render(true); return true; }
     if (a==="newShopSave" && !shopName){ S.msg = {kind:"bad", text:"Dükkânın adını yaz."}; render(true); return true; }
     if (!/^[a-z0-9._-]{3,24}$/.test(u)){ S.msg = {kind:"bad", text:"Kullanıcı adı 3-24 karakter olmalı; harf, rakam, nokta, tire."}; render(true); return true; }
-    if (p.length < 6){ S.msg = {kind:"bad", text:"Şifre en az 6 karakter olmalı."}; render(true); return true; }
+    if (p.length < 8){ S.msg = {kind:"bad", text:"Şifre en az 8 karakter olmalı."}; render(true); return true; }
     t.disabled = true;
     const ok = a==="newShopSave"
       ? await rpc("admin_create_shop", {p_shop_name:shopName, p_username:u, p_password:p, p_full_name:name||null, p_email:em})
@@ -3010,7 +3010,7 @@ async function cloudAct(a, t, id){
   if (a==="forgotOpen"){ S.forgot = "form"; C.loginErr = null; render(); document.getElementById("fg-email")?.focus(); return true; }
   if (a==="forgotBack"){ S.forgot = null; C.loginErr = null; render(); return true; }
   if (a==="recoverSave"){ const p1 = document.getElementById("nw-1").value, p2 = document.getElementById("nw-2").value;
-    if (p1.length < 6){ C.loginErr = "Şifre en az 6 karakter olmalı."; render(); return true; }
+    if (p1.length < 8){ C.loginErr = "Şifre en az 8 karakter olmalı."; render(); return true; }
     if (p1!==p2){ C.loginErr = "İki şifre aynı değil."; render(); return true; }
     t.disabled = true;
     try{ const {error} = await SB.rpc("change_my_password", {p_password:p1}); if (error && !/aynı olamaz/.test(error.message||"")) throw error;

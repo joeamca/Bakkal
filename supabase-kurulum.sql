@@ -213,8 +213,8 @@ drop function if exists public.bd_create_user(text, text, text);
 create or replace function public.bd_create_user(p_username text, p_password text, p_full_name text, p_email text default null)
 returns uuid language plpgsql security definer set search_path = public, extensions as $$
 begin
-  if char_length(coalesce(p_password,'')) < 6 then
-    raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001';
+  if char_length(coalesce(p_password,'')) < 8 then
+    raise exception 'Şifre en az 8 karakter olmalı.' using errcode = 'P0001';
   end if;
   if exists (select 1 from signup_requests where username = lower(trim(p_username)) and status = 'pending') then
     raise exception 'Bu kullanıcı adıyla bekleyen bir başvuru var: %', lower(trim(p_username)) using errcode = 'P0001';
@@ -309,7 +309,7 @@ $$;
 create or replace function public.reset_password(p_user uuid, p_password text)
 returns void language plpgsql security definer set search_path = public, extensions as $$
 begin
-  if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
+  if char_length(coalesce(p_password,'')) < 8 then raise exception 'Şifre en az 8 karakter olmalı.' using errcode = 'P0001'; end if;
   if not (is_admin() or (pw_ok() and exists (
       select 1 from members o join members t on t.shop_id = o.shop_id
       where o.user_id = auth.uid() and o.role = 'owner' and t.user_id = p_user and t.role = 'staff'))) then
@@ -330,7 +330,7 @@ returns void language plpgsql security definer set search_path = public, extensi
 declare cur text;
 begin
   if auth.uid() is null then raise exception 'Giriş yapmalısın.' using errcode = '42501'; end if;
-  if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
+  if char_length(coalesce(p_password,'')) < 8 then raise exception 'Şifre en az 8 karakter olmalı.' using errcode = 'P0001'; end if;
   if exists (select 1 from profiles where user_id = auth.uid() and must_change
              and temp_set_at < now() - make_interval(mins => bd_temp_minutes()))
      and not coalesce(auth.jwt()->'amr', '[]'::jsonb) @> '[{"method":"recovery"}]'::jsonb then
@@ -495,7 +495,7 @@ begin
   if char_length(trim(coalesce(p_shop_name,''))) > 60 or char_length(trim(p_full_name)) > 60 then raise exception 'Ad çok uzun.' using errcode = 'P0001'; end if;
   if not bd_valid_email(e) then raise exception 'E-posta adresini doğru yaz (örn. mert@gmail.com).' using errcode = 'P0001'; end if;
   if char_length(regexp_replace(coalesce(ph,''), '[^0-9]', '', 'g')) < 10 then raise exception 'Telefon numaranı yaz (onaylanınca sana haber verilecek).' using errcode = 'P0001'; end if;
-  if char_length(coalesce(p_password,'')) < 6 then raise exception 'Şifre en az 6 karakter olmalı.' using errcode = 'P0001'; end if;
+  if char_length(coalesce(p_password,'')) < 8 then raise exception 'Şifre en az 8 karakter olmalı.' using errcode = 'P0001'; end if;
   if exists (select 1 from auth.users where lower(email) = e) or exists (select 1 from signup_requests where email = e and status = 'pending') then
     raise exception 'Bu e-posta ile bir hesap ya da bekleyen başvuru var. Şifreni unuttuysan giriş ekranındaki "Şifremi unuttum"u kullan.' using errcode = 'P0001';
   end if;

@@ -141,6 +141,18 @@ details.more>.stack{margin-top:8px}
 .pindots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);display:block}
 .pindots i.on{background:var(--accent)}
 .pinpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto;width:100%}
+nav.admintabs{display:none}
+body.adminmode nav.tabs{display:none}
+body.adminmode nav.admintabs{display:grid;grid-template-columns:repeat(4,1fr)}
+body.gated nav.admintabs{display:none!important}
+body.adminmode #guideBtn{display:none}
+.adbw{position:relative;display:inline-flex}
+.adbadge{position:absolute;top:-4px;right:-10px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+.adbadge[hidden]{display:none}
+.adhero h2{margin:0}
+.adtiles{grid-template-columns:repeat(2,1fr)}
+.adtiles .tile{text-align:left;cursor:pointer;font:inherit;font-size:13px;color:var(--muted)}
+.adtiles .tile.warn{border-color:var(--bad)}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
@@ -280,6 +292,12 @@ table.mrp{border-collapse:collapse;font-size:13px;min-width:100%}
   <button data-tab="fatura"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Fatura</button>
   <button data-tab="veresiye"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/><path d="M9 8h6"/></svg>Veresiye</button>
   <button data-tab="menu"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Menü</button>
+</nav>
+<nav class="tabs admintabs" aria-label="Yönetici bölümleri">
+  <button data-tab="y-ozet"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13h6V4H4zM14 20h6v-9h-6zM14 4h6v4h-6zM4 20h6v-3H4z"/></svg>Özet</button>
+  <button data-tab="y-basvuru"><span class="adbw"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><span id="adBadge" class="adbadge" hidden></span></span>Başvurular</button>
+  <button data-tab="y-dukkan"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9h18"/><path d="M9 20v-6h6v6"/></svg>Dükkânlar</button>
+  <button data-tab="y-hesap"><svg class="icon" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Hesabım</button>
 </nav>
 
 <script>
@@ -640,7 +658,7 @@ function guideCard(){
     </div></section>`;
 }
 const shopTitle = () => S.settings?.shopName || (S.mode==="cloud" && S.cloud?.shop?.name) || "";
-const titles = {yonetim:"Yönetici paneli", ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
+const titles = {yonetim:"Yönetici paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
 
 function renderData(){ if (!S.quiet) render(true); }
 function renderToast(){
@@ -662,8 +680,11 @@ function render(keep){
   else if ((S.mode==="db"||S.mode==="cloud") && S.localPending) b = `<div class="notice ok stack" style="margin-bottom:12px"><span>Bu cihazda daha önce hesaba kaydedilmemiş ${S.localPending.products.length} ürün ve ${S.localPending.events.length} kayıt var.</span><div class="row"><button class="primary" data-act="migrate">Hesabıma aktar</button><button data-act="dropLocal">Gerek yok</button></div></div>`;
   if (FILE_MODE) b = `<div class="notice ${S.mode==="memory"?"bad":"ok"} stack" style="margin-bottom:12px"><b>${S.mode==="memory"?"Dosyadan açtın; burada yazdıkların kaydedilmez.":"Dosyadan açtın. Uygulamanın kalıcı adresi daha güvenli."}</b><span>Düğmeye bas, uygulama tarayıcıda açılsın. Sonra oradan ana ekrana ekle.</span><a class="btn primary" href="${APP_URL}" target="_blank" rel="noopener" style="text-align:center;color:var(--accent-ink);background:var(--accent);text-decoration:none;padding:12px;border-radius:10px;font-weight:700">Uygulamayı aç</a></div>` + b;
   if (S.mode==="cloud") b = `<div id="netNote"></div>` + b;
-  if (S.mode==="cloud" && S.cloud.ctx?.is_admin && S.cloud.ctx.pending_signups > 0 && S.tab!=="yonetim")
-    b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="goto" data-tab="yonetim" data-plain="1">Bak</button></div>`;
+  const adm = S.mode==="cloud" && !!S.admin;
+  document.body.classList.toggle("adminmode", adm);
+  { const bd = document.getElementById("adBadge"), n = (S.cloud && S.cloud.ctx && S.cloud.ctx.pending_signups) || 0; if (bd){ bd.textContent = n; bd.hidden = !n; } }
+  if (S.mode==="cloud" && !adm && S.cloud.ctx?.is_admin && S.cloud.ctx.pending_signups > 0)
+    b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="toAdmin">Yönetici ekranı</button></div>`;
   $("#banner").innerHTML = b;
   const v = $("#view");
   const gated = ["login","pickshop","noshop","paused","newpass","setpin","recover"].includes(S.mode) || (S.mode==="cloud" && S.locked);
@@ -678,7 +699,7 @@ function render(keep){
   const saved = {};
   if (keep) v.querySelectorAll("input,select").forEach(el=>{ if (el.id && el.type!=="file") saved[el.id] = (el.type==="checkbox"||el.type==="radio") ? el.checked : el.value; });
   const openHow = keep ? [...v.querySelectorAll("details[open]")].map(d=>d.dataset.id).filter(Boolean) : [];
-  const VIEWS = {yonetim:viewAdmin, ana:viewHome, siparis:viewOrder, fatura:viewInvoice, veresiye:viewVeresiye, menu:viewMenu, stok:viewStock, plan:viewPlan, maliyet:viewCost, fire:viewFire, kar:viewProfit, urunler:viewProducts, ayarlar:viewSettings};
+  const VIEWS = {yonetim:viewAdmin, "y-ozet":viewAdminHome, "y-basvuru":viewAdminSignups, "y-dukkan":viewAdminShops, "y-hesap":viewAdminAccount, ana:viewHome, siparis:viewOrder, fatura:viewInvoice, veresiye:viewVeresiye, menu:viewMenu, stok:viewStock, plan:viewPlan, maliyet:viewCost, fire:viewFire, kar:viewProfit, urunler:viewProducts, ayarlar:viewSettings};
   const pre = ["fire","kar","urunler","ayarlar","yonetim"].includes(S.tab) && !S.editId ? backLink() : "";
   v.innerHTML = (S.guide ? guideCard() : "") + pre + (VIEWS[S.tab]||viewHome)();
   if (keep){
@@ -1683,7 +1704,7 @@ function viewMenu(){
     ["fire","trash","Fire","Haftalık bozulan mal","c3"],["urunler","tag","Ürünler","Ekle, düzenle, reçete","c6"],["ayarlar","gear","Ayarlar","Araç günleri, özel günler, Excel","c5"]];
   return `<div class="mgrid">${items.map(([t,i,l,d,c])=>`<button class="mtile" data-act="goto" data-tab="${t}" data-plain="1"><span class="bi ${c}">${ic(i,26)}</span><b>${l}</b><span class="small muted">${d}</span></button>`).join("")}
     <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
-    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="goto" data-tab="yonetim" data-plain="1"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici paneli</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
+    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="toAdmin"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici ekranı</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
     ${S.mode==="cloud" ? `<button class="mtile" data-act="goto" data-tab="ayarlar" data-plain="1"><span class="bi c5">${ic("user",26)}</span><b>Hesabım</b><span class="small muted">${esc(S.cloud.ctx?.username||"")} · şifre, kişiler, çıkış</span></button>` : ""}</div>`;
 }
 
@@ -2390,7 +2411,7 @@ const sbMsg = e => { const m = String(e?.message||e||""); return /fetch|network|
 const isNetErr = e => /fetch|network|Load failed|NetworkError|timeout/i.test(String(e?.message||e||"")) || (!e?.code && !e?.status);
 
 function cloudSave(){ clearTimeout(cloudSave.t); cloudSave.t = setTimeout(cloudSaveNow, 150); }
-function cloudSaveNow(){ clearTimeout(cloudSave.t); if (!C.user) return; try{ localStorage.setItem(BKEY, JSON.stringify({uid:C.user.id, ctx:C.ctx, shop:C.shop, queue:C.queue, lastSync:C.lastSync, by:C.by, people:C.people,
+function cloudSaveNow(){ clearTimeout(cloudSave.t); if (!C.user) return; try{ localStorage.setItem(BKEY, JSON.stringify({uid:C.user.id, admin:!!S.admin, ctx:C.ctx, shop:C.shop, queue:C.queue, lastSync:C.lastSync, by:C.by, people:C.people,
   data:{products:S.products.map(({showCount,...x})=>x), events:S.events, suppliers:S.suppliers, customers:S.customers, settings:S.settings}})); }catch(_){} }
 function cloudRead(){ try{ return JSON.parse(localStorage.getItem(BKEY)||"null"); }catch(_){ return null; } }
 window.addEventListener("pagehide", ()=>{ if (CLOUD_ON) cloudSaveNow(); });
@@ -2486,10 +2507,12 @@ async function cloudBoot(){
   const c = RECOVERY ? null : cloudRead();
   C.recovery = RECOVERY;
   if (LINK_ERR){ C.loginErr = "Şifre yenileme bağlantısının süresi dolmuş ya da daha önce kullanılmış. \"Şifremi unuttum\"a basıp yeni bağlantı iste."; try{ history.replaceState(null, "", SITE()); }catch(_){} }
-  if (c && c.uid && c.shop){
+  if (c && c.uid && (c.shop || c.admin)){
     C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[];
     const d = c.data||{}; S.products = d.products||[]; S.events = d.events||[]; S.suppliers = d.suppliers||{}; S.customers = d.customers||{}; if (d.settings) S.settings = d.settings;
-    setStore(cloudStore()); S.mode = c.ctx?.must_change ? "newpass" : c.ctx?.has_pin===false ? "setpin" : c.shop.active===false ? "paused" : "cloud"; checkLock(true); render(); saving();
+    setStore(cloudStore()); S.mode = c.ctx?.must_change ? "newpass" : c.ctx?.has_pin===false ? "setpin" : c.shop?.active===false ? "paused" : "cloud";
+    if (c.admin){ S.admin = true; C.shop = null; C.ready = true; S.guide = false; if (!String(S.tab).startsWith("y-")) S.tab = "y-ozet"; }
+    checkLock(true); render(); saving();
   } else { S.mode = "loading"; render(); }
   try{ await loadSB(); }
   catch(e){
@@ -2518,13 +2541,15 @@ async function afterLogin(user){
   pinSync();
   if (ctx.has_pin === false || (ctx.has_pin && needRenew())){ S.locked = false; S.mode = "setpin"; render(); return; }   // ilk kullanımda (ya da PIN unutulunca) PIN zorunlu
   try{ if (localStorage.getItem(RENEW_KEY)) setRenew(false); }catch(_){}
+  if (ctx.is_admin && adminView()!=="shop"){ enterAdmin(); return; }               // yönetici: kendi ekranı (bakkal ekranı değil)
+  S.admin = false;
   const shops = ctx.shops||[];
   let pick = shops.find(s=>s.id===C.shop?.id) || null;
   try{ if (!pick){ const last = localStorage.getItem("bd-son-dukkan"); pick = shops.find(s=>s.id===last) || null; } }catch(_){}
   if (!pick && shops.length===1) pick = shops[0];
   if (!pick){
     if (shops.length>1){ S.mode = "pickshop"; render(); return; }
-    if (ctx.is_admin){ C.shop = null; setStore(cloudStore()); S.mode = "cloud"; S.tab = "yonetim"; S.guide = false; render(); loadOverview(); return; }
+    if (ctx.is_admin){ enterAdmin(); return; }
     S.mode = "noshop"; render(); return;
   }
   await openShop(pick);
@@ -2872,11 +2897,11 @@ function accountCards(){
   const wait = C.queue.length;
   let h = `<section class="card stack"><h2>Hesap</h2>
     <div class="row"><span class="bi c1">${ic("user",20)}</span><span><b>${esc(ctx.full_name||ctx.username||"")}</b> <span class="small muted">@${esc(ctx.username||"")}</span><br>
-      <span class="small muted">${sh?`${esc(sh.name)} · ${ROLE[me?.role]||"yönetici"}`:"Dükkân seçilmedi"}${ctx.is_admin?" · yönetici":""}</span></span></div>
+      <span class="small muted">${S.admin ? "Yönetici" : `${sh?`${esc(sh.name)} · ${ROLE[me?.role]||"yönetici"}`:"Dükkân seçilmedi"}${ctx.is_admin?" · yönetici":""}`}</span></span></div>
     ${S.emailOpen ? `<div class="stack" style="gap:6px"><label>E-posta adresin<input id="em-new" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" value="${esc(ctx.email||"")}" placeholder="örn. mert@gmail.com"></label>
         <div class="row"><button class="primary" data-act="emailSave">Kaydet</button><button data-act="emailCancel">Vazgeç</button></div></div>`
       : `<p class="small">${ctx.email ? `E-posta: <b>${esc(ctx.email)}</b> <button class="link" data-act="emailOpen">Değiştir</button>` : `<span class="muted">E-posta kayıtlı değil. Eklersen şifreni unutunca kendin yenileyebilirsin.</span> <button class="link" data-act="emailOpen">E-posta ekle</button>`}</p>`}
-    <p class="small muted">Kayıtların internette, dükkânın hesabında duruyor; telefon değişse de kaybolmaz. İnternet yokken girdiklerin telefonda bekler, bağlantı gelince kendiliğinden gönderilir.${wait?` <b>Şu an ${wait} kayıt gönderilmeyi bekliyor.</b>`:""}</p>
+    ${S.admin ? "" : `<p class="small muted">Kayıtların internette, dükkânın hesabında duruyor; telefon değişse de kaybolmaz. İnternet yokken girdiklerin telefonda bekler, bağlantı gelince kendiliğinden gönderilir.${wait?` <b>Şu an ${wait} kayıt gönderilmeyi bekliyor.</b>`:""}</p>`}
     ${S.pwOpen ? `<div class="stack" style="gap:6px"><label>Yeni şifre<input id="pw-new" type="password" autocomplete="new-password" minlength="8"></label>
         <label>Yeni şifre (tekrar)<input id="pw-new2" type="password" autocomplete="new-password"></label>
         <div class="row"><button class="primary" data-act="pwSave">Şifremi değiştir</button><button data-act="pwCancel">Vazgeç</button></div></div>`
@@ -2884,7 +2909,7 @@ function accountCards(){
     ${S.confirmOut ? `<p class="notice bad">${wait} kayıt henüz internete gönderilmedi. Şimdi çıkarsan bu kayıtlar kaybolur. Önce internete bağlanıp bekle.</p>
         <div class="row"><button data-act="cancelOut">Vazgeç</button><button class="danger" data-act="logoutForce">Yine de çık</button></div>`
       : `<div class="row">${S.pwOpen?"":`<button data-act="pwOpen">Şifremi değiştir</button>`}${(ctx.shops||[]).length>1?`<button data-act="chooseShop">Dükkân değiştir</button>`:""}<button data-act="logout">Çıkış yap</button></div>`}
-    ${ctx.is_admin ? `<button class="primary" data-act="goto" data-tab="yonetim" data-plain="1">${ic("grid",18)} Yönetici paneli</button>` : ""}
+    ${ctx.is_admin && !S.admin ? `<button class="primary" data-act="toAdmin">${ic("grid",18)} Yönetici ekranına dön</button>` : ""}
   </section>`;
   h += pinCard();
   if (sh && SB && Date.now()-(C.peopleAt||0) > 15000 && !C.peopleLoading){ C.peopleLoading = true; setTimeout(()=>loadPeople().finally(()=>{ C.peopleLoading = false; renderData(); }), 0); }
@@ -2951,8 +2976,96 @@ function viewAdmin(){
   return h;
 }
 
+/* --- Yönetici ekranı: bakkal ekranından ayrı (Özet · Başvurular · Dükkânlar · Hesabım) --- */
+const VIEW_KEY = "bd-gorunum";
+const adminView = () => { try{ return localStorage.getItem(VIEW_KEY); }catch(_){ return null; } };
+function setAdminView(v){ try{ if (v) localStorage.setItem(VIEW_KEY, v); else localStorage.removeItem(VIEW_KEY); }catch(_){} }
+function enterAdmin(){
+  if (RT && SB) try{ SB.removeChannel(RT); }catch(_){} RT = null;
+  if (C.shop){ clearData(); C.lastSync = null; C.by = {}; C.people = []; }
+  C.shop = null; setStore(cloudStore()); S.mode = "cloud"; S.admin = true; S.guide = false; S.editId = null; C.ready = true;
+  if (!String(S.tab).startsWith("y-")) S.tab = "y-ozet";
+  cloudSaveNow(); render(); loadOverview();
+}
+function needOverview(){ if (!C.overview && !C.ovLoading){ C.ovLoading = true; setTimeout(()=>loadOverview().finally(()=>{ C.ovLoading = false; }), 0); } }
+const msgBox = () => S.msg ? `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>` : "";
+const daysAgo = t => t ? (Date.now() - new Date(t).getTime()) / DAY : Infinity;
+function viewAdminHome(){
+  needOverview();
+  const ov = C.overview, sg = C.signups || [], ctx = C.ctx || {};
+  const first = String(ctx.full_name || ctx.username || "").split(" ")[0];
+  let h = msgBox() + `<section class="card stack adhero"><span class="small muted">Yönetici</span><h2>Merhaba ${esc(first)}</h2>
+    <p class="small muted">Dükkânların durumu bir bakışta. Dükkânların kayıtlarının içeriğini görmezsin; sadece ne kadar kullanıldığını görürsün.</p></section>`;
+  if (!ov) return h + `<p class="small muted">Yükleniyor…</p>`;
+  const act = ov.filter(s=>s.active), week = ov.filter(s=>daysAgo(s.last_write) < 7);
+  h += `<div class="tiles adtiles">
+    <button class="tile" data-act="adTab" data-tab="y-dukkan"><span class="tn num">${ov.length}</span><span>dükkân</span></button>
+    <button class="tile" data-act="adTab" data-tab="y-dukkan"><span class="tn num">${act.length}</span><span>açık</span></button>
+    <button class="tile" data-act="adTab" data-tab="y-dukkan"><span class="tn num">${week.length}</span><span>bu hafta kullanan</span></button>
+    <button class="tile ${sg.length?"warn":""}" data-act="adTab" data-tab="y-basvuru"><span class="tn num">${sg.length}</span><span>bekleyen başvuru</span></button></div>`;
+  if (sg.length) h += `<div class="notice ok row between"><span><b>${sg.length} kayıt başvurusu</b> onayını bekliyor.</span><button class="primary" data-act="adTab" data-tab="y-basvuru">Bak</button></div>`;
+  const warn = [];
+  ov.forEach(s=>{
+    if (!s.active) warn.push([s, "Durduruldu", "bad"]);
+    else if (!s.last_write && daysAgo(s.created_at) > 3) warn.push([s, "Açılalı " + Math.floor(daysAgo(s.created_at)) + " gün oldu, hiç kayıt girilmedi", "warn"]);
+    else if (s.last_write && daysAgo(s.last_write) >= 7) warn.push([s, Math.floor(daysAgo(s.last_write)) + " gündür kayıt girilmedi", "warn"]);
+    (s.members||[]).forEach(p=>{ if (p.temp==="expired") warn.push([s, `${p.full_name||p.username}: geçici şifrenin süresi doldu`, "bad"]);
+      else if (p.temp==="waiting") warn.push([s, `${p.full_name||p.username}: geçici şifreyle henüz girmedi`, "warn"]); });
+  });
+  h += `<section class="card stack"><h2>Dikkat edilecekler</h2>${warn.length ? warn.map(([s,t,k])=>`<div class="prow"><div class="row between"><b>${esc(s.name)}</b><span class="pill ${k}">${k==="bad"?"Önemli":"Bak"}</span></div><span class="small muted">${esc(t)}</span></div>`).join("")
+    : `<p class="small muted">Her şey yolunda. Takılan dükkân yok.</p>`}</section>`;
+  const recent = ov.filter(s=>s.last_write).sort((a,b)=>new Date(b.last_write)-new Date(a.last_write)).slice(0,5);
+  h += `<section class="card stack"><h2>Son hareketler</h2>${recent.length ? recent.map(s=>`<div class="row between prow" style="flex-direction:row"><span><b>${esc(s.name)}</b><br><span class="small muted">${s.products} ürün · ${s.events} kayıt</span></span><span class="small muted">${agoShort(s.last_write)}</span></div>`).join("")
+    : `<p class="small muted">Henüz hiçbir dükkân kayıt girmedi.</p>`}</section>`;
+  h += `<section class="card stack"><h2>Hızlı işlemler</h2><div class="row"><button data-act="newShopOpen">${ic("plus",18)} Yeni dükkân aç</button><button data-act="ovRefresh">Yenile</button></div></section>`;
+  return h;
+}
+function viewAdminSignups(){
+  needOverview();
+  const sg = C.signups || [];
+  return msgBox() + (S.created ? `<section class="card stack">${createdCard()}</section>` : "") + (sg.length ? signupCards()
+    : `<section class="card empty stack"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Bekleyen başvuru yok</h2>
+      <p class="small muted">Biri "Dükkânımı kaydet" ile başvurunca burada görünür; Özet'te ve alttaki menüde de sayısı çıkar.</p><button data-act="ovRefresh">Yenile</button></section>`);
+}
+function shopCard(s){
+  return `<section class="card stack ${s.active?"":"paused"}">
+      <div class="row between"><h3>${esc(s.name)}</h3><span class="pill ${s.active?"ok":"bad"}">${s.active?"Açık":"Durduruldu"}</span></div>
+      <p class="small muted">${s.products} ürün · ${s.events} kayıt · ${s.last_write ? "son kayıt " + agoShort(s.last_write) : "henüz kayıt yok"} · açılış ${new Date(s.created_at).toLocaleDateString("tr-TR")}</p>
+      ${(s.members||[]).map(p=>personRow(p, s.id, !(p.user_id===C.user.id))).join("")}
+      ${S.addPerson===s.id ? personForm(s.id) : ""}
+      <div class="row">${S.addPerson===s.id?"":`<button class="link" data-act="addPersonOpen" data-shop="${s.id}">Kişi ekle</button>`}
+        <button class="link ${s.active&&S.confirmPause===s.id?"dangerLink":""}" data-act="shopActive" data-id="${s.id}" data-v="${s.active?"0":"1"}">${s.active ? (S.confirmPause===s.id?"Emin misin? Durdur":"Dükkânı durdur") : "Dükkânı aç"}</button></div>
+    </section>`;
+}
+function viewAdminShops(){
+  needOverview();
+  const ov = C.overview, q = String(S.adQ||"").trim().toLocaleLowerCase("tr");
+  let h = msgBox() + `<section class="card stack"><div class="row between"><h2>Dükkânlar</h2><button class="link" data-act="ovRefresh">Yenile</button></div>
+    ${S.addPerson==="__shop" ? personForm("", true) : `<button data-act="newShopOpen">${ic("plus",18)} Yeni dükkânı kendim aç</button>`}
+    ${S.created ? createdCard() : ""}
+    ${ov && ov.length > 5 ? `<input id="ad-q" data-adq="1" type="search" placeholder="Dükkân ya da kişi ara" value="${esc(S.adQ||"")}" aria-label="Dükkân ara">` : ""}</section>`;
+  if (!ov) return h + `<p class="small muted">Yükleniyor…</p>`;
+  const L = !q ? ov : ov.filter(s=>(s.name + " " + (s.members||[]).map(p=>[p.username,p.full_name,p.email].join(" ")).join(" ")).toLocaleLowerCase("tr").includes(q));
+  return h + (L.length ? L.map(shopCard).join("") : `<p class="small muted">Aramaya uyan dükkân yok.</p>`);
+}
+function viewAdminAccount(){
+  const shops = C.ctx?.shops || [];
+  return msgBox() + accountCards() + (shops.length ? `<section class="card stack"><h2>Dükkân görünümü</h2>
+    <p class="small muted">Hesabın ${shops.length===1 ? `<b>${esc(shops[0].name)}</b> dükkânına` : `${shops.length} dükkâna`} da bağlı. Uygulamayı bir bakkalın gördüğü gibi denemek için geçebilirsin; Ayarlar'dan yönetici ekranına geri dönersin.</p>
+    <button data-act="toShop">${ic("book",18)} Bakkal ekranına geç</button></section>` : "");
+}
+document.addEventListener("input", ev=>{ if (ev.target.dataset?.adq){ S.adQ = ev.target.value; const pos = ev.target.selectionStart; render(true); const el = document.getElementById("ad-q"); if (el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(_){} } } });
+
 async function cloudAct(a, t, id){
   if (await pinAct(a, t)) return true;
+  if (a==="adTab"){ S.tab = t.dataset.tab; S.msg = null; S.created = null; render(); window.scrollTo(0,0); return true; }
+  if (a==="settings" && S.admin){ S.tab = "y-hesap"; S.msg = null; render(); window.scrollTo(0,0); return true; }
+  if (a==="toShop"){ const shops = C.ctx?.shops || []; if (!shops.length) return true; setAdminView("shop"); S.admin = false; S.tab = "ana"; S.msg = null;
+    let pick = null; try{ const last = localStorage.getItem("bd-son-dukkan"); pick = shops.find(s=>s.id===last) || null; }catch(_){}
+    if (!pick && shops.length===1) pick = shops[0];
+    if (!pick){ S.mode = "pickshop"; render(); return true; }
+    await openShop(pick); window.scrollTo(0,0); return true; }
+  if (a==="toAdmin"){ if (C.queue.length) await flush(); setAdminView(null); S.tab = "y-ozet"; S.msg = null; enterAdmin(); window.scrollTo(0,0); return true; }
   if (a==="logout"){ await doLogout(false); return true; }
   if (a==="logoutForce"){ await doLogout(true); return true; }
   if (a==="cancelOut"){ S.confirmOut = false; render(); return true; }
@@ -2975,7 +3088,7 @@ async function cloudAct(a, t, id){
     catch(e){ C.loginErr = sbMsg(e); if (/süresi doldu/.test(C.loginErr)) await doLogout(true); else render(); }
     return true; }
   if (a==="addPersonOpen"){ S.addPerson = t.dataset.shop; S.created = null; render(true); document.getElementById("np-name")?.focus(); return true; }
-  if (a==="newShopOpen"){ S.addPerson = "__shop"; S.created = null; render(true); document.getElementById("np-shop")?.focus(); return true; }
+  if (a==="newShopOpen"){ if (S.admin) S.tab = "y-dukkan"; S.addPerson = "__shop"; S.created = null; render(true); document.getElementById("np-shop")?.focus(); return true; }
   if (a==="addPersonCancel"){ S.addPerson = null; render(); return true; }
   if (a==="addPersonSave" || a==="newShopSave"){
     const g = k => (document.getElementById(k)?.value||"").trim();
@@ -3041,6 +3154,9 @@ document.addEventListener("submit", ev=>{ if (ev.target.id==="fgform"){ ev.preve
 async function resync(){
   if (!SB || !["cloud","paused"].includes(S.mode)) return;
   C.online = true;
+  if (S.admin && C.ready){ SB.rpc("my_context").then(r=>{ if (r && r.data){ C.ctx = r.data; pinSync(); cloudSave();
+      if (r.data.must_change || r.data.has_pin === false || !r.data.is_admin){ afterLogin({id:C.user.id}).catch(()=>{}); return; } renderData(); } }, ()=>{});
+    loadOverview(); return; }
   if (!C.ready){ try{ const s = (await SB.auth.getSession()).data.session; if (s) await afterLogin(s.user); }catch(e){ if (isNetErr(e)) C.online = false; } saving(); return; }
   flush(); pull().then(n=>{ if (n) renderData(); }, ()=>{});
   SB.rpc("my_context").then(r=>{ if (r && r.data){ C.ctx = r.data; pinSync(); cloudSave();
@@ -3048,7 +3164,7 @@ async function resync(){
 }
 window.addEventListener("online", ()=>{ resync(); });
 window.addEventListener("offline", ()=>{ if (S.mode==="cloud"){ C.online = false; saving(); } });
-document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="visible" && S.mode==="cloud" && SB && C.shop){ resync(); SB.rpc("touch").then(()=>{}, ()=>{}); } });
+document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="visible" && S.mode==="cloud" && SB && (C.shop || S.admin)){ resync(); SB.rpc("touch").then(()=>{}, ()=>{}); } });
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

@@ -2549,7 +2549,7 @@ async function flush(){
     C.queue = C.queue.filter(q=>!batch.includes(q)); C.err = null; C.online = true; cloudSave();
   }catch(e){
     if (isNetErr(e)){ C.online = false; flushTimer = setTimeout(flush, 15000); }
-    else { C.err = e; S.msg = {kind:"bad", text:"Kayıt internete gönderilemedi: " + sbMsg(e) + (e.code==="42501" ? " Dükkânın hesabı durdurulmuş ya da bu dükkândan çıkarılmış olabilirsin." : "")}; render(); }
+    else { C.err = e; S.msg = {kind:"bad", text:"Kayıt internete gönderilemedi: " + sbMsg(e) + (e.code==="42501" ? " Dükkânın hesabı durdurulmuş ya da bu dükkândan çıkarılmış olabilirsin." : "") + " Kayıtlar telefonda duruyor; bir dakika sonra yeniden denenecek."}; render(); flushTimer = setTimeout(()=>{ C.err = null; flush(); }, 60000); }
   }finally{ C.flushing = false; saving(); }
   if (!C.err && C.online && C.queue.some(q=>q.shop===C.shop?.id)) flush();
 }

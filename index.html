@@ -714,19 +714,19 @@ function stats(p, extra){
 const ORDER = ["urunler","satis","fatura","siparis","ana","veresiye","stok","plan","maliyet","fire","kar","rapor","ayarlar"];
 const GUIDE = {
   satis:{t:"Satış: barkodu okut, ödemeyi al",
-    s:["<b>İlk iş: Barkod tanıt.</b> Üstteki <b>Barkod tanıt</b> sekmesinde her ürünü bir kez okut; adını, fiyatını ve <b>rafta kaç tane olduğunu</b> yaz. Bir daha sormaz.",
+    s:["<b>İlk iş: Barkod tanıt.</b> Üstteki <b>Barkod Tanıt</b> sekmesinde her ürünü bir kez okut; adını, fiyatını ve <b>rafta kaç tane olduğunu</b> yaz. Bir daha sormaz.",
        "<b>Satış:</b> Barkodu okut, ürün sepete düşer. Aynı ürünü tekrar okutursan adet artar. Adetli okutmak için önce sayıyı yaz: <b>3*</b> sonra okut.",
-       "Barkodsuz ürünler (ekmek, poşet) için ürünü düzenleyip <b>Kasada hızlı düğme</b> yap; okutma kutusunun altında düğme olur. Hiç kaydı olmayan bir şeyi <b>Fiyat yaz</b> ile satarsın.",
+       "Barkodsuz ürünler (ekmek, poşet) için ürünü düzenleyip <b>Kasada Hızlı Düğme</b> yap; okutma kutusunun altında düğme olur. Hiç kaydı olmayan bir şeyi <b>Fiyat Yaz</b> ile satarsın.",
        "<b>Tartılı ürün:</b> Terazi etiketini okut, kilo kendiliğinden gelir. Etiket yoksa ürün adını yaz; kilo sorulur (350 yazarsan 0,350 kg).",
-       "<b>Müşteri:</b> Varsayılan <b>Müşterisiz (yoldan geçen)</b>. Veresiye yazacaksan müşteriyi seç ya da yeni ekle; borç onun defterine yazılır.",
-       "<b>Ödeme:</b> Nakit, Kart ya da Veresiye'ye bas (bilgisayarda F8, F9, F10). Alınan parayı yazarsan para üstünü gösterir. Yanlış olduysa çıkan bildirimdeki <b>Geri al</b>.",
-       "Her satışta stok raftan düşer. Müşteri ürünü geri getirirse <b>İade al</b>; satışı tamamen silmek için <b>Satışlar</b> sekmesinden iptal et.",
-       "<b>Kasa</b> sekmesi: sabah açılış parasını yaz, kasadan para çıkınca sebebiyle kaydet, akşam <b>Gün kapanışı</b>nda kasadaki parayı say. Eksik ya da fazlayı söyler."]},
+       "<b>Müşteri:</b> Varsayılan <b>Müşteri</b> (isimsiz). Veresiye yazacaksan <b>İsim Seç</b>e bas; müşteriyi seç ya da yeni ekle, borç onun defterine yazılır.",
+       "<b>Ödeme:</b> Nakit, Kart ya da Veresiye'ye bas (bilgisayarda F8, F9, F10). Alınan parayı yazarsan para üstünü gösterir. Yanlış olduysa çıkan bildirimdeki <b>Geri Al</b>.",
+       "Her satışta stok raftan düşer. Müşteri ürünü geri getirirse <b>İade Al</b>; satışı tamamen silmek için <b>Satışlar</b> sekmesinden iptal et.",
+       "<b>Kasa</b> sekmesi: sabah açılış parasını yaz, kasadan para çıkınca sebebiyle kaydet, akşam <b>Gün Kapanışı</b>nda kasadaki parayı say. Eksik ya da fazlayı söyler."]},
   rapor:{t:"Satış raporları: ne sattın, ne kazandın",
     s:["Hazır aralıklardan birini seç (Bugün, Bu hafta, Bu ay…) ya da tarihleri kendin gir.",
        "<b>Günlük, Haftalık, Aylık, Yıllık</b> seçimi tablonun nasıl gruplanacağını belirler.",
        "Toplam satış, nakit/kart/veresiye ayrımı, kâr, en çok satanlar ve kasa giriş-çıkışları sebepleriyle görünür.",
-       "<b>Excel'e indir</b> ile hepsini dosya olarak alırsın; muhasebeciye ya da kendine gönderebilirsin.",
+       "<b>Excel'e İndir</b> ile hepsini dosya olarak alırsın; muhasebeciye ya da kendine gönderebilirsin.",
        "Kâr sadece alış fiyatı bilinen ürünlerde hesaplanır; faturaları girdikçe tamamlanır."]},
   urunler:{t:"Ürünler: önce ne satıyorsun, onu tanıt",
     s:["En çok sattığın 10-20 ürünle başla. Sonra istediğin zaman yenisini eklersin.",
@@ -826,7 +826,7 @@ function guideCard(){
     </div></section>`;
 }
 const shopTitle = () => S.settings?.shopName || (S.mode==="cloud" && S.cloud?.shop?.name) || "";
-const titles = {satis:"Satış", rapor:"Satış raporları", yonetim:"Yönetici paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
+const titles = {satis:"Satış", rapor:"Satış Raporları", yonetim:"Yönetici paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
 
 function renderData(){ if (!S.quiet) render(true); }
 function renderToast(){
@@ -1291,13 +1291,13 @@ function viewProducts(){
       <label class="check"><input id="f-core" type="checkbox" ${v.core?"checked":""}> Temel ürün, bitmesin (müşteri bulamazsa başka dükkâna gider)</label>
       <p class="small muted">Araç günlerini Ayarlar'dan girdiysen "kaç günde bir" yerine o günler kullanılır. İlk tahmin sadece başlangıç için; faturalar geldikçe uygulama gerçek satışı öğrenir.</p>`}
 
-      <details class="how" ${(v.barcodes||[]).length||v.plu||v.byWeight||v.quick?"open":""}><summary>Kasada satış: barkod, terazi, hızlı düğme</summary><div class="stack" style="gap:8px;margin-top:8px">
+      <details class="how" ${(v.barcodes||[]).length||v.plu||v.byWeight||v.quick?"open":""}><summary>Kasada Satış: Barkod, Terazi, Hızlı Düğme</summary><div class="stack" style="gap:8px;margin-top:8px">
         <label>Barkod(lar)<input id="f-bc" inputmode="numeric" value="${esc((v.barcodes||[]).filter(b=>!(b.q>1)).map(b=>b.c).join(", "))}" placeholder="Okut ya da yaz; birden fazlaysa virgülle ayır"></label>
         <div class="grid2"><label>Koli barkodu<input id="f-bck" inputmode="numeric" value="${esc((v.barcodes||[]).filter(b=>b.q>1).map(b=>b.c).join(", "))}" placeholder="Varsa"></label>
           <label>Kolide kaç tane?<input id="f-bckq" inputmode="numeric" value="${esc(((v.barcodes||[]).find(b=>b.q>1)||{}).q || "")}" placeholder="Örn. 24"></label></div>
         <label class="check"><input id="f-w" type="checkbox" ${v.byWeight?"checked":""}> Kilo ile satılır (fiyat kilo fiyatı; kasada kilo sorulur)</label>
         <label>Terazi ürün kodu (etiket basan terazi için)<input id="f-plu" inputmode="numeric" value="${esc(v.plu??"")}" placeholder="Terazide bu ürüne verilen kod, örn. 12"></label>
-        <label class="check"><input id="f-quick" type="checkbox" ${v.quick?"checked":""}> Kasada hızlı düğme (barkodsuz ürünler: ekmek, poşet)</label>
+        <label class="check"><input id="f-quick" type="checkbox" ${v.quick?"checked":""}> Kasada Hızlı Düğme (barkodsuz ürünler: ekmek, poşet)</label>
       </div></details>
       <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="cancelEdit">Vazgeç</button>
       ${p?`<button type="button" class="danger" data-act="delProduct" data-id="${p.id}" style="margin-left:auto">${S.confirmDel===p.id?(usedIn(p.id).length?"Yine de sil":"Emin misin? Tekrar bas"):"Ürünü sil"}</button>`:""}</div>
@@ -1883,7 +1883,7 @@ function viewMenu(){
     ["maliyet","coin","Stok maliyeti","Maliyeti düşürme önerileri","c2"],["kar","chart","Kâr ve zarar","Ne kazanıyorsun, nerede kaybediyorsun","c1"],
     ["fire","trash","Fire","Haftalık bozulan mal","c3"],["urunler","tag","Ürünler","Ekle, düzenle, reçete","c6"],["ayarlar","gear","Ayarlar","Araç günleri, özel günler, Excel","c5"]];
   return `<div class="mgrid">${items.map(([t,i,l,d,c])=>`<button class="mtile" data-act="goto" data-tab="${t}" data-plain="1"><span class="bi ${c}">${ic(i,26)}</span><b>${l}</b><span class="small muted">${d}</span></button>`).join("")}
-    <button class="mtile" data-act="goRapor"><span class="bi c2">${ic("chart",26)}</span><b>Satış raporları</b><span class="small muted">Günlük, haftalık, aylık, yıllık · Excel</span></button>
+    <button class="mtile" data-act="goRapor"><span class="bi c2">${ic("chart",26)}</span><b>Satış Raporları</b><span class="small muted">Günlük, haftalık, aylık, yıllık · Excel</span></button>
     <button class="mtile" data-act="goKasa"><span class="bi c1">${ic("box",26)}</span><b>Kasa</b><span class="small muted">Açılış, giriş/çıkış, gün kapanışı</span></button>
     <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
     ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="toAdmin"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici ekranı</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
@@ -3400,7 +3400,7 @@ const POS_KEEP_DAYS = 35, POS_RATE_DAYS = 28;
 if (!Array.isArray(S.sales)) S.sales = [];
 if (!Array.isArray(S.cash)) S.cash = [];
 const PAY = {nakit:"Nakit", kart:"Kart", veresiye:"Veresiye"};
-const CASH_T = {acilis:"Açılış parası", giris:"Kasaya giriş", cikis:"Kasadan çıkış", kapanis:"Gün kapanışı"};
+const CASH_T = {acilis:"Açılış Parası", giris:"Kasaya Giriş", cikis:"Kasadan Çıkış", kapanis:"Gün Kapanışı"};
 const OUT_REASONS = ["Toptancı / plasiyer ödemesi","Ekmekçi","Fatura (elektrik, su, telefon)","Kira","Personel / yevmiye","Çay, yemek","Bankaya yatırıldı","Kendime aldım","Diğer"];
 const IN_REASONS = ["Bozuk para / para eklendi","Bankadan çekildi","Borç ödemesi (deftersiz)","Diğer"];
 const r2 = n => Math.round((Number(n)||0)*100)/100;
@@ -3569,7 +3569,7 @@ function prevLeft(t0){ const prev = S.cash.filter(x=>x.t==="kapanis" && tOf(x) <
 const custName = id => S.customers[id]?.name || "Silinmiş müşteri";
 function posTabs(){
   const v = S.posView || "sat";
-  const T = [["sat","Satış","coin"],["kasa","Kasa","box"],["liste","Satışlar","list"],["tanit","Barkod tanıt","tag"]];
+  const T = [["sat","Satış","coin"],["kasa","Kasa","box"],["liste","Satışlar","list"],["tanit","Barkod Tanıt","tag"]];
   return `<nav class="seg" aria-label="Satış bölümleri">${T.map(([k,l,i])=>`<button class="${v===k?"on":""}" data-act="posView" data-v="${k}" aria-current="${v===k?"page":"false"}">${ic(i,17)}<span>${l}</span></button>`).join("")}<button data-act="goRapor">${ic("chart",17)}<span>Raporlar</span></button></nav>`;
 }
 function viewPos(){
@@ -3597,14 +3597,14 @@ function viewSell(){
   if (S.posUnknown){ const u = S.posUnknown;
     L += `<div class="pcard warnc"><div><b>${u.plu ? `Terazi kodu ${esc(u.plu)} hiçbir ürüne bağlı değil` : `Bu barkod kayıtlı değil`}</b>
         <div class="small muted">${u.plu ? "Ürünü düzenleyip <b>Terazi ürün kodu</b> kısmına bu kodu yaz." : `<span class="num">${esc(u.code)}</span> · bir kez tanıt, bir daha sormaz`}</div></div>
-      <div class="row">${u.plu ? "" : `<button class="primary" data-act="posTanitThis">Ürünü tanıt</button>`}<button data-act="posPriceOpen">Fiyat yazıp sat</button><button class="link" data-act="posUnknownClose" aria-label="Kapat">Vazgeç</button></div></div>`; }
+      <div class="row">${u.plu ? "" : `<button class="primary" data-act="posTanitThis">Ürünü Tanıt</button>`}<button data-act="posPriceOpen">Fiyat Yazıp Sat</button><button class="link" data-act="posUnknownClose" aria-label="Kapat">Vazgeç</button></div></div>`; }
   if (S.posWeigh){ const p = S.products.find(x=>x.id===S.posWeigh);
     if (p) L += `<form id="weighform" class="pcard"><div><b>${esc(p.name)}</b><div class="small muted">${p.salePrice>0?TLx(p.salePrice)+" / kg":"kilo fiyatı yok"} · gram yazarsan (350) kiloya çevrilir</div></div>
       <div class="row nowrap"><input id="pw-kg" inputmode="decimal" placeholder="Kaç kilo? Örn. 0,350"><button class="primary" type="submit">Ekle</button><button type="button" class="link" data-act="posWeighClose">Vazgeç</button></div></form>`; }
-  if (S.posPrice) L += `<form id="priceform" class="pcard"><b>Fiyat yazıp sat</b>
+  if (S.posPrice) L += `<form id="priceform" class="pcard"><b>Fiyat Yazıp Sat</b>
       <div class="row nowrap"><input id="pp-name" value="${esc(S.posUnknown?.code ? "Barkodsuz ürün" : "Diğer")}" aria-label="Ürün adı" style="flex:1.4"><input id="pp-u" inputmode="decimal" placeholder="Tutar" aria-label="Tutar" style="flex:1"><button class="primary" type="submit">Ekle</button><button type="button" class="link" data-act="posPriceClose">Vazgeç</button></div></form>`;
-  L += `<div class="qrow" aria-label="Hızlı ürünler">${quick.map(p=>`<button data-act="posPick" data-id="${p.id}">${esc(p.name)}<span class="num">${p.salePrice>0?TLx(p.salePrice)+(p.byWeight?"/kg":""):""}</span></button>`).join("")}<button data-act="posPriceOpen" class="qother">${ic("plus",16)} Fiyat yaz</button></div>`;
-  L += `<section class="cart ${ret?"isret":""}"><div class="carth"><b>${ret?"İade edilecekler":"Sepet"}</b><span class="small muted">${n ? `${n} kalem` : ""}</span>${ret?`<span class="pill bad">İade modu</span>`:""}</div>
+  L += `<div class="qrow" aria-label="Hızlı ürünler">${quick.map(p=>`<button data-act="posPick" data-id="${p.id}">${esc(p.name)}<span class="num">${p.salePrice>0?TLx(p.salePrice)+(p.byWeight?"/kg":""):""}</span></button>`).join("")}<button data-act="posPriceOpen" class="qother">${ic("plus",16)} Fiyat Yaz</button></div>`;
+  L += `<section class="cart ${ret?"isret":""}"><div class="carth"><b>${ret?"İade Edilecekler":"Sepet"}</b><span class="small muted">${n ? `${n} kalem` : ""}</span>${ret?`<span class="pill bad">İade Modu</span>`:""}</div>
     ${n ? items.map(x=>{ const lt = r2(x.q*x.u), ed = S.posEditK===x.k;
       return `<div class="crow ${S.pos.flash===x.k?"flash":""}">
         <div class="cname"><b>${esc(x.n)}</b>
@@ -3618,20 +3618,20 @@ function viewSell(){
   // ---- sağ: müşteri, toplam, ödeme ----
   let R = `<aside class="posR">`;
   if (S.posLast && !n){ const s = S.posLast;
-    R += `<div class="lastsale"><span class="lsok">${ic("check",18)}</span><div><b>${s.r?"İade":"Satış"} tamam · ${TLx(s.tot)}</b><div class="small">${PAY[s.pay]}${s.c?` · ${esc(custName(s.c))}`:""}${s.al>0 && s.pay==="nakit" ? ` · para üstü <b class="num">${TLx(r2(s.al - s.tot))}</b>` : ""}</div></div></div>`; }
-  R += `<button class="custchip ${cust?"on":""}" data-act="posCustOpen" aria-expanded="${!!S.posPick}">${ic("user",18)}<span>${cust ? `<b>${esc(cust.name)}</b>${(()=>{ const b = custStats(cust).bal; return b>0 ? ` <span class="small muted">· borcu ${TLx(b)}</span>` : ""; })()}` : "Müşterisiz (yoldan geçen)"}</span><span class="small muted">${cust?"değiştir":"müşteri seç"}</span></button>`;
+    R += `<div class="lastsale"><span class="lsok">${ic("check",18)}</span><div><b>${s.r?"İade":"Satış"} tamam · ${TLx(s.tot)}</b><div class="small">${PAY[s.pay]}${s.c?` · ${esc(custName(s.c))}`:""}${s.al>0 && s.pay==="nakit" ? ` · Para Üstü <b class="num">${TLx(r2(s.al - s.tot))}</b>` : ""}</div></div></div>`; }
+  R += `<button class="custchip ${cust?"on":""}" data-act="posCustOpen" aria-expanded="${!!S.posPick}">${ic("user",18)}<span>${cust ? `<b>${esc(cust.name)}</b>${(()=>{ const b = custStats(cust).bal; return b>0 ? ` <span class="small muted">· Borcu ${TLx(b)}</span>` : ""; })()}` : "Müşteri"}</span><span class="small muted">${cust?"Değiştir":"İsim Seç"}</span></button>`;
   if (S.posPick){
     const cs = Object.values(S.customers).sort((a,b)=>a.name.localeCompare(b.name,"tr"));
     R += `<div class="custpick"><input id="pos-cq" placeholder="Müşteri ara" autocomplete="off" aria-label="Müşteri ara">
       <div id="pos-cl" class="custlist">${custListHtml(cs, "")}</div>
-      <div class="row">${cust ? `<button data-act="posCust" data-id="">Müşterisiz yap</button>` : ""}${S.posNewCust ? "" : `<button data-act="posNewCust" data-v="1">${ic("plus",16)} Yeni müşteri</button>`}<button class="link" data-act="posCustClose">Kapat</button></div>
-      ${S.posNewCust ? `<form id="pcform" class="stack" style="gap:6px"><input id="pc-name" placeholder="Adı soyadı"><input id="pc-phone" type="tel" placeholder="Telefon (isteğe bağlı)"><div class="row"><button class="primary" type="submit">Kaydet ve seç</button><button type="button" class="link" data-act="posNewCust" data-v="0">Vazgeç</button></div></form>` : ""}</div>`;
+      <div class="row">${cust ? `<button data-act="posCust" data-id="">İsimsiz Müşteri</button>` : ""}${S.posNewCust ? "" : `<button data-act="posNewCust" data-v="1">${ic("plus",16)} Yeni Müşteri</button>`}<button class="link" data-act="posCustClose">Kapat</button></div>
+      ${S.posNewCust ? `<form id="pcform" class="stack" style="gap:6px"><input id="pc-name" placeholder="Adı soyadı"><input id="pc-phone" type="tel" placeholder="Telefon (isteğe bağlı)"><div class="row"><button class="primary" type="submit">Kaydet ve Seç</button><button type="button" class="link" data-act="posNewCust" data-v="0">Vazgeç</button></div></form>` : ""}</div>`;
   }
   const lim = cust && cust.limit>0 && !ret ? (custStats(cust).bal + tot > cust.limit) : false;
-  R += `<div class="ptotal ${ret?"isret":""}"><span>${ret?"Geri verilecek":"Ödenecek"}</span><b class="num" id="pos-tot">${TLx(tot)}</b></div>`;
+  R += `<div class="ptotal ${ret?"isret":""}"><span>${ret?"Geri Verilecek":"Ödenecek"}</span><b class="num" id="pos-tot">${TLx(tot)}</b></div>`;
   if (n && !ret){
     const chips = [...new Set([Math.ceil(tot/10)*10, Math.ceil(tot/50)*50, Math.ceil(tot/100)*100, 200, 500])].filter(x=>x>=tot && x>0).slice(0,4);
-    R += `<div class="givenbox"><label for="pos-given" class="small muted">Alınan para</label><div class="row nowrap"><input id="pos-given" inputmode="decimal" placeholder="İsteğe bağlı" value="${esc(S.posGiven||"")}">${chips.map(v=>`<button class="chip" data-act="posGiven" data-v="${v}">${fmt(v)}</button>`).join("")}</div>
+    R += `<div class="givenbox"><label for="pos-given" class="small muted">Alınan Para</label><div class="row nowrap"><input id="pos-given" inputmode="decimal" placeholder="İsteğe bağlı" value="${esc(S.posGiven||"")}">${chips.map(v=>`<button class="chip" data-act="posGiven" data-v="${v}">${fmt(v)}</button>`).join("")}</div>
       <div id="pos-change" class="change">${changeHtml(tot)}</div></div>`;
   }
   if (lim) R += `<p class="notice warn small">${esc(cust.name)} için veresiye sınırı ${TLx(cust.limit)}; bu satışla aşılıyor.</p>`;
@@ -3639,9 +3639,9 @@ function viewSell(){
       <button class="pay p-nakit" data-act="posPay" data-pay="nakit" ${n?"":"disabled"}>${ic("coin",22)}<span>Nakit</span><kbd>F8</kbd></button>
       <button class="pay p-kart" data-act="posPay" data-pay="kart" ${n?"":"disabled"}>${ic("receipt",22)}<span>Kart</span><kbd>F9</kbd></button>
       <button class="pay p-ver" data-act="posPay" data-pay="veresiye" ${n?"":"disabled"}>${ic("book",22)}<span>Veresiye</span><kbd>F10</kbd></button></div>
-    <div class="row between postools"><button class="link ${ret?"dangerLink":""}" data-act="posRet">${ret?"İade modunu kapat":"İade al"}</button>
-      ${n ? `<button class="link ${S.posClear?"dangerLink":""}" data-act="posClear">${S.posClear?"Emin misin? Boşalt":"Sepeti boşalt"}</button>` : ""}</div>
-    <button class="kfoot" data-act="posView" data-v="kasa"><span>Kasada olması gereken</span><b class="num">${TLx(kd.beklenen)}</b><span class="small muted">Bugün ${kd.fis} satış · ${TLx(kd.ciro)}</span></button>
+    <div class="row between postools"><button class="link ${ret?"dangerLink":""}" data-act="posRet">${ret?"İade Modunu Kapat":"İade Al"}</button>
+      ${n ? `<button class="link ${S.posClear?"dangerLink":""}" data-act="posClear">${S.posClear?"Emin misin? Boşalt":"Sepeti Boşalt"}</button>` : ""}</div>
+    <button class="kfoot" data-act="posView" data-v="kasa"><span>Kasada Olması Gereken</span><b class="num">${TLx(kd.beklenen)}</b><span class="small muted">Bugün ${kd.fis} satış · ${TLx(kd.ciro)}</span></button>
   </aside>`;
   return `<div class="pos"><div class="posL">${L}</div>${R}</div>`;
 }
@@ -3649,7 +3649,7 @@ function changeHtml(tot){
   const g = pnum(S.posGiven);
   if (!(g > 0)) return "";
   const ch = r2(g - tot);
-  return ch >= 0 ? `<span>Para üstü</span><b class="num">${TLx(ch)}</b>` : `<span class="neg">Eksik</span><b class="num neg">${TLx(-ch)}</b>`;
+  return ch >= 0 ? `<span>Para Üstü</span><b class="num">${TLx(ch)}</b>` : `<span class="neg">Eksik</span><b class="num neg">${TLx(-ch)}</b>`;
 }
 function custListHtml(cs, q){
   const n = norm(q), L = cs.filter(c=>!n || norm(c.name + " " + (c.phone||"")).includes(n)).slice(0, 30);
@@ -3688,18 +3688,18 @@ async function posCancel(id, undo){
 
 function viewKasa(){
   const t0 = today0(), k = kasaDay(t0), f = S.kasaForm;
-  const rows = [["Açılış parası", k.acilis, ""], ["Nakit satış", k.nakit, "+"], ["Veresiyeden alınan ödeme", k.tahsilat, "+"], ["Kasaya giriş", k.giris, "+"], ["Kasadan çıkış", -k.cikis, "−"]];
-  let h = `<section class="card stack kasa"><div class="row between"><h2>Bugünkü kasa</h2><span class="small muted">${new Date(t0).toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</span></div>
-    <div class="kbig"><span>Kasada olması gereken nakit</span><b class="num">${TLx(k.beklenen)}</b></div>
+  const rows = [["Açılış Parası", k.acilis, ""], ["Nakit Satış", k.nakit, "+"], ["Veresiyeden Alınan Ödeme", k.tahsilat, "+"], ["Kasaya Giriş", k.giris, "+"], ["Kasadan Çıkış", -k.cikis, "−"]];
+  let h = `<section class="card stack kasa"><div class="row between"><h2>Bugünkü Kasa</h2><span class="small muted">${new Date(t0).toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</span></div>
+    <div class="kbig"><span>Kasada Olması Gereken Nakit</span><b class="num">${TLx(k.beklenen)}</b></div>
     <div class="klines">${rows.map(([l,v])=>`<div class="row between"><span>${l}</span><b class="num ${v<0?"neg":""}">${TLx(v)}</b></div>`).join("")}</div>
     <div class="tiles t4"><div class="tile"><span class="tn num">${k.fis}</span><span>satış</span></div><div class="tile"><span class="tn num">${TLx(k.ciro)}</span><span>toplam satış</span></div>
       <div class="tile"><span class="tn num">${TLx(k.kart)}</span><span>kartla</span></div><div class="tile"><span class="tn num">${TLx(k.veresiye)}</span><span>veresiyeye</span></div></div>
     ${k.iade ? `<p class="small muted">İadeler: ${TLx(k.iade)} (toplama dahil)</p>` : ""}
     ${k.kap ? `<p class="notice ${Math.abs(Number(k.kap.fark)||0)<0.01?"ok":"warn"}">Gün kapatıldı (${hhmm(tOf(k.kap))}): sayılan ${TLx(k.kap.say)}, ${Math.abs(Number(k.kap.fark)||0)<0.01 ? "kasa tuttu." : (k.kap.fark>0 ? `${TLx(k.kap.fark)} fazla.` : `${TLx(-k.kap.fark)} eksik.`)}${k.kap.birak!=null?` Yarına bırakılan: ${TLx(k.kap.birak)}.`:""}</p>` : ""}
-    <div class="row kbtns">${k.acilisSet ? "" : `<button data-act="kasaForm" data-f="acilis">Açılış parasını yaz</button>`}
-      <button class="primary" data-act="kasaForm" data-f="cikis">${ic("minus",18)} Kasadan para çıkışı</button>
-      <button data-act="kasaForm" data-f="giris">${ic("plus",18)} Kasaya para girişi</button>
-      <button data-act="kasaForm" data-f="kapanis">${ic("check",18)} Gün kapanışı</button></div>`;
+    <div class="row kbtns">${k.acilisSet ? "" : `<button data-act="kasaForm" data-f="acilis">Açılış Parasını Yaz</button>`}
+      <button class="primary" data-act="kasaForm" data-f="cikis">${ic("minus",18)} Kasadan Para Çıkışı</button>
+      <button data-act="kasaForm" data-f="giris">${ic("plus",18)} Kasaya Para Girişi</button>
+      <button data-act="kasaForm" data-f="kapanis">${ic("check",18)} Gün Kapanışı</button></div>`;
   if (f){
     const reasons = f==="cikis" ? OUT_REASONS : f==="giris" ? IN_REASONS : null, left = prevLeft(t0);
     h += `<form id="kasaform" class="card stack kform" data-f="${f}"><b>${CASH_T[f]}</b>
@@ -3713,7 +3713,7 @@ function viewKasa(){
   }
   h += `</section>`;
   const mv = k.cash.slice().reverse();
-  h += `<section class="card stack"><h2>Bugünkü kasa hareketleri</h2>${mv.length ? mv.map(x=>`<div class="krow"><span class="small muted num">${hhmm(tOf(x))}</span>
+  h += `<section class="card stack"><h2>Bugünkü Kasa Hareketleri</h2>${mv.length ? mv.map(x=>`<div class="krow"><span class="small muted num">${hhmm(tOf(x))}</span>
       <span><b>${CASH_T[x.t]||x.t}</b>${x.r?` · ${esc(x.r)}`:""}${x.n?`<br><span class="small muted">${esc(x.n)}</span>`:""}</span>
       <b class="num ${x.t==="cikis"?"neg":""}">${x.t==="cikis"?"−":""}${TLx(x.t==="kapanis" ? x.say : x.a)}</b>
       <button class="link ${S.kasaDel===x.id?"dangerLink":""}" data-act="kasaDel" data-id="${x.id}">${S.kasaDel===x.id?"Emin misin? Sil":"Sil"}</button></div>`).join("")
@@ -3740,8 +3740,8 @@ function viewSalesList(){
   const day = S.posDay || 0, t0 = today0() - day*DAY, [a,b] = dayRange(t0);
   const L = S.sales.filter(s=>{ const t = tOf(s); return t>=a && t<b; }).sort((x,y)=>y.d.localeCompare(x.d));
   const ok = L.filter(s=>!s.x);
-  let h = `<section class="card stack"><div class="row between"><h2>${day===0?"Bugünkü":day===1?"Dünkü":new Date(t0).toLocaleDateString("tr-TR",{day:"numeric",month:"long"})} satışlar</h2>
-      <div class="row"><button class="tog" data-act="posDay" data-v="${day+1}" ${day >= POS_KEEP_DAYS-1 ? "disabled" : ""}>${ic("back",16)} Önceki gün</button>${day>0?`<button class="tog" data-act="posDay" data-v="${day-1}">Sonraki gün</button>`:""}</div></div>
+  let h = `<section class="card stack"><div class="row between"><h2>${day===0?"Bugünkü":day===1?"Dünkü":new Date(t0).toLocaleDateString("tr-TR",{day:"numeric",month:"long"})} Satışlar</h2>
+      <div class="row"><button class="tog" data-act="posDay" data-v="${day+1}" ${day >= POS_KEEP_DAYS-1 ? "disabled" : ""}>${ic("back",16)} Önceki Gün</button>${day>0?`<button class="tog" data-act="posDay" data-v="${day-1}">Sonraki Gün</button>`:""}</div></div>
     <div class="tiles t4"><div class="tile"><span class="tn num">${ok.filter(s=>!s.r).length}</span><span>satış</span></div><div class="tile"><span class="tn num">${TLx(r2(ok.reduce((x,s)=>x+s.tot,0)))}</span><span>toplam</span></div>
       <div class="tile"><span class="tn num">${TLx(r2(ok.filter(s=>(s.pay||"nakit")==="nakit").reduce((x,s)=>x+s.tot,0)))}</span><span>nakit</span></div><div class="tile"><span class="tn num">${TLx(r2(ok.filter(s=>s.pay==="kart").reduce((x,s)=>x+s.tot,0)))}</span><span>kart</span></div></div>
     <p class="small muted">Daha eski satışlar ve haftalık, aylık özetler Raporlar'da.</p></section>`;
@@ -3753,7 +3753,7 @@ function viewSalesList(){
         <b class="num">${s.x?`<s>${TLx(s.tot)}</s>`:TLx(s.tot)}</b></button>
       ${open ? `<div class="sdet">${(s.it||[]).map(x=>`<div class="row between small"><span>${esc(x.n)} × ${qtyTxt(x.q, x.w)}</span><span class="num">${TLx(r2(x.q*x.u))}</span></div>`).join("")}
         ${s.al>0?`<div class="row between small muted"><span>Verilen / para üstü</span><span class="num">${TLx(s.al)} / ${TLx(r2(s.al-s.tot))}</span></div>`:""}
-        ${s.x ? `<p class="small muted">İptal edildi${s.xAt?" ("+hhmm(Date.parse(s.xAt))+")":""}.</p>` : `<button class="link ${S.posXc===s.id?"dangerLink":""}" data-act="posCancel" data-id="${s.id}">${S.posXc===s.id?"Emin misin? Satışı iptal et":"Satışı iptal et"}</button>`}</div>` : ""}
+        ${s.x ? `<p class="small muted">İptal edildi${s.xAt?" ("+hhmm(Date.parse(s.xAt))+")":""}.</p>` : `<button class="link ${S.posXc===s.id?"dangerLink":""}" data-act="posCancel" data-id="${s.id}">${S.posXc===s.id?"Emin misin? Satışı İptal Et":"Satışı İptal Et"}</button>`}</div>` : ""}
     </div>`; }).join("") : `<p class="small muted" style="padding:12px">Bu gün satış yok.</p>`}</section>`;
   return h;
 }
@@ -3761,7 +3761,7 @@ function viewSalesList(){
 function viewTanit(){
   const P = S.products.filter(p=>!isMade(p) || p.salePrice>0);
   const done = P.filter(p=>(p.barcodes||[]).length || p.plu).length;
-  let h = `<section class="card stack"><h2>Barkod tanıt</h2>
+  let h = `<section class="card stack"><h2>Barkod Tanıt</h2>
     <p class="small">Ürünleri tek tek okut. Kayıtlı değilse adını, fiyatını ve <b>rafta kaç tane olduğunu</b> yaz. Rafta kaç tane olduğunu bir kez yazınca stok bundan sonra her satışta kendiliğinden düşer.</p>
     <form id="tanform" class="posscan" autocomplete="off"><span class="posico">${ic("tag",20)}</span><input id="tan-scan" autocomplete="off" placeholder="Barkodu okut" aria-label="Barkod"><button class="primary" type="submit">Getir</button></form>
     <div class="hb"><span style="width:${P.length ? (100*done/P.length).toFixed(1) : 0}%;background:var(--accent)"></span></div>
@@ -3775,11 +3775,11 @@ function viewTanit(){
         <p class="small muted">Barkod: <span class="num">${esc(T.code)}</span>${T.q>1?` · koli (${T.q} ${esc(unitOf(p))})`:""}</p>
         <div class="grid2"><label>Satış fiyatı (TL${p.byWeight?" / kg":""})<input id="tp-sale" inputmode="decimal" value="${p.salePrice!=null?String(p.salePrice).replace(".",","):""}"></label>
           <label>Rafta kaç ${esc(unitOf(p))} var?<input id="tp-cnt" inputmode="decimal" placeholder="${cur.known?"şu an ≈ "+fmt(cur.v,1):"bilmiyorsan boş bırak"}"></label></div>
-        <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="tanClose">Sonraki ürün</button></div></form>`;
+        <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="tanClose">Sonraki Ürün</button></div></form>`;
     } else {
       const cands = S.products.filter(x=>!(x.barcodes||[]).length).sort((a,b)=>a.name.localeCompare(b.name,"tr"));
-      h += `<section class="card stack"><div class="row between"><h3>Yeni barkod</h3><span class="num small">${esc(T.code)}</span></div>
-        <div class="row"><button class="tog ${T.mode!=="bind"?"on":""}" data-act="tanMode" data-v="new">Yeni ürün</button><button class="tog ${T.mode==="bind"?"on":""}" data-act="tanMode" data-v="bind">Var olan ürüne bağla</button></div>`;
+      h += `<section class="card stack"><div class="row between"><h3>Yeni Barkod</h3><span class="num small">${esc(T.code)}</span></div>
+        <div class="row"><button class="tog ${T.mode!=="bind"?"on":""}" data-act="tanMode" data-v="new">Yeni Ürün</button><button class="tog ${T.mode==="bind"?"on":""}" data-act="tanMode" data-v="bind">Var Olan Ürüne Bağla</button></div>`;
       if (T.mode==="bind"){
         h += `<form id="tanbform" class="stack"><label>Ürün<select id="tb-p"><option value="">Seç</option>${cands.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("")}${S.products.filter(x=>(x.barcodes||[]).length).length ? `<optgroup label="Barkodu olanlar (ikinci barkod)">${S.products.filter(x=>(x.barcodes||[]).length).sort((a,b)=>a.name.localeCompare(b.name,"tr")).map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("")}</optgroup>` : ""}</select></label>
           <label class="check"><input id="tb-koli" type="checkbox"> Bu bir <b>koli</b> barkodu</label>
@@ -3793,7 +3793,7 @@ function viewTanit(){
             <label>Alış fiyatı (isteğe bağlı)<input id="tn-buy" inputmode="decimal"></label><label>Tedarikçi (isteğe bağlı)<input id="tn-sup" list="tn-sups"><datalist id="tn-sups">${sups.map(s=>`<option value="${esc(s)}">`).join("")}</datalist></label></div>
           <label class="check"><input id="tn-w" type="checkbox"> Kilo ile satılır (peynir, zeytin gibi; fiyat kilo fiyatı)</label>
           <label class="check"><input id="tn-per" type="checkbox"> Çabuk bozulur</label>
-          <div class="row"><button class="primary" type="submit">Ürünü kaydet</button><button type="button" data-act="tanClose">Vazgeç</button></div></form>`;
+          <div class="row"><button class="primary" type="submit">Ürünü Kaydet</button><button type="button" data-act="tanClose">Vazgeç</button></div></form>`;
       }
       h += `</section>`;
     }
@@ -3932,7 +3932,7 @@ function posMemDel(key, id){ S[key] = S[key].filter(y=>y.id!==id); if (key==="sa
 
 /* ---------- Satış raporları: günlük / haftalık / aylık / yıllık + Excel ---------- */
 const RG = {day:"Günlük", week:"Haftalık", month:"Aylık", year:"Yıllık"};
-const RP_PRE = [["bugun","Bugün","day"],["hafta","Bu hafta","day"],["buay","Bu ay","day"],["gecenay","Geçen ay","day"],["buyil","Bu yıl","month"],["12ay","Son 12 ay","month"],["yillar","Son 3 yıl","year"]];
+const RP_PRE = [["bugun","Bugün","day"],["hafta","Bu Hafta","day"],["buay","Bu Ay","day"],["gecenay","Geçen Ay","day"],["buyil","Bu Yıl","month"],["12ay","Son 12 Ay","month"],["yillar","Son 3 Yıl","year"]];
 const monday = t => { const d = new Date(t); d.setHours(0,0,0,0); const w = (d.getDay()+6)%7; d.setDate(d.getDate()-w); return d; };
 function rpPreset(k){
   const t = new Date(today0()), Y = t.getFullYear(), M = t.getMonth(); let a = t, b = t;
@@ -3997,16 +3997,16 @@ function rpSum(d){
 }
 function viewReport(){
   const R = rpState(), d = S.rpData;
-  let h = `<section class="card stack"><h2>Satış raporu</h2>
+  let h = `<section class="card stack"><h2>Satış Raporu</h2>
     <div class="fchips">${RP_PRE.map(([k,l])=>`<button class="tog ${R.pre===k?"on":""}" data-act="rpPre" data-k="${k}">${l}</button>`).join("")}</div>
     <div class="grid2"><label>Başlangıç<input id="rp-from" type="date" value="${esc(R.from)}"></label><label>Bitiş<input id="rp-to" type="date" value="${esc(R.to)}"></label></div>
     <div class="row" role="group" aria-label="Gruplama">${Object.entries(RG).map(([k,l])=>`<button class="tog ${R.g===k?"on":""}" data-act="rpG" data-g="${k}">${l}</button>`).join("")}</div>
-    <button class="primary" data-act="rpGo" ${S.rpBusy?"disabled":""}>${S.rpBusy?'<span class="spin"></span> Hazırlanıyor':"Raporu göster"}</button>
+    <button class="primary" data-act="rpGo" ${S.rpBusy?"disabled":""}>${S.rpBusy?'<span class="spin"></span> Hazırlanıyor':"Raporu Göster"}</button>
     ${S.rpErr ? `<p class="notice bad">${esc(S.rpErr)}</p>` : ""}</section>`;
-  if (!d) return h + `<p class="small muted">Tarih aralığını ve günlük, haftalık, aylık ya da yıllık gruplamayı seç; "Raporu göster"e bas. Raporu Excel olarak da indirebilirsin.</p>`;
+  if (!d) return h + `<p class="small muted">Tarih aralığını ve Günlük, Haftalık, Aylık ya da Yıllık gruplamayı seç; "Raporu Göster"e bas. Raporu Excel olarak da indirebilirsin.</p>`;
   const T = rpSum(d), eksik = (d.products||[]).filter(p=>p.eksik).length;
   h += `<section class="card stack"><div class="row between"><h2>${esc(new Date(ymdLocalT(d.from)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}))} – ${esc(new Date(ymdLocalT(d.to)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}))}</h2>
-      <button class="primary" data-act="rpXlsx">${ic("sheet",18)} Excel'e indir</button></div>
+      <button class="primary" data-act="rpXlsx">${ic("sheet",18)} Excel'e İndir</button></div>
     ${d.offline ? `<p class="notice warn small">İnternet yok; rapor telefondaki son ${POS_KEEP_DAYS} günün kayıtlarından hazırlandı.</p>` : ""}
     <div class="tiles t4">
       <div class="tile"><span class="tn num">${TLx(T.ciro)}</span><span>toplam satış</span></div>
@@ -4021,16 +4021,16 @@ function viewReport(){
       <div class="tile"><span class="tn num neg">${TLx(T.cikis)}</span><span>kasadan çıkış</span></div></div>
     ${T.iade ? `<p class="small muted">İadeler: ${TLx(T.iade)} (toplam satışa dahil).</p>` : ""}
     ${eksik ? `<p class="small muted">${eksik} ürünün alış fiyatı bilinmediği için kâra katılmadı. Fatura girildikçe ya da ürüne alış fiyatı yazılınca tamamlanır.</p>` : ""}</section>`;
-  h += `<section class="card stack"><h2>${RG[d.g]} döküm</h2><div class="tscroll"><table class="rtab"><thead><tr><th>Dönem</th><th>Fiş</th><th>Satış</th><th>Nakit</th><th>Kart</th><th>Veresiye</th><th>Kâr</th><th>Giriş</th><th>Çıkış</th></tr></thead><tbody>
+  h += `<section class="card stack"><h2>${RG[d.g]} Döküm</h2><div class="tscroll"><table class="rtab"><thead><tr><th>Dönem</th><th>Fiş</th><th>Satış</th><th>Nakit</th><th>Kart</th><th>Veresiye</th><th>Kâr</th><th>Giriş</th><th>Çıkış</th></tr></thead><tbody>
     ${d.periods.map(p=>`<tr><td>${esc(rpLabel(p.k, d.g))}</td><td class="num">${fmt(p.fis)}</td><td class="num">${TLx(p.ciro)}</td><td class="num">${TLx(p.nakit)}</td><td class="num">${TLx(p.kart)}</td><td class="num">${TLx(p.veresiye)}</td><td class="num">${TLx(r2(p.ciro_bilinen - p.maliyet))}</td><td class="num">${TLx(p.giris)}</td><td class="num neg">${TLx(p.cikis)}</td></tr>`).join("") || `<tr><td colspan="9" class="muted">Bu aralıkta kayıt yok.</td></tr>`}
     </tbody></table></div></section>`;
   const prods = d.products || [];
-  h += `<section class="card stack"><h2>En çok satanlar</h2>${prods.length ? `<div class="tscroll"><table class="rtab"><thead><tr><th>Ürün</th><th>Miktar</th><th>Satış</th><th>Kâr</th></tr></thead><tbody>
+  h += `<section class="card stack"><h2>En Çok Satanlar</h2>${prods.length ? `<div class="tscroll"><table class="rtab"><thead><tr><th>Ürün</th><th>Miktar</th><th>Satış</th><th>Kâr</th></tr></thead><tbody>
     ${prods.slice(0, 15).map(p=>{ const pp = S.products.find(x=>x.id===p.p); return `<tr><td>${esc(p.n||"?")}</td><td class="num">${fmt(p.q, 3)} ${esc(pp ? unitOf(pp) : "")}</td><td class="num">${TLx(p.ciro)}</td><td class="num">${p.eksik ? "–" : TLx(r2(p.ciro - (p.maliyet||0)))}</td></tr>`; }).join("")}</tbody></table></div>
     ${prods.length > 15 ? `<p class="small muted">${prods.length} ürünün hepsi Excel dosyasında.</p>` : ""}` : `<p class="small muted">Satış yok.</p>`}</section>`;
   const rs = d.reasons || [];
-  h += `<section class="card stack"><h2>Kasa giriş ve çıkışları (sebebe göre)</h2>${rs.length ? rs.map(r=>`<div class="row between krow2"><span><span class="pill ${r.t==="cikis"?"bad":"ok"}">${r.t==="cikis"?"Çıkış":"Giriş"}</span> ${esc(r.r)} <span class="small muted">· ${r.adet} kez</span></span><b class="num ${r.t==="cikis"?"neg":""}">${TLx(r.a)}</b></div>`).join("") : `<p class="small muted">Bu aralıkta kasa giriş ya da çıkışı yok.</p>`}
-    ${(d.cash||[]).length ? `<details class="how"><summary>Tüm kasa hareketleri (${d.cash.length})</summary>${d.cash.slice(-60).reverse().map(c=>`<div class="row between small krow2"><span>${new Date(Date.parse(c.d)).toLocaleString("tr-TR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})} · ${CASH_T[c.t]||c.t}${c.r?` · ${esc(c.r)}`:""}${c.n?` · ${esc(c.n)}`:""}</span><b class="num">${TLx(c.t==="kapanis" ? (c.say ?? c.a) : c.a)}</b></div>`).join("")}</details>` : ""}</section>`;
+  h += `<section class="card stack"><h2>Kasa Giriş ve Çıkışları (Sebebe Göre)</h2>${rs.length ? rs.map(r=>`<div class="row between krow2"><span><span class="pill ${r.t==="cikis"?"bad":"ok"}">${r.t==="cikis"?"Çıkış":"Giriş"}</span> ${esc(r.r)} <span class="small muted">· ${r.adet} kez</span></span><b class="num ${r.t==="cikis"?"neg":""}">${TLx(r.a)}</b></div>`).join("") : `<p class="small muted">Bu aralıkta kasa giriş ya da çıkışı yok.</p>`}
+    ${(d.cash||[]).length ? `<details class="how"><summary>Tüm Kasa Hareketleri (${d.cash.length})</summary>${d.cash.slice(-60).reverse().map(c=>`<div class="row between small krow2"><span>${new Date(Date.parse(c.d)).toLocaleString("tr-TR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})} · ${CASH_T[c.t]||c.t}${c.r?` · ${esc(c.r)}`:""}${c.n?` · ${esc(c.n)}`:""}</span><b class="num">${TLx(c.t==="kapanis" ? (c.say ?? c.a) : c.a)}</b></div>`).join("")}</details>` : ""}</section>`;
   return h;
 }
 async function rpXlsx(){

@@ -65,6 +65,10 @@ create table if not exists public.docs (
   primary key (shop_id, kind, id)
 );
 create index if not exists docs_shop_time on public.docs(shop_id, updated_at);
+-- Satış (sale) ve kasa hareketi (cash) kayıtları da aynı tabloda; tarihe göre hızlı bulunsun
+alter table public.docs drop constraint if exists docs_kind_check;
+alter table public.docs add constraint docs_kind_check check (kind in ('product','event','supplier','customer','settings','sale','cash'));
+create index if not exists docs_shop_kind_d on public.docs(shop_id, kind, (data->>'d')) where kind in ('sale','cash');
 
 -- Kayıt başvuruları: bakkal kendi başvurur, yönetici onaylar. Şifre sadece şifrelenmiş (bcrypt) saklanır.
 create table if not exists public.signup_requests (
@@ -469,6 +473,72 @@ begin
   return jsonb_build_object('ok', false, 'reason', 'wrong', 'left', maxf - r.fails - 1);
 end $$;
 
+-- ---------- Satış ve kasa ----------
+-- Stok için: telefonda tutulmayan eski satışların toplamı. p_req = [{"k":anahtar,"p":ürün,"s":başlangıç}], p_until hariç.
+create or replace function public.pos_sold(p_shop uuid, p_req jsonb, p_until text)
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_member(p_shop) then raise exception 'Bu dükkânın kayıtlarına erişimin yok.' using errcode = '42501'; end if;
+  if jsonb_typeof(coalesce(p_req,'[]'::jsonb)) <> 'array' or jsonb_array_length(coalesce(p_req,'[]'::jsonb)) > 5000 then
+    raise exception 'İstek hatalı.' using errcode = 'P0001'; end if;
+  return coalesce((select jsonb_object_agg(k, q) from (
+    select r->>'k' k, sum(coalesce((i->>'q')::numeric,0)) q
+    from jsonb_array_elements(p_req) r
+    join docs d on d.shop_id = p_shop and d.kind = 'sale' and not d.deleted
+      and not coalesce((d.data->>'x')::boolean, false)
+      and d.data->>'d' >= r->>'s' and d.data->>'d' < p_until
+    cross join lateral jsonb_array_elements(coalesce(d.data->'it','[]'::jsonb)) i
+    where i->>'p' = r->>'p'
+    group by r->>'k') t), '{}'::jsonb);
+end $$;
+
+-- Rapor: gün / hafta / ay / yıl. Tarihler ISO (UTC) metni; p_to hariç. Saat dilimi İstanbul.
+create or replace function public.pos_report(p_shop uuid, p_from text, p_to text, p_group text default 'day')
+returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare g text := case when p_group in ('day','week','month','year') then p_group else 'day' end; res jsonb;
+begin
+  if not is_member(p_shop) then raise exception 'Bu dükkânın kayıtlarına erişimin yok.' using errcode = '42501'; end if;
+  with s as (
+    select (d.data->>'d')::timestamptz at time zone 'Europe/Istanbul' lt, coalesce(d.data->>'pay','nakit') pay,
+           coalesce((d.data->>'tot')::numeric, 0) tot, coalesce((d.data->>'r')::boolean, false) iade, coalesce(d.data->'it','[]'::jsonb) it
+    from docs d where d.shop_id = p_shop and d.kind = 'sale' and not d.deleted and not coalesce((d.data->>'x')::boolean, false)
+      and d.data->>'d' >= p_from and d.data->>'d' < p_to),
+  it as (select s.lt, i->>'p' p, i->>'n' n, coalesce((i->>'q')::numeric,0) q, coalesce((i->>'u')::numeric,0) u, nullif(i->>'b','')::numeric b
+         from s cross join lateral jsonb_array_elements(s.it) i),
+  c as (select (d.data->>'d')::timestamptz at time zone 'Europe/Istanbul' lt, d.data->>'d' ds, d.data->>'t' t,
+               coalesce((d.data->>'a')::numeric, 0) a, d.data->>'r' r, d.data->>'n' n, nullif(d.data->>'say','')::numeric say
+        from docs d where d.shop_id = p_shop and d.kind = 'cash' and not d.deleted and d.data->>'d' >= p_from and d.data->>'d' < p_to),
+  o as (select (d.data->>'date')::timestamptz at time zone 'Europe/Istanbul' lt, coalesce((d.data->>'amount')::numeric, 0) a
+        from docs d where d.shop_id = p_shop and d.kind = 'event' and not d.deleted and d.data->>'type' = 'odeme'
+          and d.data->>'date' >= p_from and d.data->>'date' < p_to),
+  keys as (select date_trunc(g, lt) k from s union select date_trunc(g, lt) from c union select date_trunc(g, lt) from o),
+  per as (
+    select to_char(k.k, 'YYYY-MM-DD') k,
+      (select count(*) from s where date_trunc(g, s.lt) = k.k and not s.iade) fis,
+      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k) ciro,
+      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and s.iade) iade,
+      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and pay = 'nakit') nakit,
+      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and pay = 'kart') kart,
+      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and pay = 'veresiye') veresiye,
+      (select coalesce(sum(q*b),0) from it where date_trunc(g, it.lt) = k.k and b is not null) maliyet,
+      (select coalesce(sum(q*u),0) from it where date_trunc(g, it.lt) = k.k and b is not null) ciro_bilinen,
+      (select coalesce(sum(a),0) from o where date_trunc(g, o.lt) = k.k) tahsilat,
+      (select coalesce(sum(a),0) from c where date_trunc(g, c.lt) = k.k and t = 'giris') giris,
+      (select coalesce(sum(a),0) from c where date_trunc(g, c.lt) = k.k and t = 'cikis') cikis
+    from keys k)
+  select jsonb_build_object(
+    'group', g,
+    'periods', coalesce((select jsonb_agg(to_jsonb(per) order by per.k) from per), '[]'::jsonb),
+    'products', coalesce((select jsonb_agg(x order by (x->>'ciro')::numeric desc) from (
+        select jsonb_build_object('p', p, 'n', max(n), 'q', sum(q), 'ciro', sum(q*u),
+          'maliyet', sum(q*b) filter (where b is not null), 'eksik', bool_or(b is null)) x from it group by p) t), '[]'::jsonb),
+    'cash', coalesce((select jsonb_agg(jsonb_build_object('d', ds, 't', t, 'a', a, 'r', r, 'n', n, 'say', say) order by ds) from c), '[]'::jsonb),
+    'reasons', coalesce((select jsonb_agg(jsonb_build_object('t', t, 'r', coalesce(r,'Diğer'), 'a', a, 'adet', adet) order by t, a desc) from (
+        select t, r, sum(a) a, count(*) adet from c where t in ('giris','cikis') group by t, r) t), '[]'::jsonb)
+  ) into res;
+  return res;
+end $$;
+
 -- ---------- Kayıt başvurusu ----------
 -- Herkes (girişsiz) başvurabilir. Sahte başvuru yağmuruna karşı sınır var.
 drop function if exists public.request_signup(text, text, text, text, text, text);
@@ -576,7 +646,8 @@ begin
     'public.admin_set_shop_active(uuid,boolean)', 'public.rename_shop(uuid,text)', 'public.admin_overview()',
     'public.is_admin()', 'public.is_member(uuid)', 'public.is_owner(uuid)',
     'public.admin_signups()', 'public.admin_decide_signup(uuid,boolean)', 'public.change_my_password(text)', 'public.pw_ok()',
-    'public.set_my_pin(text,integer)', 'public.set_my_pin_mins(integer)', 'public.verify_my_pin(text)'] loop
+    'public.set_my_pin(text,integer)', 'public.set_my_pin_mins(integer)', 'public.verify_my_pin(text)',
+    'public.pos_sold(uuid,jsonb,text)', 'public.pos_report(uuid,text,text,text)'] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated', f);
   end loop;

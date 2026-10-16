@@ -219,6 +219,11 @@ body.wide .wrap{max-width:1200px}
 .srow2.cancel{opacity:.55}
 .srowh{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:8px;align-items:center;width:100%;border:0;border-radius:0;background:none;text-align:left;padding:10px 4px}
 .sdet{padding:4px 8px 12px 52px;display:flex;flex-direction:column;gap:4px}
+html,body{overscroll-behavior-y:contain}
+#ptr{position:fixed;top:0;left:50%;transform:translate(-50%,-70px);opacity:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 14px;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:14px;font-weight:600;transition:transform .2s,opacity .2s;pointer-events:none}
+#ptr .ptr-i{display:inline-flex;transition:transform .2s}
+#ptr.go .ptr-i{transform:rotate(180deg)}
+#ptr.go{color:var(--accent);border-color:var(--accent)}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
@@ -3965,6 +3970,38 @@ async function rpAct(a, t){
   return false;
 }
 document.addEventListener("change", ev=>{ if (ev.target.id==="rp-from" || ev.target.id==="rp-to"){ S.rp = {...rpState(), [ev.target.id==="rp-from"?"from":"to"]: ev.target.value, pre:null}; } });
+
+
+/* ---------- Aşağı çekip yenile ---------- */
+(function(){
+  const TH = 70; let y0 = null, d = 0, el = null, busy = false;
+  function box(){ if (!el){ el = document.createElement("div"); el.id = "ptr"; el.setAttribute("aria-hidden","true");
+      el.innerHTML = '<span class="ptr-i">↓</span><span class="ptr-t">Yenilemek için çek</span>'; document.body.appendChild(el); } return el; }
+  function hide(){ if (el && !busy){ el.style.transform = "translate(-50%,-70px)"; el.style.opacity = "0"; } }
+  const blocked = t => !!(t && t.closest && t.closest("input,textarea,select,.custlist,.tscroll,.posres,.pinpad,dialog"));
+  document.addEventListener("touchstart", e=>{
+    if (busy || e.touches.length!==1 || (document.scrollingElement||document.documentElement).scrollTop > 0 || blocked(e.target)){ y0 = null; return; }
+    y0 = e.touches[0].clientY; d = 0;
+  }, {passive:true});
+  document.addEventListener("touchmove", e=>{
+    if (y0==null) return;
+    d = (e.touches[0].clientY - y0) * 0.5;
+    if (d <= 0 || (document.scrollingElement||document.documentElement).scrollTop > 0){ hide(); return; }
+    const x = box(), k = Math.min(d, 110);
+    x.style.transition = "none"; x.style.transform = `translate(-50%,${k-50}px)`; x.style.opacity = String(Math.min(1, k/50));
+    x.classList.toggle("go", d >= TH); x.querySelector(".ptr-t").textContent = d >= TH ? "Bırak, yenilensin" : "Yenilemek için çek";
+  }, {passive:true});
+  document.addEventListener("touchend", ()=>{
+    if (y0==null) return; y0 = null;
+    if (el) el.style.transition = "";
+    if (d < TH){ hide(); return; }
+    busy = true; const x = box(); x.classList.add("go"); x.querySelector(".ptr-i").innerHTML = '<span class="spin"></span>'; x.querySelector(".ptr-t").textContent = "Yenileniyor";
+    x.style.transform = "translate(-50%,14px)"; x.style.opacity = "1";
+    try{ if (typeof cloudSaveNow==="function" && CLOUD_ON) cloudSaveNow(); }catch(_){}
+    setTimeout(()=>location.reload(), 250);
+  }, {passive:true});
+  document.addEventListener("touchcancel", ()=>{ y0 = null; hide(); }, {passive:true});
+})();
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

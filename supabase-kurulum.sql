@@ -476,56 +476,53 @@ end $$;
 -- ---------- Satış ve kasa ----------
 -- Stok için: telefonda tutulmayan eski satışların toplamı. p_req = [{"k":anahtar,"p":ürün,"s":başlangıç}], p_until hariç.
 create or replace function public.pos_sold(p_shop uuid, p_req jsonb, p_until text)
-returns jsonb language plpgsql stable security definer set search_path = public as $$
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
 begin
   if not is_member(p_shop) then raise exception 'Bu dükkânın kayıtlarına erişimin yok.' using errcode = '42501'; end if;
   if jsonb_typeof(coalesce(p_req,'[]'::jsonb)) <> 'array' or jsonb_array_length(coalesce(p_req,'[]'::jsonb)) > 5000 then
     raise exception 'İstek hatalı.' using errcode = 'P0001'; end if;
-  return coalesce((select jsonb_object_agg(k, q) from (
-    select r->>'k' k, sum(coalesce((i->>'q')::numeric,0)) q
-    from jsonb_array_elements(p_req) r
-    join docs d on d.shop_id = p_shop and d.kind = 'sale' and not d.deleted
-      and not coalesce((d.data->>'x')::boolean, false)
-      and d.data->>'d' >= r->>'s' and d.data->>'d' < p_until
-    cross join lateral jsonb_array_elements(coalesce(d.data->'it','[]'::jsonb)) i
-    where i->>'p' = r->>'p'
-    group by r->>'k') t), '{}'::jsonb);
+  -- satışlar bir kez taranır, ürünler eşleştirilir (ürün başına ayrı tarama yok)
+  return coalesce((
+    with r as (select x->>'k' k, x->>'p' p, x->>'s' s from jsonb_array_elements(p_req) x),
+    it as (select d.data->>'d' dd, i->>'p' p, coalesce((i->>'q')::numeric, 0) q
+           from docs d cross join lateral jsonb_array_elements(coalesce(d.data->'it','[]'::jsonb)) i
+           where d.shop_id = p_shop and d.kind = 'sale' and not d.deleted and not coalesce((d.data->>'x')::boolean, false)
+             and d.data->>'d' >= (select min(s) from r) and d.data->>'d' < p_until)
+    select jsonb_object_agg(k, q) from (select r.k, sum(it.q) q from r join it on it.p = r.p and it.dd >= r.s group by r.k) t
+  ), '{}'::jsonb);
 end $$;
 
--- Rapor: gün / hafta / ay / yıl. Tarihler ISO (UTC) metni; p_to hariç. Saat dilimi İstanbul.
+-- Rapor: gün / hafta / ay / yıl. Tarihler ISO (UTC) metni; p_to hariç. Saat dilimi İstanbul. Her kayıt türü bir kez taranır.
 create or replace function public.pos_report(p_shop uuid, p_from text, p_to text, p_group text default 'day')
-returns jsonb language plpgsql stable security definer set search_path = public as $$
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
 declare g text := case when p_group in ('day','week','month','year') then p_group else 'day' end; res jsonb;
 begin
   if not is_member(p_shop) then raise exception 'Bu dükkânın kayıtlarına erişimin yok.' using errcode = '42501'; end if;
   with s as (
-    select (d.data->>'d')::timestamptz at time zone 'Europe/Istanbul' lt, coalesce(d.data->>'pay','nakit') pay,
+    select date_trunc(g, (d.data->>'d')::timestamptz at time zone 'Europe/Istanbul') k, coalesce(d.data->>'pay','nakit') pay,
            coalesce((d.data->>'tot')::numeric, 0) tot, coalesce((d.data->>'r')::boolean, false) iade, coalesce(d.data->'it','[]'::jsonb) it
     from docs d where d.shop_id = p_shop and d.kind = 'sale' and not d.deleted and not coalesce((d.data->>'x')::boolean, false)
       and d.data->>'d' >= p_from and d.data->>'d' < p_to),
-  it as (select s.lt, i->>'p' p, i->>'n' n, coalesce((i->>'q')::numeric,0) q, coalesce((i->>'u')::numeric,0) u, nullif(i->>'b','')::numeric b
+  it as (select s.k, i->>'p' p, i->>'n' n, coalesce((i->>'q')::numeric,0) q, coalesce((i->>'u')::numeric,0) u, nullif(i->>'b','')::numeric b
          from s cross join lateral jsonb_array_elements(s.it) i),
-  c as (select (d.data->>'d')::timestamptz at time zone 'Europe/Istanbul' lt, d.data->>'d' ds, d.data->>'t' t,
+  c as (select date_trunc(g, (d.data->>'d')::timestamptz at time zone 'Europe/Istanbul') k, d.data->>'d' ds, d.data->>'t' t,
                coalesce((d.data->>'a')::numeric, 0) a, d.data->>'r' r, d.data->>'n' n, nullif(d.data->>'say','')::numeric say
         from docs d where d.shop_id = p_shop and d.kind = 'cash' and not d.deleted and d.data->>'d' >= p_from and d.data->>'d' < p_to),
-  o as (select (d.data->>'date')::timestamptz at time zone 'Europe/Istanbul' lt, coalesce((d.data->>'amount')::numeric, 0) a
+  o as (select date_trunc(g, (d.data->>'date')::timestamptz at time zone 'Europe/Istanbul') k, coalesce((d.data->>'amount')::numeric, 0) a
         from docs d where d.shop_id = p_shop and d.kind = 'event' and not d.deleted and d.data->>'type' = 'odeme'
           and d.data->>'date' >= p_from and d.data->>'date' < p_to),
-  keys as (select date_trunc(g, lt) k from s union select date_trunc(g, lt) from c union select date_trunc(g, lt) from o),
-  per as (
-    select to_char(k.k, 'YYYY-MM-DD') k,
-      (select count(*) from s where date_trunc(g, s.lt) = k.k and not s.iade) fis,
-      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k) ciro,
-      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and s.iade) iade,
-      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and pay = 'nakit') nakit,
-      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and pay = 'kart') kart,
-      (select coalesce(sum(tot),0) from s where date_trunc(g, s.lt) = k.k and pay = 'veresiye') veresiye,
-      (select coalesce(sum(q*b),0) from it where date_trunc(g, it.lt) = k.k and b is not null) maliyet,
-      (select coalesce(sum(q*u),0) from it where date_trunc(g, it.lt) = k.k and b is not null) ciro_bilinen,
-      (select coalesce(sum(a),0) from o where date_trunc(g, o.lt) = k.k) tahsilat,
-      (select coalesce(sum(a),0) from c where date_trunc(g, c.lt) = k.k and t = 'giris') giris,
-      (select coalesce(sum(a),0) from c where date_trunc(g, c.lt) = k.k and t = 'cikis') cikis
-    from keys k)
+  sa as (select k, count(*) filter (where not iade) fis, sum(tot) ciro, coalesce(sum(tot) filter (where iade),0) iade,
+                coalesce(sum(tot) filter (where pay = 'nakit'),0) nakit, coalesce(sum(tot) filter (where pay = 'kart'),0) kart,
+                coalesce(sum(tot) filter (where pay = 'veresiye'),0) veresiye from s group by k),
+  ia as (select k, coalesce(sum(q*b) filter (where b is not null),0) maliyet, coalesce(sum(q*u) filter (where b is not null),0) ciro_bilinen from it group by k),
+  ca as (select k, coalesce(sum(a) filter (where t = 'giris'),0) giris, coalesce(sum(a) filter (where t = 'cikis'),0) cikis from c group by k),
+  oa as (select k, sum(a) tahsilat from o group by k),
+  keys as (select k from sa union select k from ca union select k from oa),
+  per as (select to_char(keys.k, 'YYYY-MM-DD') k, coalesce(sa.fis,0) fis, coalesce(sa.ciro,0) ciro, coalesce(sa.iade,0) iade,
+                 coalesce(sa.nakit,0) nakit, coalesce(sa.kart,0) kart, coalesce(sa.veresiye,0) veresiye,
+                 coalesce(ia.maliyet,0) maliyet, coalesce(ia.ciro_bilinen,0) ciro_bilinen, coalesce(oa.tahsilat,0) tahsilat,
+                 coalesce(ca.giris,0) giris, coalesce(ca.cikis,0) cikis
+          from keys left join sa on sa.k = keys.k left join ia on ia.k = keys.k left join ca on ca.k = keys.k left join oa on oa.k = keys.k)
   select jsonb_build_object(
     'group', g,
     'periods', coalesce((select jsonb_agg(to_jsonb(per) order by per.k) from per), '[]'::jsonb),

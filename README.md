@@ -1,21 +1,59 @@
 # Bakkal Defteri
 
-Mahalle bakkalı için cep defteri: neyi ne kadar sipariş edeceğini söyler, bozulan malı ve kârını gösterir, veresiyeyi unutturmaz.
+Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş, fatura, veresiye, kâr-zarar ve raporlar. Telefonda, tablette ve bilgisayarda çalışır.
 
-**Aç:** https://joeamca.github.io/Bakkal/
+İki uygulama var. İkisi de **aynı hesap ve aynı verilerle** çalışır; birinde yapılan satış ötekinde de görünür.
 
-## Nasıl kullanılır
-1. Bağlantıyı telefonda **Chrome** ya da **Safari** ile aç.
-2. Yöneticinin verdiği **kullanıcı adı ve şifreyle** giriş yap.
-3. Üç noktadan (iPhone'da paylaş düğmesinden) **Ana ekrana ekle**.
-4. Mal gelince **Fatura**'ya gir; **Sipariş** ne alacağını söyler; haftada bir **Fire** kutusunu say.
+| | Adres | Kimin için |
+|---|---|---|
+| **Bakkal Defteri** (tam sürüm) | https://joeamca.github.io/Bakkal/ | Sipariş, fatura, ihtiyaç planı, fire dahil her şey |
+| **Bakkal Kolay** | https://joeamca.github.io/Bakkal/kolay/ | Büyük düğmeler, sade ekran: satış, kasa, stok, kâr. Ayrıntılar: [kolay/](kolay/) |
+
+<p>
+<img src="ekran/tam-bugun.jpg" width="200" alt="Bugün ekranı">
+<img src="ekran/tam-menu.jpg" width="200" alt="Menü">
+<img src="ekran/tam-satis.jpg" width="200" alt="Satış ekranı">
+</p>
+
+## Neler var?
+
+- **Satış:** Barkod okuyucuyla (USB ya da Bluetooth) okut, sepete eklensin. Nakit, kart ya da veresiye; isimli ya da isimsiz müşteri. Tartılı ürünler için terazi barkodu ve elle kilo girişi.
+- **Stok:** Her satışta raftan düşer. Sayım, fatura ve "bitti" bilgisiyle düzelir; azalan ve biten ürünleri gösterir.
+- **Kasa:** Açılış parası, kasaya giriş ve kasadan çıkış (sebebiyle), gün kapanışı ve kasa farkı.
+- **Sipariş ve fatura:** Hangi üründen ne kadar alınacağını, araç günlerine ve özel günlere göre hesaplar.
+- **Veresiye:** Kim ne kadar borçlu, ne zamandır bekliyor; borç sınırı.
+- **Kâr-zarar ve raporlar:** Günlük, haftalık, aylık, yıllık satış raporu ve Excel çıktısı (kasa giriş-çıkış sebepleri dahil).
+- **Bildirimler:** Stok azalınca, ürün bitince, gün kapanınca, kasadan büyük para çıkınca telefona, tablete ya da bilgisayara simgeli bildirim.
+- **Güvenlik:** Hesaba özel PIN kilidi, e-postayla şifre yenileme. Bir dükkân başka dükkânın kayıtlarını göremez; yönetici de kayıtların içeriğini görmez.
+
+## Nasıl kullanılır?
+
+1. Adresi telefonda **Chrome** ya da **Safari** ile aç.
+2. Hesabınla giriş yap (yoksa "Kayıt ol" ile başvur; yönetici onaylar).
+3. **Ana ekrana ekle:** Chrome'da üç nokta, iPhone'da Paylaş → "Ana Ekrana Ekle".
+4. Bildirim istiyorsan: Ayarlar → **Bildirimleri Aç**. iPhone'da önce ana ekrana eklemek gerekir.
 
 ## Bilmen gerekenler
+
 - Kayıtlar internette, dükkânın hesabında durur; telefon değişse de kaybolmaz.
-- İnternet yokken girilenler telefonda bekler, bağlantı gelince kendiliğinden gönderilir.
+- İnternet yokken yapılan satışlar telefonda bekler, bağlantı gelince kendiliğinden gönderilir. Kasa hiç durmaz.
 - Dükkân sahibi çalışanına ayrı hesap açabilir; kimin ne girdiği görünür.
-- Bir dükkân başka dükkânın kayıtlarını göremez; yönetici de kayıtların içeriğini görmez.
+
+<img src="ekran/simgeler.png" width="620" alt="Uygulama ve bildirim simgeleri">
+
+## Dosyalar
+
+| Dosya | Ne |
+|---|---|
+| `index.html` | Tam sürüm (tek dosya uygulama) |
+| `kolay/` | Bakkal Kolay |
+| `sw.js` | Bildirimler için servis çalışanı (sayfaları önbelleğe almaz) |
+| `manifest.webmanifest` | Ana ekrana ekleme bilgileri |
+| `icons/` | Uygulama ve bildirim simgeleri |
+| `supabase-kurulum.sql` | Veritabanı kurulumu |
 
 ## Kurulum (yönetici için)
-Veritabanı Supabase'te. `supabase-kurulum.sql` dosyası Supabase panelinde **SQL Editor**'de bir kez çalıştırılır.
+
+Veritabanı Supabase'te. `supabase-kurulum.sql` dosyası Supabase panelinde **SQL Editor**'de çalıştırılır; tekrar çalıştırmak güvenlidir, güncelleme gelince yeniden çalıştırılır.
+Bildirimler Supabase'teki `bildir` fonksiyonuyla gönderilir.
 Sitedeki Supabase anahtarı herkese açık "anon" anahtarıdır; verileri veritabanındaki satır güvenliği kuralları korur.

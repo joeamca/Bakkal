@@ -11,6 +11,7 @@ Bakkal Defteri'nin sade hâli: büyük düğmeler, az bölüm, kolay kullanım. 
 <img src="../ekran/kolay-kasa.jpg" width="200" alt="Kasa">
 <img src="../ekran/kolay-stok.jpg" width="200" alt="Stok">
 <img src="../ekran/kolay-kar.jpg" width="200" alt="Kâr ve Zarar">
+<img src="../ekran/kolay-urun.jpg" width="200" alt="Ürün Ekle">
 </p>
 
 ## Bölümler
@@ -25,7 +26,18 @@ Alt menüde sadece 5 bölüm var:
 | **Stok** | Rafta kaç tane var, fiyatı, tanesinden kalan kâr; sayım, ürün ekleme ve düzenleme |
 | **Kâr** | Satış − malın maliyeti − giderler = net kâr; bugün, bu hafta, bu ay, bu yıl; Excel'e indirme |
 
-Sağ üstteki ayar düğmesinde: ürün ekleme, barkodla ürün tanıtma, satış raporları, veresiye, bildirimler, ayarlar ve **tam sürüme geçiş**.
+Sağ üstteki ayar düğmesinde: ürün ekleme, satış raporları, veresiye, bildirimler, ayarlar ve **tam sürüme geçiş**.
+
+## Ürün eklemek
+
+Tek bir **Ürün Ekle** düğmesi var; barkodlu ya da barkodsuz fark etmez. Form 4 adım:
+
+1. **Barkod:** Varsa okut, yoksa geç. Barkod başka üründe kayıtlıysa hemen uyarır, "Onu Düzenle" der.
+2. **Ürün adı**
+3. **Satış ve alış fiyatı:** Tanesinden kaç TL ve yüzde kaç kâr kaldığını anında gösterir; zararına satışta uyarır.
+4. **Rafta kaç tane var:** − / + düğmeleriyle. Tartılı ürünler için tek dokunuşla "kilo" seçilir.
+
+Çok ürün girerken **Kaydet + Yeni** ile kaydedip hemen sıradakini okutursun. Satışta tanınmayan bir barkod okutulursa aynı form açılır; kaydedince ürün doğrudan sepete eklenir.
 
 ## Kâr nasıl hesaplanır?
 

@@ -427,28 +427,28 @@ table.mrp{border-collapse:collapse;font-size:13px;min-width:100%}
 
 /* ===== Canlı tema ===== */
 :root{
-  --accent:#059669; --accent-soft:#d1fae5; --accent-ink:#ffffff;
-  --c1:#10b981; --c2:#f59e0b; --c3:#f43f5e; --c4:#3b82f6; --c5:#64748b; --c6:#8b5cf6; --c7:#f97316; --c8:#06b6d4;
-  --bg:#f3f6f4; --line:#e2e8e4; --shadow:0 1px 2px rgba(16,24,20,.06),0 6px 18px rgba(16,24,20,.06);
-  --warn:#b45309; --warn-soft:#fef3c7; --bad:#e11d48; --bad-soft:#ffe4e6;
+  --accent:#0e8a7b; --accent-soft:#d9f2ee; --accent-ink:#ffffff; --ink:#1f2a27; --muted:#5d6b67;
+  --c1:#2e9e6b; --c2:#d9952b; --c3:#d9604f; --c4:#3f78d4; --c5:#6b7a8a; --c6:#7a63cf; --c7:#14958c; --c8:#2797c9;
+  --bg:#f4f6f3; --card:#ffffff; --line:#e3e8e4; --shadow:0 1px 2px rgba(20,40,34,.05),0 8px 22px rgba(20,40,34,.06);
+  --warn:#a5640f; --warn-soft:#fcf1dc; --bad:#c2473a; --bad-soft:#fbe7e3;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1311; --card:#161d1a; --line:#25302b; --accent:#34d399; --accent-soft:#0f2e24; --accent-ink:#06130e;
-  --c1:#34d399; --c2:#fbbf24; --c3:#fb7185; --c4:#60a5fa; --c5:#94a3b8; --c6:#a78bfa; --c7:#fb923c; --c8:#22d3ee;
-  --warn:#fbbf24; --warn-soft:#3a2a0a; --bad:#fb7185; --bad-soft:#3b1520; --shadow:none}}
+  --bg:#101614; --card:#18201d; --line:#26312d; --accent:#3cc4b0; --accent-soft:#12302b; --accent-ink:#071512; --ink:#e6ece9; --muted:#9caaa5;
+  --c1:#5bc58f; --c2:#ecb45e; --c3:#ec8577; --c4:#7ea7ee; --c5:#9aa8b6; --c6:#a491ea; --c7:#46c7bb; --c8:#62bde6;
+  --warn:#ecb45e; --warn-soft:#352711; --bad:#ec8577; --bad-soft:#3a1d19; --shadow:none}}
 :root[data-theme="dark"]{
-  --bg:#0e1311; --card:#161d1a; --line:#25302b; --accent:#34d399; --accent-soft:#0f2e24; --accent-ink:#06130e;
-  --c1:#34d399; --c2:#fbbf24; --c3:#fb7185; --c4:#60a5fa; --c5:#94a3b8; --c6:#a78bfa; --c7:#fb923c; --c8:#22d3ee;
-  --warn:#fbbf24; --warn-soft:#3a2a0a; --bad:#fb7185; --bad-soft:#3b1520; --shadow:none}
+  --bg:#101614; --card:#18201d; --line:#26312d; --accent:#3cc4b0; --accent-soft:#12302b; --accent-ink:#071512; --ink:#e6ece9; --muted:#9caaa5;
+  --c1:#5bc58f; --c2:#ecb45e; --c3:#ec8577; --c4:#7ea7ee; --c5:#9aa8b6; --c6:#a491ea; --c7:#46c7bb; --c8:#62bde6;
+  --warn:#ecb45e; --warn-soft:#352711; --bad:#ec8577; --bad-soft:#3a1d19; --shadow:none}
 .card,.mtile,.btile{border-radius:16px;box-shadow:var(--shadow)}
-button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#000)) ;border-color:transparent;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
+button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 82%,#063)) ;border-color:transparent;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
 /* Renkli simge kutuları */
-.bi{--bc:var(--c1);background:linear-gradient(140deg,color-mix(in srgb,var(--bc) 82%,#fff),var(--bc))!important;color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--bc) 35%,transparent);border-radius:14px}
+.bi{--bc:var(--c1);background:linear-gradient(140deg,color-mix(in srgb,var(--bc) 72%,#fff),var(--bc))!important;color:#fff;box-shadow:0 3px 10px color-mix(in srgb,var(--bc) 28%,transparent);border-radius:14px}
 .bi.c1{--bc:var(--c1)} .bi.c2{--bc:var(--c2)} .bi.c3{--bc:var(--c3)} .bi.c4{--bc:var(--c4)} .bi.c5{--bc:var(--c5)} .bi.c6{--bc:var(--c6)} .bi.c7{--bc:var(--c7)} .bi.c8{--bc:var(--c8)}
 :root[data-theme="dark"] .bi{color:#08110d}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bi{color:#08110d}}
 /* Kutucuklar kendi renginde hafif boyansın */
-.mtile:has(.bi),.btile:has(.bi){--tc:var(--c1);background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 13%,var(--card)),var(--card) 70%);border-color:color-mix(in srgb,var(--tc) 28%,var(--line))}
+.mtile:has(.bi),.btile:has(.bi){--tc:var(--c1);background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 9%,var(--card)),var(--card) 70%);border-color:color-mix(in srgb,var(--tc) 20%,var(--line))}
 .mtile:has(.bi.c2),.btile:has(.bi.c2){--tc:var(--c2)} .mtile:has(.bi.c3),.btile:has(.bi.c3){--tc:var(--c3)} .mtile:has(.bi.c4),.btile:has(.bi.c4){--tc:var(--c4)}
 .mtile:has(.bi.c5),.btile:has(.bi.c5){--tc:var(--c5)} .mtile:has(.bi.c6),.btile:has(.bi.c6){--tc:var(--c6)} .mtile:has(.bi.c7),.btile:has(.bi.c7){--tc:var(--c7)} .mtile:has(.bi.c8),.btile:has(.bi.c8){--tc:var(--c8)}
 .mtile:active,.btile:active{transform:scale(.98)}
@@ -461,6 +461,9 @@ nav.tabs button[data-tab="fatura"]{--tc:var(--c6)} nav.tabs button[data-tab="ver
 nav.tabs button svg{padding:4px 12px;width:48px!important;height:32px!important;border-radius:999px;transition:background .15s,color .15s;color:color-mix(in srgb,var(--tc) 70%,var(--muted))}
 nav.tabs button[aria-current="page"]{color:var(--tc);box-shadow:none}
 nav.tabs button[aria-current="page"] svg{background:color-mix(in srgb,var(--tc) 18%,transparent);color:var(--tc)}
+.icon .f{fill:currentColor;fill-opacity:.18;stroke:none}
+.bi .icon .f{fill-opacity:.3}
+nav.tabs button[aria-current="page"] svg .f{fill-opacity:.28}
 /* Üst başlık */
 header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(--accent) 60%,var(--ink)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .chip{font-weight:600}
@@ -3634,7 +3637,7 @@ function viewPos(){
   if (v==="tanit") return h + viewTanit();
   return h + viewSell();
 }
-const BARCODE_SVG = `<svg class="icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>`;
+const BARCODE_SVG = `<svg class="icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect class="f" x="6" y="7" width="12" height="10" rx="1"/><path d="M8 8v8M11 8v8M13.5 8v8M16 8v8"/></svg>`;
 function viewSell(){
   const items = S.pos.items, tot = cartTotal(), ret = !!S.pos.ret;
   const quick = S.products.filter(p=>p.quick).sort((a,b)=>a.name.localeCompare(b.name,"tr"));
@@ -4163,7 +4166,8 @@ document.addEventListener("change", ev=>{ if (ev.target.id==="rp-from" || ev.tar
     document.body.classList.toggle("kb", kb);
     // iOS klavye kapandıktan sonra sabit öğeleri eski yerde bırakabiliyor: menüyü görünen alanın dibine taşı
     const off = Math.round(vv.offsetTop + vv.height - window.innerHeight);
-    n.style.transform = (!kb && Math.abs(off) > 1) ? "translateY(" + off + "px)" : "";
+    const sy = window.scrollY || 0;
+    n.style.transform = (!kb && off > 1 && sy >= 0 && vv.offsetTop >= 0 && !document.getElementById("ptr")?.classList.contains("go")) ? "translateY(" + off + "px)" : "";
   }
   const later = () => { if (!raf) raf = requestAnimationFrame(fix); };
   window.navFix = fix;
@@ -4294,6 +4298,37 @@ document.addEventListener("change", ev=>{
 });
 
 ICONS.bell = '<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>';
+
+
+/* ---------- Çift tonlu simgeler ---------- */
+Object.assign(ICONS, {
+  home:'<path class="f" d="M5 10.5 12 5l7 5.5V19a1 1 0 0 1-1 1h-4v-5h-4v5H6a1 1 0 0 1-1-1z"/><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-9"/>',
+  list:'<rect class="f" x="3" y="4" width="18" height="16" rx="3"/><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9h7M10 12h7M10 15h5"/><path d="M7 9h.01M7 12h.01M7 15h.01"/>',
+  receipt:'<path class="f" d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  book:'<path class="f" d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12H8a3 3 0 0 0-3 3z"/><path d="M5 20V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15H8a3 3 0 0 1-3-3"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 7h6M9 10h4"/>',
+  grid:'<rect class="f" x="4" y="4" width="7" height="7" rx="2"/><rect class="f" x="13" y="13" width="7" height="7" rx="2"/><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+  box:'<path class="f" d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 7.5l9-4.5 9 4.5-9 4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/><path d="M12 12v9"/><path d="M7.5 5.3l9 4.5"/>',
+  plan:'<rect class="f" x="3" y="5" width="18" height="5" rx="2"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7 14h3M7 17h6M15 14h2"/>',
+  coin:'<circle class="f" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M10 7v10"/><path d="M8 11l6-2.5M8 14l6-2.5"/><path d="M10 17c3 0 5-1.5 5-4.5"/>',
+  chart:'<rect class="f" x="3" y="3" width="18" height="18" rx="4"/><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7.5 16v-3M12 16V8M16.5 16v-5"/>',
+  trash:'<path class="f" d="M6 7h12l-1 13H7z"/><path d="M4 7h16M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>',
+  tag:'<path class="f" d="M3 4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z"/><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.6"/>',
+  gear:'<circle class="f" cx="12" cy="12" r="8"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.2"/>',
+  help:'<circle class="f" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.8-2.5 2-2.5 4"/><path d="M12 17.5h.01"/>',
+  sheet:'<path class="f" d="M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M8 12h8M8 16h8M12 12v6"/>',
+  truck:'<path class="f" d="M2 6h11v10H2z"/><path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+  alert:'<path class="f" d="M12 3l10 18H2z"/><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  user:'<circle class="f" cx="12" cy="8" r="4"/><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+  plus:'<circle class="f" cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>',
+  minus:'<circle class="f" cx="12" cy="12" r="9"/><path d="M7 12h10"/>',
+  search:'<circle class="f" cx="11" cy="11" r="7"/><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  bell:'<path class="f" d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>',
+  cash:'<rect class="f" x="2" y="6" width="20" height="12" rx="2"/><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v.01M18 14.5v.01"/>',
+  scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect class="f" x="6" y="7" width="12" height="10" rx="1"/><path d="M8 8v8M11 8v8M13.5 8v8M16 8v8"/>',
+  lock:'<rect class="f" x="4" y="10" width="16" height="11" rx="2"/><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
+});
+(function(){ const M = {satis:"scan", ana:"home", siparis:"list", fatura:"receipt", veresiye:"book", menu:"grid"};
+  document.querySelectorAll('nav.tabs[aria-label="Bölümler"] button').forEach(b=>{ const k = M[b.dataset.tab], sv = b.querySelector("svg"); if (k && sv) sv.outerHTML = ic(k, 24); }); })();
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

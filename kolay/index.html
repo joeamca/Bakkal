@@ -427,28 +427,28 @@ table.mrp{border-collapse:collapse;font-size:13px;min-width:100%}
 
 /* ===== Canlı tema ===== */
 :root{
-  --accent:#059669; --accent-soft:#d1fae5; --accent-ink:#ffffff;
-  --c1:#10b981; --c2:#f59e0b; --c3:#f43f5e; --c4:#3b82f6; --c5:#64748b; --c6:#8b5cf6; --c7:#f97316; --c8:#06b6d4;
-  --bg:#f3f6f4; --line:#e2e8e4; --shadow:0 1px 2px rgba(16,24,20,.06),0 6px 18px rgba(16,24,20,.06);
-  --warn:#b45309; --warn-soft:#fef3c7; --bad:#e11d48; --bad-soft:#ffe4e6;
+  --accent:#0e8a7b; --accent-soft:#d9f2ee; --accent-ink:#ffffff; --ink:#1f2a27; --muted:#5d6b67;
+  --c1:#2e9e6b; --c2:#d9952b; --c3:#d9604f; --c4:#3f78d4; --c5:#6b7a8a; --c6:#7a63cf; --c7:#14958c; --c8:#2797c9;
+  --bg:#f4f6f3; --card:#ffffff; --line:#e3e8e4; --shadow:0 1px 2px rgba(20,40,34,.05),0 8px 22px rgba(20,40,34,.06);
+  --warn:#a5640f; --warn-soft:#fcf1dc; --bad:#c2473a; --bad-soft:#fbe7e3;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1311; --card:#161d1a; --line:#25302b; --accent:#34d399; --accent-soft:#0f2e24; --accent-ink:#06130e;
-  --c1:#34d399; --c2:#fbbf24; --c3:#fb7185; --c4:#60a5fa; --c5:#94a3b8; --c6:#a78bfa; --c7:#fb923c; --c8:#22d3ee;
-  --warn:#fbbf24; --warn-soft:#3a2a0a; --bad:#fb7185; --bad-soft:#3b1520; --shadow:none}}
+  --bg:#101614; --card:#18201d; --line:#26312d; --accent:#3cc4b0; --accent-soft:#12302b; --accent-ink:#071512; --ink:#e6ece9; --muted:#9caaa5;
+  --c1:#5bc58f; --c2:#ecb45e; --c3:#ec8577; --c4:#7ea7ee; --c5:#9aa8b6; --c6:#a491ea; --c7:#46c7bb; --c8:#62bde6;
+  --warn:#ecb45e; --warn-soft:#352711; --bad:#ec8577; --bad-soft:#3a1d19; --shadow:none}}
 :root[data-theme="dark"]{
-  --bg:#0e1311; --card:#161d1a; --line:#25302b; --accent:#34d399; --accent-soft:#0f2e24; --accent-ink:#06130e;
-  --c1:#34d399; --c2:#fbbf24; --c3:#fb7185; --c4:#60a5fa; --c5:#94a3b8; --c6:#a78bfa; --c7:#fb923c; --c8:#22d3ee;
-  --warn:#fbbf24; --warn-soft:#3a2a0a; --bad:#fb7185; --bad-soft:#3b1520; --shadow:none}
+  --bg:#101614; --card:#18201d; --line:#26312d; --accent:#3cc4b0; --accent-soft:#12302b; --accent-ink:#071512; --ink:#e6ece9; --muted:#9caaa5;
+  --c1:#5bc58f; --c2:#ecb45e; --c3:#ec8577; --c4:#7ea7ee; --c5:#9aa8b6; --c6:#a491ea; --c7:#46c7bb; --c8:#62bde6;
+  --warn:#ecb45e; --warn-soft:#352711; --bad:#ec8577; --bad-soft:#3a1d19; --shadow:none}
 .card,.mtile,.btile{border-radius:16px;box-shadow:var(--shadow)}
-button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#000)) ;border-color:transparent;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
+button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 82%,#063)) ;border-color:transparent;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
 /* Renkli simge kutuları */
-.bi{--bc:var(--c1);background:linear-gradient(140deg,color-mix(in srgb,var(--bc) 82%,#fff),var(--bc))!important;color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--bc) 35%,transparent);border-radius:14px}
+.bi{--bc:var(--c1);background:linear-gradient(140deg,color-mix(in srgb,var(--bc) 72%,#fff),var(--bc))!important;color:#fff;box-shadow:0 3px 10px color-mix(in srgb,var(--bc) 28%,transparent);border-radius:14px}
 .bi.c1{--bc:var(--c1)} .bi.c2{--bc:var(--c2)} .bi.c3{--bc:var(--c3)} .bi.c4{--bc:var(--c4)} .bi.c5{--bc:var(--c5)} .bi.c6{--bc:var(--c6)} .bi.c7{--bc:var(--c7)} .bi.c8{--bc:var(--c8)}
 :root[data-theme="dark"] .bi{color:#08110d}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bi{color:#08110d}}
 /* Kutucuklar kendi renginde hafif boyansın */
-.mtile:has(.bi),.btile:has(.bi){--tc:var(--c1);background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 13%,var(--card)),var(--card) 70%);border-color:color-mix(in srgb,var(--tc) 28%,var(--line))}
+.mtile:has(.bi),.btile:has(.bi){--tc:var(--c1);background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 9%,var(--card)),var(--card) 70%);border-color:color-mix(in srgb,var(--tc) 20%,var(--line))}
 .mtile:has(.bi.c2),.btile:has(.bi.c2){--tc:var(--c2)} .mtile:has(.bi.c3),.btile:has(.bi.c3){--tc:var(--c3)} .mtile:has(.bi.c4),.btile:has(.bi.c4){--tc:var(--c4)}
 .mtile:has(.bi.c5),.btile:has(.bi.c5){--tc:var(--c5)} .mtile:has(.bi.c6),.btile:has(.bi.c6){--tc:var(--c6)} .mtile:has(.bi.c7),.btile:has(.bi.c7){--tc:var(--c7)} .mtile:has(.bi.c8),.btile:has(.bi.c8){--tc:var(--c8)}
 .mtile:active,.btile:active{transform:scale(.98)}
@@ -461,18 +461,24 @@ nav.tabs button[data-tab="fatura"]{--tc:var(--c6)} nav.tabs button[data-tab="ver
 nav.tabs button svg{padding:4px 12px;width:48px!important;height:32px!important;border-radius:999px;transition:background .15s,color .15s;color:color-mix(in srgb,var(--tc) 70%,var(--muted))}
 nav.tabs button[aria-current="page"]{color:var(--tc);box-shadow:none}
 nav.tabs button[aria-current="page"] svg{background:color-mix(in srgb,var(--tc) 18%,transparent);color:var(--tc)}
+.icon .f{fill:currentColor;fill-opacity:.18;stroke:none}
+.bi .icon .f{fill-opacity:.3}
+nav.tabs button[aria-current="page"] svg .f{fill-opacity:.28}
 /* Üst başlık */
 header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(--accent) 60%,var(--ink)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .chip{font-weight:600}
 
 /* ===== Bakkal Kolay ===== */
-html.kolay{--accent:#ea580c;--accent-soft:#ffedd5}
-@media (prefers-color-scheme:dark){html.kolay:not([data-theme="light"]){--accent:#fb923c;--accent-soft:#3b1f0c}}
-html.kolay[data-theme="dark"]{--accent:#fb923c;--accent-soft:#3b1f0c}
-html.kolay body{font-size:18px}
+html.kolay{--accent:#2f6fcf;--accent-soft:#e1ebfa}
+@media (prefers-color-scheme:dark){html.kolay:not([data-theme="light"]){--accent:#7aa7f0;--accent-soft:#16253d;--accent-ink:#08111f}}
+html.kolay[data-theme="dark"]{--accent:#7aa7f0;--accent-soft:#16253d;--accent-ink:#08111f}
+html.kolay body{font-size:19px}
+html.kolay #banner .note{display:none}
+html.kolay nav.tabs{grid-template-columns:repeat(5,1fr)}
+html.kolay nav.tabs button{font-size:14px;min-height:64px}
 html.kolay #guideBtn{display:none}
-html.kolay nav.tabs button[data-tab="k-ana"]{--tc:var(--c1)} html.kolay nav.tabs button[data-tab="satis"]{--tc:var(--c7)} html.kolay nav.tabs button[data-tab="k-kasa"]{--tc:var(--c8)}
-html.kolay nav.tabs button[data-tab="k-stok"]{--tc:var(--c4)} html.kolay nav.tabs button[data-tab="k-kar"]{--tc:var(--c6)} html.kolay nav.tabs button[data-tab="k-daha"]{--tc:var(--c5)}
+html.kolay nav.tabs button[data-tab="k-ana"]{--tc:var(--accent)} html.kolay nav.tabs button[data-tab="satis"]{--tc:var(--c7)} html.kolay nav.tabs button[data-tab="k-kasa"]{--tc:var(--c1)}
+html.kolay nav.tabs button[data-tab="k-stok"]{--tc:var(--c4)} html.kolay nav.tabs button[data-tab="k-kar"]{--tc:var(--c6)}
 html.kolay nav.tabs button span{font-weight:600}
 .khello h2{font-size:24px}
 .kstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -481,10 +487,10 @@ html.kolay nav.tabs button span{font-weight:600}
 .kstats.two .kstat{grid-template-columns:minmax(0,1fr)}
 .kstats.two .kstat .bi{grid-row:auto;width:40px;height:40px;margin-bottom:6px}
 .kstats.two .kstat b{font-size:22px}
-.kstat{--tc:var(--c1);display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;column-gap:12px;align-items:center;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid color-mix(in
+.kstat{--tc:var(--c1);display:grid;grid-template-columns:auto 1fr;grid-templat
 </head>
 <body>
- srgb,var(--tc) 30%,var(--line));
+e-rows:auto auto auto;column-gap:12px;align-items:center;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid color-mix(in srgb,var(--tc) 30%,var(--line));
   background:linear-gradient(150deg,color-mix(in srgb,var(--tc) 16%,var(--card)),var(--card) 75%);box-shadow:var(--shadow);font:inherit;color:inherit;min-height:0}
 .kstat .bi{grid-row:1/4;grid-column:1}
 .kstat > :not(.bi){grid-column:2;min-width:0}
@@ -535,6 +541,42 @@ button.big{font-size:18px;min-height:54px;display:inline-flex;align-items:center
 
 .kbar input{min-width:0}
 html.kolay .wrap{overflow-x:clip}
+
+/* Kolay: daha büyük, daha sade */
+.ksell{display:flex;align-items:center;gap:16px;width:100%;padding:18px 20px;border-radius:22px;border:0;text-align:left;font:inherit;color:#fff;min-height:96px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--c7) 85%,#fff),color-mix(in srgb,var(--c7) 85%,#023));box-shadow:0 8px 24px color-mix(in srgb,var(--c7) 30%,transparent)}
+.ksell b{display:block;font-size:26px;line-height:1.1}
+.ksell small{font-size:15px;opacity:.9}
+.ksell .kse{display:inline-flex;width:62px;height:62px;border-radius:18px;align-items:center;justify-content:center;background:rgba(255,255,255,.2)}
+.ksell .kgo{margin-left:auto;transform:rotate(180deg);opacity:.8}
+.ksell .icon .f{fill-opacity:.35}
+:root[data-theme="dark"] .ksell{color:#06231f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ksell{color:#06231f}}
+.ksum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ksum button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);font:inherit;color:inherit;text-align:left;min-height:0}
+.ksum span{font-size:13px;font-weight:600}
+.ksum b{font-size:20px;font-family:var(--display);font-weight:700;overflow-wrap:anywhere}
+.ksum b.pos{color:var(--c1)}
+.ksum small{font-size:12px;color:var(--muted)}
+.kgrid.k4{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (min-width:700px){.kgrid.k4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.kgrid.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kgrid.k3 .ktile{min-height:130px;padding:14px 12px}
+.kgrid.k3 .ktile b{font-size:17px}
+.kmore{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.kmore.two{grid-template-columns:1fr 1fr}
+.kmore button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border-radius:14px;font-size:14px;min-height:0;color:var(--muted)}
+.kmore button .icon{color:var(--accent)}
+.kh{display:flex;align-items:center;gap:8px}
+.kcash{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:22px 16px;border-radius:22px;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--c1) 14%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--c1) 22%,var(--line));box-shadow:var(--shadow)}
+.kcash span{font-weight:600}
+.kcash b{font-size:40px;font-family:var(--display);font-weight:700;color:var(--c1);line-height:1.1}
+.kcash small{font-size:14px;color:var(--muted)}
+.kreasons{display:flex;flex-wrap:wrap;gap:8px}
+.kreasons .small{width:100%}
+.kreasons .tog{min-height:44px;font-size:16px}
+.kwelcome .kbig{width:72px;height:72px;border-radius:22px;margin:0 auto}
 </style>
 
 <noscript><style>.wrap,nav.tabs,#toast{display:none!important}</style><div style="max-width:560px;margin:24px auto;padding:20px;font:18px/1.5 system-ui,sans-serif;background:#fff;border:2px solid #0f6b55;border-radius:14px;color:#1d2421"><b style="font-size:22px">Bakkal Defteri</b><p>Bu dosya burada çalışmıyor. Aşağıdaki düğmeye bas, uygulama tarayıcıda açılsın.</p><a href="https://joeamca.github.io/Bakkal/kolay/" style="display:block;text-align:center;background:#0f6b55;color:#fff;padding:16px;border-radius:12px;text-decoration:none;font-weight:700;font-size:20px">Uygulamayı aç</a><p style="font-size:15px;color:#5f6b66;overflow-wrap:anywhere">Açılmazsa bu adresi Chrome ya da Safari'ye yaz:<br>https://joeamca.github.io/Bakkal/kolay/</p></div></noscript>
@@ -3706,7 +3748,7 @@ function viewPos(){
   if (v==="tanit") return h + viewTanit();
   return h + viewSell();
 }
-const BARCODE_SVG = `<svg class="icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>`;
+const BARCODE_SVG = `<svg class="icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect class="f" x="6" y="7" width="12" height="10" rx="1"/><path d="M8 8v8M11 8v8M13.5 8v8M16 8v8"/></svg>`;
 function viewSell(){
   const items = S.pos.items, tot = cartTotal(), ret = !!S.pos.ret;
   const quick = S.products.filter(p=>p.quick).sort((a,b)=>a.name.localeCompare(b.name,"tr"));
@@ -4235,7 +4277,8 @@ document.addEventListener("change", ev=>{ if (ev.target.id==="rp-from" || ev.tar
     document.body.classList.toggle("kb", kb);
     // iOS klavye kapandıktan sonra sabit öğeleri eski yerde bırakabiliyor: menüyü görünen alanın dibine taşı
     const off = Math.round(vv.offsetTop + vv.height - window.innerHeight);
-    n.style.transform = (!kb && Math.abs(off) > 1) ? "translateY(" + off + "px)" : "";
+    const sy = window.scrollY || 0;
+    n.style.transform = (!kb && off > 1 && sy >= 0 && vv.offsetTop >= 0 && !document.getElementById("ptr")?.classList.contains("go")) ? "translateY(" + off + "px)" : "";
   }
   const later = () => { if (!raf) raf = requestAnimationFrame(fix); };
   window.navFix = fix;
@@ -4367,6 +4410,37 @@ document.addEventListener("change", ev=>{
 
 ICONS.bell = '<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>';
 
+
+/* ---------- Çift tonlu simgeler ---------- */
+Object.assign(ICONS, {
+  home:'<path class="f" d="M5 10.5 12 5l7 5.5V19a1 1 0 0 1-1 1h-4v-5h-4v5H6a1 1 0 0 1-1-1z"/><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-5h4v5h4a1 1 0 0 0 1-1v-9"/>',
+  list:'<rect class="f" x="3" y="4" width="18" height="16" rx="3"/><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M10 9h7M10 12h7M10 15h5"/><path d="M7 9h.01M7 12h.01M7 15h.01"/>',
+  receipt:'<path class="f" d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  book:'<path class="f" d="M5 5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12H8a3 3 0 0 0-3 3z"/><path d="M5 20V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v15H8a3 3 0 0 1-3-3"/><path d="M5 17a3 3 0 0 1 3-3h11"/><path d="M9 7h6M9 10h4"/>',
+  grid:'<rect class="f" x="4" y="4" width="7" height="7" rx="2"/><rect class="f" x="13" y="13" width="7" height="7" rx="2"/><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+  box:'<path class="f" d="M12 3l9 4.5-9 4.5-9-4.5z"/><path d="M3 7.5l9-4.5 9 4.5-9 4.5z"/><path d="M3 7.5v9l9 4.5 9-4.5v-9"/><path d="M12 12v9"/><path d="M7.5 5.3l9 4.5"/>',
+  plan:'<rect class="f" x="3" y="5" width="18" height="5" rx="2"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M7 14h3M7 17h6M15 14h2"/>',
+  coin:'<circle class="f" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M10 7v10"/><path d="M8 11l6-2.5M8 14l6-2.5"/><path d="M10 17c3 0 5-1.5 5-4.5"/>',
+  chart:'<rect class="f" x="3" y="3" width="18" height="18" rx="4"/><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7.5 16v-3M12 16V8M16.5 16v-5"/>',
+  trash:'<path class="f" d="M6 7h12l-1 13H7z"/><path d="M4 7h16M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>',
+  tag:'<path class="f" d="M3 4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z"/><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.6"/>',
+  gear:'<circle class="f" cx="12" cy="12" r="8"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2.2"/>',
+  help:'<circle class="f" cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 015 0c0 1.8-2.5 2-2.5 4"/><path d="M12 17.5h.01"/>',
+  sheet:'<path class="f" d="M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M8 12h8M8 16h8M12 12v6"/>',
+  truck:'<path class="f" d="M2 6h11v10H2z"/><path d="M2 6h11v10H2z"/><path d="M13 9h4l4 4v3h-8z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+  alert:'<path class="f" d="M12 3l10 18H2z"/><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+  user:'<circle class="f" cx="12" cy="8" r="4"/><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+  plus:'<circle class="f" cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>',
+  minus:'<circle class="f" cx="12" cy="12" r="9"/><path d="M7 12h10"/>',
+  search:'<circle class="f" cx="11" cy="11" r="7"/><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  bell:'<path class="f" d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>',
+  cash:'<rect class="f" x="2" y="6" width="20" height="12" rx="2"/><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v.01M18 14.5v.01"/>',
+  scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect class="f" x="6" y="7" width="12" height="10" rx="1"/><path d="M8 8v8M11 8v8M13.5 8v8M16 8v8"/>',
+  lock:'<rect class="f" x="4" y="10" width="16" height="11" rx="2"/><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
+});
+(function(){ const M = {satis:"scan", ana:"home", siparis:"list", fatura:"receipt", veresiye:"book", menu:"grid"};
+  document.querySelectorAll('nav.tabs[aria-label="Bölümler"] button').forEach(b=>{ const k = M[b.dataset.tab], sv = b.querySelector("svg"); if (k && sv) sv.outerHTML = ic(k, 24); }); })();
+
 /* ================= Bakkal Kolay: sade arayüz, aynı veri ve aynı hesaplar ================= */
 window.KOLAY = true;
 const K_MAP = {ana:"k-ana", menu:"k-daha", stok:"k-stok", kar:"k-kar"};
@@ -4376,7 +4450,7 @@ Object.assign(titles, {"k-ana":"Ana Sayfa", "k-kasa":"Kasa", "k-stok":"Stok", "k
 function kRoute(){
   if (S.tab==="urunler"){ if (!S.products.length) S.tab = "k-ana"; else if (S.editId){ S.kEdit = S.editId; S.editId = null; S.tab = "k-urun"; } else S.tab = "k-stok"; }
   if (K_MAP[S.tab]) S.tab = K_MAP[S.tab]; S.guide = false; }
-const kNavOn = t => (t==="k-daha" && K_MORE.includes(S.tab)) || (t==="k-stok" && S.tab==="k-urun");
+const kNavOn = t => (t==="k-stok" && S.tab==="k-urun");
 const kTL = n => TLx(r2(Number(n)||0));
 
 function kToday(){
@@ -4391,38 +4465,67 @@ function kAna(){
   const {k, kar, bil} = kToday();
   const h = new Date().getHours(), hi = h<11 ? "Günaydın" : h<17 ? "İyi Günler" : "İyi Akşamlar";
   const rows = kStockRows(), az = rows.filter(r=>r.s.k==="out"||r.s.k==="low").sort((a,b)=>(a.s.k==="out"?0:1)-(b.s.k==="out"?0:1));
-  let x = noticeHtml() + `<div class="khello"><h2>${hi}${shopTitle()?", "+esc(shopTitle()):""}</h2><p class="muted">${new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</p></div>
-  <div class="kstats">
-    <button class="kstat c7" data-act="kGo" data-tab="satis"><span class="bi c7">${ic("coin",26)}</span><span class="kl">Bugünkü Satış</span><b class="num">${kTL(k.ciro)}</b><span class="ks">${k.fis} satış</span></button>
-    <button class="kstat c1" data-act="kGo" data-tab="k-kasa"><span class="bi c1">${ic("box",26)}</span><span class="kl">Kasada Olması Gereken</span><b class="num">${kTL(k.beklenen)}</b><span class="ks">nakit</span></button>
-    <button class="kstat c6" data-act="kGo" data-tab="k-kar"><span class="bi c6">${ic("chart",26)}</span><span class="kl">Bugünkü Kâr</span><b class="num">${kTL(kar)}</b><span class="ks">${bil ? "satılan maldan" : "alış fiyatı bilinenlerden"}</span></button>
-  </div>
-  <div class="kgrid">
-    <button class="ktile c7" data-act="kGo" data-tab="satis"><span class="bi c7">${BARCODE_SVG}</span><b>Satış Yap</b><span>Barkodu okut, sat</span></button>
-    <button class="ktile c1" data-act="kKasa" data-f="giris"><span class="bi c1">${ic("plus",26)}</span><b>Para Girişi</b><span>Kasaya para koy</span></button>
-    <button class="ktile c3" data-act="kKasa" data-f="cikis"><span class="bi c3">${ic("minus",26)}</span><b>Para Çıkışı</b><span>Kasadan para al</span></button>
-    <button class="ktile c4" data-act="kGo" data-tab="k-stok"><span class="bi c4">${ic("box",26)}</span><b>Stok</b><span>Rafta ne kadar var</span></button>
-    <button class="ktile c6" data-act="kGo" data-tab="k-kar"><span class="bi c6">${ic("chart",26)}</span><b>Kâr ve Zarar</b><span>Ne kazandın</span></button>
-    <button class="ktile c8" data-act="goRapor"><span class="bi c8">${ic("sheet",26)}</span><b>Excel Rapor</b><span>Günlük, aylık, yıllık</span></button>
-  </div>`;
-  if (az.length) x += `<section class="card stack"><div class="row between"><h2>${ic("alert",20)} Azalan Ürünler</h2><button class="link" data-act="kGo" data-tab="k-stok" data-f="az">Hepsi</button></div>
-    ${az.slice(0,6).map(r=>`<div class="krow3"><b>${esc(r.p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${r.s.c} 18%, transparent);color:${r.s.c}">${r.s.k==="out" ? "Bitti" : `${fmt(r.s.cur.v, r.s.cur.v<10?1:0)} ${esc(unitOf(r.p))} kaldı`}</span></div>`).join("")}</section>`;
-  else if (rows.length) x += `<p class="notice ok">Biten ya da azalan ürün yok.</p>`;
-  else x += `<section class="card empty stack"><h2>Hoş Geldin!</h2><p class="muted">Önce ürünlerini ekle. Barkodlu ürünü okutman yeter.</p>
-    <button class="primary big" data-act="kTanit">${BARCODE_SVG} Barkodla Ürün Ekle</button><button data-act="kEdit" data-id="__new">Barkodsuz Ürün Ekle</button>
+  let x = noticeHtml() + `<div class="khello"><h2>${hi}${shopTitle()?", "+esc(shopTitle()):""}</h2><p class="muted">${new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</p></div>`;
+  if (!rows.length) return x + `<section class="card empty stack kwelcome"><span class="bi c7 kbig">${ic("scan",34)}</span><h2>Hoş Geldin!</h2><p class="muted">Önce ürünlerini ekle. Barkodlu ürünü okutman yeterli.</p>
+    <button class="primary big" data-act="kTanit">${ic("scan",22)} Barkodla Ürün Ekle</button><button class="big" data-act="kEdit" data-id="__new">${ic("plus",22)} Barkodsuz Ürün Ekle</button>
     <button class="link" data-act="seed">Önce örnek ürünlerle dene</button></section>`;
+  x += `<button class="ksell" data-act="kGo" data-tab="satis"><span class="kse">${ic("scan",34)}</span><span><b>Satış Yap</b><small>Barkodu okut, parayı al</small></span><span class="kgo">${ic("back",22)}</span></button>
+  <div class="ksum">
+    <button data-act="kGo" data-tab="k-kar"><span class="muted">Bugün Satış</span><b class="num">${kTL(k.ciro)}</b><small>${k.fis} satış</small></button>
+    <button data-act="kGo" data-tab="k-kar"><span class="muted">Bugün Kâr</span><b class="num pos">${kTL(kar)}</b><small>${bil ? "satılan maldan" : "fiyatı bilinenlerden"}</small></button>
+    <button data-act="kGo" data-tab="k-kasa"><span class="muted">Kasada</span><b class="num">${kTL(k.beklenen)}</b><small>nakit olmalı</small></button>
+  </div>
+  <div class="kgrid k4">
+    <button class="ktile c1" data-act="kKasa" data-f="giris"><span class="bi c1">${ic("plus",28)}</span><b>Para Koy</b><span>Kasaya giriş</span></button>
+    <button class="ktile c3" data-act="kKasa" data-f="cikis"><span class="bi c3">${ic("minus",28)}</span><b>Para Al</b><span>Kasadan çıkış</span></button>
+    <button class="ktile c4" data-act="kGo" data-tab="k-stok"><span class="bi c4">${ic("box",28)}</span><b>Stok</b><span>Rafta ne var</span></button>
+    <button class="ktile c6" data-act="kGo" data-tab="k-kar"><span class="bi c6">${ic("chart",28)}</span><b>Kâr ve Zarar</b><span>Ne kazandım</span></button>
+  </div>`;
+  if (az.length) x += `<section class="card stack"><div class="row between"><h2 class="kh">${ic("alert",22)} Azalan Ürünler</h2><button class="link" data-act="kGo" data-tab="k-stok" data-f="az">Hepsi</button></div>
+    ${az.slice(0,5).map(r=>`<div class="krow3"><b>${esc(r.p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${r.s.c} 16%, transparent);color:${r.s.c}">${r.s.k==="out" ? "Bitti" : `${fmt(r.s.cur.v, r.s.cur.v<10?1:0)} ${esc(unitOf(r.p))} kaldı`}</span></div>`).join("")}</section>`;
+  else x += `<p class="notice ok">${ic("check",18)} Biten ya da azalan ürün yok.</p>`;
+  x += `<div class="kmore">
+    <button data-act="kEdit" data-id="__new">${ic("plus",20)}<span>Ürün Ekle</span></button>
+    <button data-act="goRapor">${ic("sheet",20)}<span>Excel Rapor</span></button>
+    <button data-act="kGo" data-tab="veresiye">${ic("book",20)}<span>Veresiye</span></button>
+    <button data-act="kGo" data-tab="k-daha">${ic("grid",20)}<span>Diğer</span></button></div>`;
   return x;
 }
 function kPos(){
   const v = S.posView || "sat";
-  let h = `<nav class="seg kseg" aria-label="Satış">${[["sat","Satış","coin"],["liste","Bugünkü Satışlar","list"],["tanit","Ürün Tanıt","tag"]].map(([k,l,i])=>`<button class="${v===k?"on":""}" data-act="posView" data-v="${k}" aria-current="${v===k?"page":"false"}">${ic(i,17)}<span>${l}</span></button>`).join("")}</nav>`;
+  let h = "";
+  if (S.msg && v!=="sat") h += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
+  if (v==="liste" || v==="tanit") return `<button class="link back" data-act="posView" data-v="sat">${ic("back",18)} Satışa Dön</button>` + h + (v==="liste" ? viewSalesList() : viewTanit());
+  if (v==="kasa") S.posView = "sat";
   if (S.msg) h += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
-  if (v==="liste") return h + viewSalesList();
-  if (v==="tanit") return h + viewTanit();
-  if (v==="kasa"){ S.posView = "sat"; }
-  return h + viewSell();
+  return h + viewSell() + `<div class="kmore two"><button data-act="posView" data-v="liste">${ic("list",20)}<span>Bugünkü Satışlar</span></button><button data-act="kTanit">${ic("scan",20)}<span>Yeni Ürün Tanıt</span></button></div>`;
 }
-function kKasa(){ return viewKasa(); }
+function kKasa(){
+  const k = kasaDay(today0()), f = S.kasaForm;
+  let h = noticeHtml() + `<section class="kcash"><span class="muted">Kasada Olması Gereken</span><b class="num">${kTL(k.beklenen)}</b>
+    <small>${k.acilisSet ? `Açılış ${kTL(k.acilis)} · ` : ""}Nakit satış ${kTL(k.nakit)}${k.giris?` · Giriş ${kTL(k.giris)}`:""}${k.cikis?` · Çıkış ${kTL(k.cikis)}`:""}</small></section>`;
+  if (!f){
+    h += `<div class="kgrid k3">
+      <button class="ktile c1" data-act="kKasa" data-f="giris"><span class="bi c1">${ic("plus",28)}</span><b>Para Koy</b><span>Kasaya giriş</span></button>
+      <button class="ktile c3" data-act="kKasa" data-f="cikis"><span class="bi c3">${ic("minus",28)}</span><b>Para Al</b><span>Kasadan çıkış</span></button>
+      <button class="ktile c6" data-act="kKasa" data-f="kapanis"><span class="bi c6">${ic("lock",28)}</span><b>Günü Kapat</b><span>Kasayı say</span></button></div>
+      ${k.acilisSet ? "" : `<button class="link" data-act="kKasa" data-f="acilis">Sabah açılış parasını yaz</button>`}`;
+  } else {
+    const reasons = f==="cikis" ? OUT_REASONS : f==="giris" ? IN_REASONS : null, left = prevLeft(today0());
+    const T = {giris:"Kasaya Para Koy", cikis:"Kasadan Para Al", kapanis:"Günü Kapat", acilis:"Açılış Parası"}[f];
+    h += `<form id="kasaform" class="card stack kform2" data-f="${f}"><h2>${T}</h2>
+      ${f==="kapanis" ? `<p>Kasadaki parayı say ve yaz. Uygulama, olması gerekenle karşılaştırır.</p>` : ""}
+      <label>${f==="kapanis" ? "Kasada Saydığın Para (TL)" : "Kaç TL?"}<input id="kf-a" inputmode="decimal" required placeholder="${f==="acilis" && left!=null ? fmt(left,2) : "Örn. 500"}" value="${f==="acilis" && left!=null ? String(left).replace(".",",") : ""}"></label>
+      ${reasons ? `<input type="hidden" id="kf-r" value="${esc(S.kReason||"")}"><div class="kreasons"><span class="small muted">Neden?</span>${reasons.map(r=>`<button type="button" class="tog ${S.kReason===r?"on":""}" data-act="kReason" data-v="${esc(r)}">${esc(r)}</button>`).join("")}</div>` : ""}
+      ${f==="kapanis" ? `<label>Yarına Kasada Bırakılan (isteğe bağlı)<input id="kf-b" inputmode="decimal" placeholder="Örn. 500"></label>` : ""}
+      <label>Not (isteğe bağlı)<input id="kf-n" maxlength="120" placeholder="${f==="cikis" ? "Örn. Ekmekçi Hasan" : ""}"></label>
+      ${S.kasaErr ? `<p class="notice bad">${esc(S.kasaErr)}</p>` : ""}
+      <div class="row"><button class="primary big" type="submit">Kaydet</button><button type="button" class="big" data-act="kKasa" data-f="">Vazgeç</button></div></form>`;
+  }
+  const mv = k.cash.slice().reverse();
+  h += `<section class="card stack"><h2 class="kh">${ic("list",22)} Bugünkü Hareketler</h2>${mv.length ? mv.map(x=>`<div class="krow3"><span><b>${CASH_T[x.t]||x.t}</b>${x.r?` · ${esc(x.r)}`:""}<br><span class="small muted">${hhmm(tOf(x))}${x.n?` · ${esc(x.n)}`:""}</span></span><b class="num ${x.t==="cikis"?"neg":""}">${x.t==="cikis"?"−":""}${kTL(x.t==="kapanis" ? x.say : x.a)}</b></div>`).join("") : `<p class="muted">Bugün kasaya giren ya da çıkan para yok.</p>`}</section>`;
+  return h;
+}
 function kStok(){
   const rows = kStockRows(), f = S.kStokF || "all", q = (S.kq||"").trim();
   if (!rows.length) return `<section class="card empty stack"><h2>Henüz Ürün Yok</h2><button class="primary big" data-act="kTanit">${BARCODE_SVG} Barkodla Ürün Ekle</button><button data-act="kEdit" data-id="__new">Barkodsuz Ürün Ekle</button></section>`;
@@ -4446,7 +4549,7 @@ function kStokList(rows){
   return list.slice(0, 200).map(({p,st,s})=>{
     const u = unitOf(p), b = st.money.buy ?? (Number(p.buyPrice)||null), sp = Number(p.salePrice)||null;
     const open = S.kCount===p.id;
-    return `<div class="kitem"><div class="kn"><b>${esc(p.name)}</b><span class="small muted">${sp?`Satış ${kTL(sp)}`:"Satış fiyatı yok"}${b?` · Alış ${kTL(b)} · Kâr ${kTL(sp ? sp-b : 0)}`:""}</span></div>
+    return `<div class="kitem"><div class="kn"><b>${esc(p.name)}</b><span class="small muted">${sp?kTL(sp):"Fiyat yok"}${b && sp?` · tanesinde ${kTL(sp-b)} kâr`:""}</span></div>
       <div class="kq"><b class="num" style="color:${s.c}">${s.cur.known ? fmt(s.cur.v, s.cur.v<10?1:0) : "?"}</b><span class="small muted">${esc(u)}</span></div>
       <div class="row kact"><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.k==="unk"?"Sayılmadı":s.t}</span>
         <button data-act="kCount" data-id="${p.id}">${open?"Vazgeç":"Say"}</button><button data-act="kEdit" data-id="${p.id}">Düzenle</button></div>
@@ -4485,13 +4588,13 @@ function kKar(){
 function kDaha(){
   const t = (act, extra, cls, icon, title, sub) => `<button class="ktile ${cls}" data-act="${act}" ${extra}><span class="bi ${cls}">${icon}</span><b>${title}</b><span>${sub}</span></button>`;
   return noticeHtml() + `<div class="kgrid">
-    ${t("kEdit", 'data-id="__new"', "c1", ic("plus",26), "Ürün Ekle", "Barkodsuz ya da elle")}
-    ${t("kTanit", "", "c7", BARCODE_SVG, "Barkodla Ürün Tanıt", "Okut, fiyatını yaz")}
-    ${t("goRapor", "", "c8", ic("sheet",26), "Satış Raporları", "Excel'e indir")}
-    ${t("kGo", 'data-tab="veresiye"', "c3", ic("book",26), "Veresiye", "Kim ne kadar borçlu")}
-    ${t("nGo", "", "c2", ic("bell",26), "Bildirimler", "Telefona haber gelsin")}
-    ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",26), "Ayarlar", "Hesap, PIN, Excel yedek")}
-    <a class="ktile c4" href="../" ><span class="bi c4">${ic("grid",26)}</span><b>Tam Sürüm</b><span>Sipariş, fatura, plan</span></a>
+    ${t("kEdit", 'data-id="__new"', "c1", ic("plus",28), "Ürün Ekle", "Elle ya da barkodsuz")}
+    ${t("kTanit", "", "c7", ic("scan",28), "Barkodla Ürün Tanıt", "Okut, fiyatını yaz")}
+    ${t("goRapor", "", "c8", ic("sheet",28), "Satış Raporları", "Excel'e indir")}
+    ${t("kGo", 'data-tab="veresiye"', "c3", ic("book",28), "Veresiye", "Kim ne kadar borçlu")}
+    ${t("nGo", "", "c2", ic("bell",28), "Bildirimler", "Telefona haber gelsin")}
+    ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",28), "Ayarlar", "Hesap, PIN, yedek")}
+    <a class="ktile c4" href="../"><span class="bi c4">${ic("grid",28)}</span><b>Tam Sürüm</b><span>Sipariş, fatura, plan</span></a>
   </div>`;
 }
 function kUrun(){
@@ -4533,7 +4636,9 @@ async function kSave(){
 }
 async function kolayAct(a, t, id){
   if (a==="kGo"){ S.tab = t.dataset.tab; S.msg = null; S.kEdit = null; S.vCust = null; S.editId = null; if (t.dataset.f) S.kStokF = t.dataset.f; if (S.tab==="satis") S.posView = "sat"; render(); window.scrollTo(0,0); if (S.tab==="satis") posFocus(); return true; }
-  if (a==="kKasa"){ S.tab = "k-kasa"; S.kasaForm = t.dataset.f; S.kasaErr = null; S.msg = null; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
+  if (a==="kKasa"){ S.tab = "k-kasa"; S.kasaForm = t.dataset.f || null; S.kReason = null; S.kasaErr = null; S.msg = null; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
+  if (a==="kReason"){ S.kReason = t.dataset.v; const h = document.getElementById("kf-r"); if (h) h.value = S.kReason; document.querySelectorAll('[data-act="kReason"]').forEach(b=>b.classList.toggle("on", b===t)); return true; }
+  if (a==="settings"){ S.tab = S.tab==="k-daha" ? "k-ana" : "k-daha"; S.msg = null; render(); window.scrollTo(0,0); return true; }
   if (a==="kStokF"){ S.kStokF = t.dataset.f; render(); return true; }
   if (a==="kCount"){ S.kCount = S.kCount===id ? null : id; render(true); setTimeout(()=>document.getElementById("kcnt-"+id)?.focus(),0); return true; }
   if (a==="kEdit"){ S.kEdit = id || "__new"; S.kErr = null; S.msg = null; S.tab = "k-urun"; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById(id==="__new" ? "ku-name" : "ku-sale")?.focus(),0); return true; }
@@ -4548,8 +4653,8 @@ document.addEventListener("input", ev=>{ if (ev.target.id==="k-q"){ S.kq = ev.ta
 document.addEventListener("keydown", ev=>{ if (ev.target?.id==="ku-bc" && ev.key==="Enter"){ ev.preventDefault(); document.getElementById("ku-sale")?.focus(); } });
 document.documentElement.classList.add("kolay");
 (function(){ const n = document.querySelector('nav.tabs[aria-label="Bölümler"]'); if (!n) return;
-  const T = [["k-ana","Ana Sayfa","home"],["satis","Satış",null],["k-kasa","Kasa","box"],["k-stok","Stok","tag"],["k-kar","Kâr","chart"],["k-daha","Daha","grid"]];
-  n.innerHTML = T.map(([t,l,i])=>`<button data-tab="${t}">${i ? ic(i,24) : BARCODE_SVG}<span>${l}</span></button>`).join(""); })();
+  const T = [["k-ana","Ana Sayfa","home"],["satis","Satış","scan"],["k-kasa","Kasa","cash"],["k-stok","Stok","box"],["k-kar","Kâr","chart"]];
+  n.innerHTML = T.map(([t,l,i])=>`<button data-tab="${t}">${ic(i,26)}<span>${l}</span></button>`).join(""); })();
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

@@ -666,4 +666,60 @@ begin
   end if;
 end $$;
 
+
+-- ===== Bildirimler (web push) =====
+-- Her cihazın bildirim aboneliği. Tabloya doğrudan kimse erişemez; aşağıdaki fonksiyonlar ve sunucudaki bildirim servisi kullanır.
+create table if not exists public.push_subs (
+  endpoint   text primary key,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  shop_id    uuid references public.shops(id) on delete cascade,
+  p256dh     text not null,
+  auth       text not null,
+  app        text not null default 'tam' check (app in ('tam','kolay')),
+  types      text[] not null default '{}',
+  ua         text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists push_subs_shop on public.push_subs(shop_id);
+create index if not exists push_subs_user on public.push_subs(user_id);
+alter table public.push_subs enable row level security;
+revoke all on public.push_subs from anon, authenticated;
+
+create or replace function public.push_save(p_shop uuid, p_endpoint text, p_p256dh text, p_auth text, p_app text, p_types text[], p_ua text)
+returns void language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  if auth.uid() is null then raise exception 'Giriş gerekli.' using errcode = '42501'; end if;
+  if p_shop is not null and not public.is_member(p_shop) then raise exception 'Bu dükkânın kayıtlarına erişimin yok.' using errcode = '42501'; end if;
+  if p_endpoint is null or p_endpoint !~ '^https://' or char_length(p_endpoint) > 1000
+     or coalesce(char_length(p_p256dh), 0) not between 20 and 200 or coalesce(char_length(p_auth), 0) not between 8 and 100 then
+    raise exception 'Bildirim kaydı hatalı.' using errcode = 'P0001'; end if;
+  insert into push_subs (endpoint, user_id, shop_id, p256dh, auth, app, types, ua)
+  values (p_endpoint, auth.uid(), p_shop, p_p256dh, p_auth, case when p_app = 'kolay' then 'kolay' else 'tam' end,
+          coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t where t in ('stok','bitti','kasa','cikis','veresiye','basvuru')), '{}'),
+          left(p_ua, 200))
+  on conflict (endpoint) do update set user_id = excluded.user_id, shop_id = excluded.shop_id, p256dh = excluded.p256dh, auth = excluded.auth,
+    app = excluded.app, types = excluded.types, ua = excluded.ua, updated_at = now();
+  -- bir kişi en fazla 20 cihaz: en eskileri sil
+  delete from push_subs where user_id = auth.uid() and endpoint in (
+    select endpoint from push_subs where user_id = auth.uid() order by updated_at desc offset 20);
+end $$;
+
+create or replace function public.push_remove(p_endpoint text)
+returns void language sql security definer set search_path = public, pg_temp as $$
+  delete from push_subs where endpoint = p_endpoint and user_id = auth.uid();
+$$;
+
+create or replace function public.push_get(p_endpoint text)
+returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+  select jsonb_build_object('types', to_jsonb(types), 'app', app, 'shop_id', shop_id) from push_subs where endpoint = p_endpoint and user_id = auth.uid();
+$$;
+
+revoke all on function public.push_save(uuid, text, text, text, text, text[], text) from public, anon;
+revoke all on function public.push_remove(text) from public, anon;
+revoke all on function public.push_get(text) from public, anon;
+grant execute on function public.push_save(uuid, text, text, text, text, text[], text) to authenticated;
+grant execute on function public.push_remove(text) to authenticated;
+grant execute on function public.push_get(text) to authenticated;
+
 select 'Bakkal Defteri veritabanı hazır.' as sonuc;

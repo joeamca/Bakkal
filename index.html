@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bakkal Defteri</title>
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0f6b55">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -301,6 +302,11 @@ html,body{overscroll-behavior-y:contain}
 }
 body.kb nav.tabs{display:none}
 nav.tabs{will-change:transform}
+.nlist{display:flex;flex-direction:column;gap:4px}
+.nrow{display:grid!important;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.nrow:first-child{border-top:0}
+.nrow .bi{width:32px;height:32px;border-radius:10px}
+.nrow input{width:22px;height:22px}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
@@ -418,6 +424,46 @@ table.mrp{border-collapse:collapse;font-size:13px;min-width:100%}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+/* ===== Canlı tema ===== */
+:root{
+  --accent:#059669; --accent-soft:#d1fae5; --accent-ink:#ffffff;
+  --c1:#10b981; --c2:#f59e0b; --c3:#f43f5e; --c4:#3b82f6; --c5:#64748b; --c6:#8b5cf6; --c7:#f97316; --c8:#06b6d4;
+  --bg:#f3f6f4; --line:#e2e8e4; --shadow:0 1px 2px rgba(16,24,20,.06),0 6px 18px rgba(16,24,20,.06);
+  --warn:#b45309; --warn-soft:#fef3c7; --bad:#e11d48; --bad-soft:#ffe4e6;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1311; --card:#161d1a; --line:#25302b; --accent:#34d399; --accent-soft:#0f2e24; --accent-ink:#06130e;
+  --c1:#34d399; --c2:#fbbf24; --c3:#fb7185; --c4:#60a5fa; --c5:#94a3b8; --c6:#a78bfa; --c7:#fb923c; --c8:#22d3ee;
+  --warn:#fbbf24; --warn-soft:#3a2a0a; --bad:#fb7185; --bad-soft:#3b1520; --shadow:none}}
+:root[data-theme="dark"]{
+  --bg:#0e1311; --card:#161d1a; --line:#25302b; --accent:#34d399; --accent-soft:#0f2e24; --accent-ink:#06130e;
+  --c1:#34d399; --c2:#fbbf24; --c3:#fb7185; --c4:#60a5fa; --c5:#94a3b8; --c6:#a78bfa; --c7:#fb923c; --c8:#22d3ee;
+  --warn:#fbbf24; --warn-soft:#3a2a0a; --bad:#fb7185; --bad-soft:#3b1520; --shadow:none}
+.card,.mtile,.btile{border-radius:16px;box-shadow:var(--shadow)}
+button.primary{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 78%,#000)) ;border-color:transparent;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 30%,transparent)}
+/* Renkli simge kutuları */
+.bi{--bc:var(--c1);background:linear-gradient(140deg,color-mix(in srgb,var(--bc) 82%,#fff),var(--bc))!important;color:#fff;box-shadow:0 4px 12px color-mix(in srgb,var(--bc) 35%,transparent);border-radius:14px}
+.bi.c1{--bc:var(--c1)} .bi.c2{--bc:var(--c2)} .bi.c3{--bc:var(--c3)} .bi.c4{--bc:var(--c4)} .bi.c5{--bc:var(--c5)} .bi.c6{--bc:var(--c6)} .bi.c7{--bc:var(--c7)} .bi.c8{--bc:var(--c8)}
+:root[data-theme="dark"] .bi{color:#08110d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bi{color:#08110d}}
+/* Kutucuklar kendi renginde hafif boyansın */
+.mtile:has(.bi),.btile:has(.bi){--tc:var(--c1);background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 13%,var(--card)),var(--card) 70%);border-color:color-mix(in srgb,var(--tc) 28%,var(--line))}
+.mtile:has(.bi.c2),.btile:has(.bi.c2){--tc:var(--c2)} .mtile:has(.bi.c3),.btile:has(.bi.c3){--tc:var(--c3)} .mtile:has(.bi.c4),.btile:has(.bi.c4){--tc:var(--c4)}
+.mtile:has(.bi.c5),.btile:has(.bi.c5){--tc:var(--c5)} .mtile:has(.bi.c6),.btile:has(.bi.c6){--tc:var(--c6)} .mtile:has(.bi.c7),.btile:has(.bi.c7){--tc:var(--c7)} .mtile:has(.bi.c8),.btile:has(.bi.c8){--tc:var(--c8)}
+.mtile:active,.btile:active{transform:scale(.98)}
+.mtile b{font-size:18px}
+/* Alt menü: her bölüm kendi renginde */
+nav.tabs{box-shadow:0 -4px 18px rgba(0,0,0,.06)}
+nav.tabs button{--tc:var(--accent)}
+nav.tabs button[data-tab="satis"]{--tc:var(--c7)} nav.tabs button[data-tab="ana"]{--tc:var(--c1)} nav.tabs button[data-tab="siparis"]{--tc:var(--c4)}
+nav.tabs button[data-tab="fatura"]{--tc:var(--c6)} nav.tabs button[data-tab="veresiye"]{--tc:var(--c3)} nav.tabs button[data-tab="menu"]{--tc:var(--c8)}
+nav.tabs button svg{padding:4px 12px;width:48px!important;height:32px!important;border-radius:999px;transition:background .15s,color .15s;color:color-mix(in srgb,var(--tc) 70%,var(--muted))}
+nav.tabs button[aria-current="page"]{color:var(--tc);box-shadow:none}
+nav.tabs button[aria-current="page"] svg{background:color-mix(in srgb,var(--tc) 18%,transparent);color:var(--tc)}
+/* Üst başlık */
+header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(--accent) 60%,var(--ink)));-webkit-background-clip:text;background-clip:text;color:transparent}
+.chip{font-weight:600}
 </style>
 </head>
 <body>
@@ -817,25 +863,25 @@ const GUIDE = {
 function guideCard(){
   const g = GUIDE[S.tab] || GUIDE.menu, i = ORDER.indexOf(S.tab);
   if (i<0) return `<section class="card guide stack" aria-label="Rehber"><div class="row between"><span class="step">REHBER</span><button class="link" data-act="guideClose">Kapat</button></div>
-    <h2>${g.t}</h2><ol>${g.s.map(x=>`<li>${x}</li>`).join("")}</ol><div class="row"><button class="primary" data-act="guideGo" data-tab="${ORDER[0]}">Baştan başla →</button></div></section>`;
+    <h2>${g.t}</h2><ol>${g.s.map(x=>`<li>${x}</li>`).join("")}</ol><div class="row"><button class="primary" data-act="guideGo" data-tab="${ORDER[0]}">Baştan Başla →</button></div></section>`;
   return `<section class="card guide stack" aria-label="Rehber">
     <div class="row between"><span class="step">ADIM ${i+1} / ${ORDER.length}</span><button class="link" data-act="guideClose">Kapat</button></div>
     <h2>${g.t}</h2>
     <ol>${g.s.map(x=>`<li>${x}</li>`).join("")}</ol>
     <div class="row">
       ${i>0?`<button data-act="guideGo" data-tab="${ORDER[i-1]}">← ${titles[ORDER[i-1]]}</button>`:""}
-      ${i<ORDER.length-1?`<button class="primary" data-act="guideGo" data-tab="${ORDER[i+1]}">Sıradaki: ${titles[ORDER[i+1]]} →</button>`:`<button class="primary" data-act="guideClose">Anladım, başlayalım</button>`}
+      ${i<ORDER.length-1?`<button class="primary" data-act="guideGo" data-tab="${ORDER[i+1]}">Sıradaki: ${titles[ORDER[i+1]]} →</button>`:`<button class="primary" data-act="guideClose">Anladım, Başlayalım</button>`}
     </div></section>`;
 }
 const shopTitle = () => S.settings?.shopName || (S.mode==="cloud" && S.cloud?.shop?.name) || "";
-const titles = {satis:"Satış", rapor:"Satış Raporları", yonetim:"Yönetici paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş listesi", fatura:"Fatura gir", veresiye:"Veresiye defteri", menu:"Menü", stok:"Stok durumu", plan:"İhtiyaç planı", maliyet:"Stok maliyeti", fire:"Haftalık fire", kar:"Kâr ve zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
+const titles = {satis:"Satış", rapor:"Satış Raporları", yonetim:"Yönetici Paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş Listesi", fatura:"Fatura Gir", veresiye:"Veresiye Defteri", menu:"Menü", stok:"Stok Durumu", plan:"İhtiyaç Planı", maliyet:"Stok Maliyeti", fire:"Haftalık Fire", kar:"Kâr ve Zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
 
 function renderData(){ if (!S.quiet) render(true); }
 function renderToast(){
   const el = document.getElementById("toast"); if (!el) return;
   const u = S.undo;
   if (!u || Date.now() > u.until){ el.hidden = true; el.innerHTML = ""; return; }
-  el.hidden = false; el.innerHTML = `<span>${esc(u.text)}</span><button data-act="undo">Geri al</button>`;
+  el.hidden = false; el.innerHTML = `<span>${esc(u.text)}</span><button data-act="undo">Geri Al</button>`;
 }
 function offerUndo(text, run){ S.undo = {text, run, until: Date.now()+9000}; renderToast(); clearTimeout(offerUndo.t); offerUndo.t = setTimeout(()=>{ S.undo=null; renderToast(); }, 9100); }
 function render(keep){
@@ -845,16 +891,16 @@ function render(keep){
   let hideLocal = false; try{ hideLocal = localStorage.getItem("bd-yerel-not")==="1"; }catch(_){}
   let b = "";
   if (S.mode==="local" && !hideLocal) b = `<div class="note" style="margin-bottom:12px"><div class="row between"><span>Kayıtlar bu cihazda saklanıyor.</span>
-      <span class="row"><button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Excel'e al</button><button class="link" data-act="whyLocal">${S.showWhy?"Kapat":"Ne demek?"}</button><button class="link" data-act="hideLocal">Gizle</button></span></div>${S.showWhy?why:""}</div>`;
+      <span class="row"><button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Excel'e Al</button><button class="link" data-act="whyLocal">${S.showWhy?"Kapat":"Ne demek?"}</button><button class="link" data-act="hideLocal">Gizle</button></span></div>${S.showWhy?why:""}</div>`;
   else if (S.mode==="memory" && !FILE_MODE) b = `<div class="notice bad" style="margin-bottom:12px"><b>Bu tarayıcı kayıt yapmaya izin vermiyor; bilgiler sayfa kapanınca silinir.</b> Gizli sekmedeysen normal sekmede aç.</div>`;
-  else if ((S.mode==="db"||S.mode==="cloud") && S.localPending) b = `<div class="notice ok stack" style="margin-bottom:12px"><span>Bu cihazda daha önce hesaba kaydedilmemiş ${S.localPending.products.length} ürün ve ${S.localPending.events.length} kayıt var.</span><div class="row"><button class="primary" data-act="migrate">Hesabıma aktar</button><button data-act="dropLocal">Gerek yok</button></div></div>`;
+  else if ((S.mode==="db"||S.mode==="cloud") && S.localPending) b = `<div class="notice ok stack" style="margin-bottom:12px"><span>Bu cihazda daha önce hesaba kaydedilmemiş ${S.localPending.products.length} ürün ve ${S.localPending.events.length} kayıt var.</span><div class="row"><button class="primary" data-act="migrate">Hesabıma Aktar</button><button data-act="dropLocal">Gerek Yok</button></div></div>`;
   if (FILE_MODE) b = `<div class="notice ${S.mode==="memory"?"bad":"ok"} stack" style="margin-bottom:12px"><b>${S.mode==="memory"?"Dosyadan açtın; burada yazdıkların kaydedilmez.":"Dosyadan açtın. Uygulamanın kalıcı adresi daha güvenli."}</b><span>Düğmeye bas, uygulama tarayıcıda açılsın. Sonra oradan ana ekrana ekle.</span><a class="btn primary" href="${APP_URL}" target="_blank" rel="noopener" style="text-align:center;color:var(--accent-ink);background:var(--accent);text-decoration:none;padding:12px;border-radius:10px;font-weight:700">Uygulamayı aç</a></div>` + b;
   if (S.mode==="cloud") b = `<div id="netNote"></div>` + b;
   const adm = S.mode==="cloud" && !!S.admin;
   document.body.classList.toggle("adminmode", adm);
   { const bd = document.getElementById("adBadge"), n = (S.cloud && S.cloud.ctx && S.cloud.ctx.pending_signups) || 0; if (bd){ bd.textContent = n; bd.hidden = !n; } }
   if (S.mode==="cloud" && !adm && S.cloud.ctx?.is_admin && S.cloud.ctx.pending_signups > 0)
-    b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="toAdmin">Yönetici ekranı</button></div>`;
+    b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="toAdmin">Yönetici Ekranı</button></div>`;
   $("#banner").innerHTML = b;
   const v = $("#view");
   const gated = ["login","pickshop","noshop","paused","newpass","setpin","recover"].includes(S.mode) || (S.mode==="cloud" && !!S.locked);
@@ -884,13 +930,13 @@ function render(keep){
 
 function emptyProducts(){
   return `<div class="card empty stack">
-    <h2>Hoş geldin! Başlamak için ürünlerini tanıt</h2>
+    <h2>Hoş Geldin! Başlamak İçin Ürünlerini Tanıt</h2>
     <p class="muted">${S.canImages?"En kolayı: elindeki son toptancı faturasının fotoğrafını çek. Faturadaki ürünler otomatik eklenir.":"En kolayı: elindeki son toptancı faturasını gir. Faturadaki ürünler kendiliğinden eklenir."}</p>
     <div class="choices">
       <button class="primary" data-act="goto" data-tab="fatura" data-plain="1">${S.canImages?"Faturanın fotoğrafını çek":"Faturayı gir"}</button>
-      <button data-act="goto" data-tab="urunler">Ürünleri tek tek ekle</button>
-      <button data-act="goto" data-tab="ayarlar" data-plain="1">Excel yedeğinden yükle</button>
-      <button class="link" data-act="seed">Önce örnek ürünlerle dene</button>
+      <button data-act="goto" data-tab="urunler">Ürünleri Tek Tek Ekle</button>
+      <button data-act="goto" data-tab="ayarlar" data-plain="1">Excel Yedeğinden Yükle</button>
+      <button class="link" data-act="seed">Önce Örnek Ürünlerle Dene</button>
     </div></div>`;
 }
 
@@ -925,7 +971,7 @@ function movCard(p, st){
   if (rows.length<2) return "";
   const nowRow = rows[rows.length-1], list = rows.slice(0,-1).reverse().slice(0,8);
   const n = x => x==null ? "bilinmiyor" : fmt(x);
-  return `<details class="how mov" data-id="m-${p.id}"><summary>Fatura fatura hareketler</summary>
+  return `<details class="how mov" data-id="m-${p.id}"><summary>Fatura Fatura Hareketler</summary>
     <p class="small muted" style="margin-top:8px">Her faturada ne geldi (+), bir önceki faturadan beri ne eksildi (−). Satış tahminidir; bitti, fire ve rafa bakış bilgileri tahmini düzeltir.</p>
     <div class="mrow now"><div><b>Bugüne kadar</b><span class="small muted"> · son faturadan beri ${fmt(nowRow.days)} gün</span></div>
       <div class="mnums"><span class="minus num">−${fmt(nowRow.sold+nowRow.fire+nowRow.iade)}</span><span class="small muted">rafta ≈ <b class="num">${n(nowRow.before)}</b></span></div></div>
@@ -1020,7 +1066,7 @@ function howCard(p, st){
   if (st.nv) rows.push(["Kâr ve bozulma hesabı", st.nv.f<1 ? "Artan mal çöpe gideceği için biraz az" : "Eksik kalmak daha pahalı, biraz fazla"]);
   if (st.days > st.winDays) rows.unshift(["Hesaba giren dönem", `son ${fmt(st.winDays)} gün`]);
   rows.push(["Hesap", `${calc} = <b>${fmt(st.q)}</b>`]);
-  return `<details class="how" data-id="${p.id}"><summary>Bu rakam nasıl çıktı?</summary><dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd class="num">${v}</dd>`).join("")}</dl></details>`;
+  return `<details class="how" data-id="${p.id}"><summary>Bu Rakam Nasıl Çıktı?</summary><dl>${rows.map(([k,v])=>`<dt>${k}</dt><dd class="num">${v}</dd>`).join("")}</dl></details>`;
 }
 function viewOrder(){
   if (!S.products.length) return emptyProducts();
@@ -1041,12 +1087,12 @@ function viewOrder(){
     if (np.length) html += `<section class="card stack guide"><div class="row between"><h2>${np.length} yeni ürün eklendi</h2><button class="link" data-act="closeNew">Tamam</button></div>
       <p class="small">Doğru tahmin için her birine iki şeyi söyle. Dokunman yeterli, hemen kaydedilir.</p>
       ${np.map(p=>`<div class="newp"><b>${esc(p.name)}</b><div class="row">
-        <button class="tog ${p.perishable?"on":""}" data-act="npToggle" data-f="perishable" data-id="${p.id}" aria-pressed="${!!p.perishable}">Çabuk bozulur</button>
-        <button class="tog ${p.core?"on":""}" data-act="npToggle" data-f="core" data-id="${p.id}" aria-pressed="${!!p.core}">Bitmesin (temel ürün)</button></div></div>`).join("")}
+        <button class="tog ${p.perishable?"on":""}" data-act="npToggle" data-f="perishable" data-id="${p.id}" aria-pressed="${!!p.perishable}">Çabuk Bozulur</button>
+        <button class="tog ${p.core?"on":""}" data-act="npToggle" data-f="core" data-id="${p.id}" aria-pressed="${!!p.core}">Bitmesin (Temel Ürün)</button></div></div>`).join("")}
       ${S.newProds.sup ? `<div class="stack" style="gap:6px"><b>${esc(S.newProds.sup)} aracı hangi günler geliyor?</b>${supDays(S.newProds.sup)}</div>` : ""}
       <p class="small muted">Satış fiyatlarını da girmek istersen Ürünler'den yapabilirsin.</p></section>`;
   }
-  if (S.invSummary && S.invSummary.length) html += `<section class="card stack"><div class="row between"><h2>Bu faturada</h2><button class="link" data-act="closeInvSum">Kapat</button></div>
+  if (S.invSummary && S.invSummary.length) html += `<section class="card stack"><div class="row between"><h2>Bu Faturada</h2><button class="link" data-act="closeInvSum">Kapat</button></div>
     ${S.invSummary.map(x=>`<div class="mrow"><div><b>${esc(x.name)}</b>${x.days!=null?`<div class="small muted">son faturadan beri ${fmt(x.days)} gün</div>`:""}</div>
       <div class="mnums"><span class="plus num">+${fmt(x.add)} geldi</span>${x.minus!=null && Math.round(x.minus)>0?`<span class="minus num">−${fmt(x.minus)} eksilmişti</span>`:""}
       ${x.shelf!=null?`<span class="small muted">raf ${fmt(x.shelf)} → <b class="num">${fmt(x.shelf+x.add)}</b></span>`:""}</div></div>`).join("")}</section>`;
@@ -1057,7 +1103,7 @@ function viewOrder(){
     const when = !sch ? `<span class="muted">Araç günleri girilmemiş.</span> <button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Gir</button>`
       : sch.lead>0 ? `<span class="truck ${sch.orderIn===0?"now":""}">${sch.orderIn===0?"Siparişi bugün ver":`Siparişi ${sch.orderIn===1?"yarın":DN[(new Date(today0()).getDay()+sch.orderIn)%7]} ver`}</span> <span class="muted">· araç ${sch.a===1?"yarın":DN[sch.next]} gelecek</span>`
       : `<span class="truck ${sch.a===0?"now":""}">${sch.a===0?"Araç bugün geliyor":sch.a===1?"Araç yarın geliyor":`Araç ${DN[sch.next]} geliyor (${sch.a} gün sonra)`}</span> <span class="muted">· sonraki geliş ${DN[sch.follow]}</span>`;
-    html += `<section class="stack"><div class="supplier"><div><h2>${esc(sup)}</h2><p class="small">${when}</p></div><button class="link" data-act="copy" data-sup="${esc(sup)}">Listeyi kopyala</button></div>`;
+    html += `<section class="stack"><div class="supplier"><div><h2>${esc(sup)}</h2><p class="small">${when}</p></div><button class="link" data-act="copy" data-sup="${esc(sup)}">Listeyi Kopyala</button></div>`;
     list.sort((a,b)=>(!!b.p.outSince - !!a.p.outSince) || (b.st.q - a.st.q) || a.p.name.localeCompare(b.p.name,"tr"));
     for (const {p, st} of list){
       const sts = statusOf(p, st);
@@ -1067,10 +1113,10 @@ function viewOrder(){
         <div class="simple">
           <div class="buy"><span class="buyLab">Bu sefer al</span><span class="buyN num">${fmt(st.q)}</span><span class="buyU">${unitOf(p)}${st.cases?` · ${st.cases} koli${st.caseRem?` + ${fmt(st.caseRem)}`:""}`:""}</span></div>
           <div class="side"><p class="short">${shortSay(p, st)}</p>
-            ${p.outSince ? `<button class="out" data-act="unout" data-id="${p.id}">Bitti işaretini kaldır</button>`
-                         : `<button class="bitti" data-act="out" data-id="${p.id}">Rafta bitti</button>`}</div>
+            ${p.outSince ? `<button class="out" data-act="unout" data-id="${p.id}">Bitti İşaretini Kaldır</button>`
+                         : `<button class="bitti" data-act="out" data-id="${p.id}">Rafta Bitti</button>`}</div>
         </div>
-        <details class="more" data-id="d-${p.id}" ${open}><summary>Neden bu rakam? Ayrıntılar</summary><div class="stack">
+        <details class="more" data-id="d-${p.id}" ${open}><summary>Neden Bu Rakam? Ayrıntılar</summary><div class="stack">
           <p class="say">${sayIt(p, st)}</p>
           ${p.perishable && st.expFire>0 ? `<p class="small fireNote">Bu siparişten yaklaşık <b class="num">${st.expFire}</b> tanesinin bozulması bekleniyor.</p>` : ""}
           ${st.money.orderProfit!=null && st.q>0 ? `<p class="small moneyLine">Bu siparişten beklenen kâr <b class="num">${TL(st.money.orderProfit)}</b>${st.money.orderFireLoss?` · olası fire zararı <b class="num neg">${TL(st.money.orderFireLoss)}</b>`:""} <span class="muted">(tanesi ${TL(st.money.unit,2)} kâr)</span></p>`
@@ -1081,8 +1127,8 @@ function viewOrder(){
           ${movCard(p, st)}
           <div class="row pact">
             ${!st.checkShelf && p.showCount ? `<label class="row cnt"><span>Rafta kaç var?</span><input id="cnt-${p.id}" type="number" min="0" inputmode="numeric"><button data-act="count" data-id="${p.id}">Kaydet</button></label>`
-                         : `<button class="link" data-act="showcount" data-id="${p.id}">Rafa baktım, sayı gir</button>`}
-            <button class="link" data-act="edit" data-id="${p.id}" data-totab="urunler">Ürünü düzenle</button>
+                         : `<button class="link" data-act="showcount" data-id="${p.id}">Rafa Baktım, Sayı Gir</button>`}
+            <button class="link" data-act="edit" data-id="${p.id}" data-totab="urunler">Ürünü Düzenle</button>
           </div></div></details>
         ${st.checkShelf ? `<div class="fireNote stack" style="gap:6px"><span class="small"><b>Rafa bir bak:</b> şu an kaç tane var? Bu bilgi tahmini en çok düzelten şey.</span>
           <label class="row cnt" style="color:inherit"><input id="cntq-${p.id}" type="number" min="0" inputmode="numeric" placeholder="adet"><button data-act="count" data-id="${p.id}" data-src="cntq-">Kaydet</button></label></div>`:""}
@@ -1099,12 +1145,12 @@ function viewInvoice(){
   if (S.msg) html += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
   if (!S.inv){
     html += `<div class="card stack">
-      <h2>Faturanın fotoğrafını çek</h2>
+      <h2>Faturanın Fotoğrafını Çek</h2>
       <p class="small muted">Gelen malı ve iadeleri faturadan okuyorum. Fatura birkaç sayfaysa hepsini birlikte seç. Sonra her satırı sen kontrol edip kaydedersin.</p>
       ${S.canImages ? `<label class="btn primary" style="text-align:center;color:var(--accent-ink);background:var(--accent);border-color:var(--accent);font-weight:600;align-items:center">${S.invBusy?'<span><span class="spin"></span> Fatura okunuyor</span>':'Fotoğraf çek veya seç'}<input id="invFile" type="file" accept="image/*" multiple hidden ${S.invBusy?"disabled":""}></label>`
                     : `<p class="note">Fotoğraftan okuma şu an kullanılamıyor. Satırları elle girebilirsin.</p>`}
       ${S.invMsg ? `<p class="notice bad">${esc(S.invMsg)}</p>` : ""}
-      <button data-act="manualInv">Elle gir</button>
+      <button data-act="manualInv">Elle Gir</button>
     </div>`;
     const recent = S.events.filter(e=>e.type==="gelen"||e.type==="iade").reduce((m,e)=>{ const k = invKeyOf(e); m[k] ||= {k,no:e.invoiceNo,date:e.date,sup:e.supplier,n:0,q:0,eid:e.id}; m[k].n++; m[k].q+=e.qty; return m; },{});
     const rec = Object.values(recent).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
@@ -1137,11 +1183,11 @@ function viewInvoice(){
         <label>Adet fiyatı (TL)<input id="ln-pr-${i}" type="number" min="0" step="0.01" inputmode="decimal" value="${l.price??""}"></label>
       </div>
       <div class="row between"><label class="check"><input id="ln-r-${i}" type="checkbox" ${l.iade?"checked":""}> İade (geri verildi)</label>
-      <button class="link" data-act="delLine" data-i="${i}">Satırı sil</button></div>
+      <button class="link" data-act="delLine" data-i="${i}">Satırı Sil</button></div>
     </div>`).join("")}
-    <button data-act="addLine" style="margin-top:8px">Satır ekle</button>
+    <button data-act="addLine" style="margin-top:8px">Satır Ekle</button>
   </div>
-  <div class="row"><button class="primary" data-act="saveInv" ${dup && !inv.force ? "disabled":""}>Faturayı kaydet</button>
+  <div class="row"><button class="primary" data-act="saveInv" ${dup && !inv.force ? "disabled":""}>Faturayı Kaydet</button>
   ${dup ? `<label class="check"><input id="inv-force" type="checkbox" ${inv.force?"checked":""}> Yine de kaydet</label>` : ""}
   <button data-act="cancelInv">Vazgeç</button></div>`;
   return html;
@@ -1163,7 +1209,7 @@ function viewFire(){
         <label>Neden?<select id="fwhy-${p.id}">${Object.entries(WHY).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label>
         <label>Açıklama (isteğe bağlı)<input id="fnote-${p.id}" maxlength="140" placeholder="Örn. koli ezik geldi, raf arkasında unutuldu"></label>
       </div></div>`).join("");
-  html += `</div><button class="primary" data-act="saveFire">Fireyi kaydet</button>`;
+  html += `</div><button class="primary" data-act="saveFire">Fireyi Kaydet</button>`;
   html += fireHistory();
   return html;
 }
@@ -1204,9 +1250,9 @@ function viewProfit(){
   let html = "";
   if (S.msg) html += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
   if (!priced.length){
-    return html + `<div class="card empty stack"><div class="big">₺</div><h2>Kârı görmek için fiyat lazım</h2>
+    return html + `<div class="card empty stack"><div class="big">₺</div><h2>Kârı Görmek İçin Fiyat Lazım</h2>
       <p class="muted">Ürünler'de her ürüne <b>raf satış fiyatını</b> yaz. Alış fiyatı faturadan otomatik gelir; fatura girmediysen onu da elle yazabilirsin.</p>
-      <button class="primary" data-act="goto" data-tab="urunler" data-plain="1">Fiyatları gir</button></div>`;
+      <button class="primary" data-act="goto" data-tab="urunler" data-plain="1">Fiyatları Gir</button></div>`;
   }
   const sum = k => priced.reduce((a,x)=>a+(x.st.money[k]||0),0);
   const wp = sum("weekProfit"), fl = all.reduce((a,x)=>a+(x.st.money.fireLossW||0),0), lp = sum("lostProfit"), net = wp - fl;
@@ -1241,14 +1287,14 @@ function viewProfit(){
       <p class="small muted">Alış <span class="num">${TL(m.buy,2)}</span> · satış <span class="num">${TL(m.sale,2)}</span> · adet başı <b class="num">${TL(m.unit,2)}</b> (%${fmt((m.margin||0)*100)}) · haftada ≈ ${fmt(st.weekly,1)} tane</p></div>`;
   }
   html += `</section>`;
-  html += `<section class="card stack"><h2>Rafta bağlı para</h2>
+  html += `<section class="card stack"><h2>Rafta Bağlı Para</h2>
     ${tiedKnown ? `<p class="say">Raftaki ve depodaki mallara yaklaşık <b class="num">${TL(tied)}</b> bağlı.${mr?` Paranın aylık maliyeti %${fmt(mr,1)} ise bu, ayda yaklaşık <b class="num">${TL(tied*mr/100)}</b> demek.`:""}</p>
       ${tiedRows.sort((a,b)=>b.v-a.v).slice(0,5).map(x=>`<div class="row between small"><span>${esc(x.p.name)} <span class="muted">≈${fmt(x.sh)} tane</span></span><span class="num">${TL(x.v)}</span></div>`).join("")}`
       : `<p class="small muted">Hesaplamak için ürünlerin rafta kaç tane olduğunu bilmem gerekiyor: yeni üründe başlangıç sayısını gir, ya da "Rafa baktım" ile say.</p>`}
     <div class="row" style="align-items:flex-end"><label style="flex:1;min-width:180px">Paranın aylık maliyeti (%): enflasyon ya da kredi faizi<input id="mrate" type="number" min="0" step="0.1" inputmode="decimal" value="${S.settings?.monthlyRate??""}" placeholder="Örn. 3"></label><button data-act="saveRate">Kaydet</button></div>
     <p class="small muted">Yavaş satan üründe fazla mal tutmak bu parayı bağlar. Alış fiyatları hızlı artıyorsa erken alınan mal değer kazanabilir; bu durumda biraz fazla stok mantıklı olabilir.</p></section>`;
   if (missing.length) html += `<section class="card stack"><h3>Fiyatı eksik ürünler</h3>
-    ${missing.map(({p,st})=>`<div class="row between"><span>${esc(p.name)} <span class="small muted">${st.money.sale==null?"satış fiyatı yok":"alış fiyatı yok"}</span></span><button data-act="edit" data-id="${p.id}" data-totab="urunler">Fiyat gir</button></div>`).join("")}</section>`;
+    ${missing.map(({p,st})=>`<div class="row between"><span>${esc(p.name)} <span class="small muted">${st.money.sale==null?"satış fiyatı yok":"alış fiyatı yok"}</span></span><button data-act="edit" data-id="${p.id}" data-totab="urunler">Fiyat Gir</button></div>`).join("")}</section>`;
   return html;
 }
 
@@ -1307,7 +1353,7 @@ function viewProducts(){
     </form>`;
     return html;
   }
-  html += `<button class="primary" data-act="newProduct">Ürün ekle</button>`;
+  html += `<button class="primary" data-act="newProduct">Ürün Ekle</button>`;
   if (!S.products.length) return html + emptyProducts();
   html += `<div class="card">` + S.products.slice().sort((a,b)=>a.name.localeCompare(b.name,"tr")).map(p=>{
     if (isMade(p)) return `<div class="item"><div class="name">${esc(p.name)} <span class="pill info">reçeteli</span><div class="small muted">günde ${fmt(p.dailyEst||0)} tane · ${p.recipe.map(r=>{ const c=S.products.find(x=>x.id===r.id); return c?`${esc(c.name)} ×${fmt(r.qty,3)}`:""; }).filter(Boolean).join(", ")}</div></div>
@@ -1327,6 +1373,7 @@ function viewSettings(){
   if (!S.products.length) html += `<p class="notice ok">Başka bir cihazdan aldığın Excel yedeğin varsa en alttaki "Excel'den yükle" ile hepsini getirebilirsin.</p>`;
   if (S.msg) html += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
   html += accountCards();
+  html += nSection();
   const sups = [...new Set(S.products.map(x=>x.supplier).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"tr"));
   html += `<section class="card stack"><h2>Dükkân</h2>
     <div class="row" style="align-items:flex-end"><label style="flex:1;min-width:180px">Dükkânın adı<input id="shop-name" maxlength="40" value="${esc(S.settings?.shopName||"")}" placeholder="Örn. Yıldız Bakkal"></label><button data-act="saveShop">Kaydet</button></div>
@@ -1338,39 +1385,39 @@ function viewSettings(){
     <label class="check"><input id="set-big" type="checkbox" data-set="bigText" ${S.settings?.bigText?"checked":""}> Yazıları büyüt</label>
     <label class="check"><input id="set-det" type="checkbox" data-set="showDetails" ${S.settings?.showDetails?"checked":""}> Sipariş kartlarında ayrıntıları hep açık göster</label>
   </section>
-  <section class="card stack"><h2>Araçların geliş günleri</h2>
+  <section class="card stack"><h2>Araçların Geliş Günleri</h2>
     <p class="small muted">Her tedarikçinin aracı hangi günler geliyorsa işaretle. Sipariş, bir sonraki gelişe kadar yetecek kadar hesaplanır.</p>
     ${sups.length ? sups.map(sp=>{ const d = S.suppliers[supKey(sp)]?.days || [];
       const ld = Number(S.suppliers[supKey(sp)]?.lead)||0;
       return `<div class="stack" style="gap:6px">${S.renSup===sp
         ? `<div class="row" style="flex-wrap:nowrap"><input id="ren-sup" value="${esc(sp)}" maxlength="60" aria-label="Tedarikçinin yeni adı" style="flex:1;min-width:0"><button class="primary" data-act="renSupSave" data-sup="${esc(sp)}">Kaydet</button><button data-act="renSupCancel">Vazgeç</button></div>`
-        : `<div class="row between"><b>${esc(sp)}</b><span class="row"><span class="small muted">${d.length?`haftada ${d.length} kez`:"gün seçilmedi"}</span><button class="link" data-act="renSup" data-sup="${esc(sp)}">Adını değiştir</button></span></div>`}${supDays(sp)}
+        : `<div class="row between"><b>${esc(sp)}</b><span class="row"><span class="small muted">${d.length?`haftada ${d.length} kez`:"gün seçilmedi"}</span><button class="link" data-act="renSup" data-sup="${esc(sp)}">Adını Değiştir</button></span></div>`}${supDays(sp)}
         <label class="row" style="flex-direction:row;gap:8px;align-items:center;flex-wrap:nowrap"><span class="small" style="flex:none">Siparişi ne zaman veriyorsun?</span><select id="lead-${supKey(sp)}" data-lead="${esc(sp)}">${[[0,"Araç gelince"],[1,"1 gün önce"],[2,"2 gün önce"]].map(([v,l])=>`<option value="${v}" ${ld===v?"selected":""}>${l}</option>`).join("")}</select></label></div>`; }).join('<hr class="sep">')
       : `<p class="small muted">Ürünlere tedarikçi adı girince burada listelenir.</p>`}
   </section>
-  <section class="card stack"><h2>Dükkânın yoğun günleri</h2>
+  <section class="card stack"><h2>Dükkânın Yoğun Günleri</h2>
     <p class="small muted">Güne basarak Sakin, Normal ve Yoğun arasında değiştir. Yoğun günlere denk gelen siparişler biraz artar.</p>
     <div class="days">${WEEK.map(x=>{ const v = dayW()[x], k = v>1?"busy":v<1?"calm":"";
       return `<button class="dchip w ${k}" data-act="wday" data-d="${x}"><span>${DS[x]}</span><small>${v>1?"Yoğun":v<1?"Sakin":"Normal"}</small></button>`; }).join("")}</div>
   </section>
-  <section class="card stack"><h2>Özel günler</h2>
+  <section class="card stack"><h2>Özel Günler</h2>
     <p class="small muted">Bayram, arife, maç günü, dükkânın kapalı olacağı gün... Siparişin yetmesi gereken günlere denk gelirse miktar ona göre ayarlanır.</p>
     ${specials().filter(x=>x.d>=ymd(today0())).map(x=>`<div class="row between"><span><b class="num">${new Date(x.d+"T12:00:00").toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"short"})}</b> · ${esc(x.name)} <span class="pill ${x.k==="kapali"||x.k==="sakin"?"info":"warn"}">${SPECIAL[x.k]?.t||""}</span></span><button class="link" data-act="delSpecial" data-d="${x.d}">Sil</button></div>`).join("") || `<p class="small muted">Yaklaşan özel gün yok.</p>`}
     <div class="grid2"><label>Tarih<input id="sp-date" type="date" min="${ymd(today0())}"></label>
       <label>Ne günü?<input id="sp-name" maxlength="40" placeholder="Örn. Bayram arifesi"></label>
       <label>Satış nasıl olur?<select id="sp-k">${Object.entries(SPECIAL).map(([k,v])=>`<option value="${k}" ${k==="cokyogun"?"selected":""}>${v.t}</option>`).join("")}</select></label></div>
-    <button data-act="addSpecial">Özel gün ekle</button>
+    <button data-act="addSpecial">Özel Gün Ekle</button>
   </section>
-  ${S.mode==="cloud" ? "" : `<section class="card stack"><h2>Dükkânda birden fazla kişi</h2>
+  ${S.mode==="cloud" ? "" : `<section class="card stack"><h2>Dükkânda Birden Fazla Kişi</h2>
     ${S.shared ? `<p class="small"><b>Ortak defteri kullanıyorsun.</b> Uygulamanın paylaşıldığı herkes aynı ürünleri, faturaları ve fireleri görüp girebilir.</p>
-      <button data-act="shareOff">Kendi defterime dön</button>`
+      <button data-act="shareOff">Kendi Defterime Dön</button>`
     : `<p class="small muted">Sen ve çırağın gibi aynı dükkânda çalışanlar tek defter kullanabilir. Dikkat: ortak defteri, bu uygulamayı paylaştığın <b>herkes</b> görür ve değiştirebilir. Uygulamayı başka bakkallara da gönderiyorsan her dükkâna ayrı bir kopya ver.</p>
-      ${S.mode==="db" ? `<button data-act="shareOn">Ortak deftere geç</button>` : `<p class="small muted">Bu açılışta ortak defter yok. İki telefonda çalışacaksanız birinde <b>Excel'e aktar</b>, öbüründe <b>Excel'den yükle</b>.</p>`}`}
+      ${S.mode==="db" ? `<button data-act="shareOn">Ortak Deftere Geç</button>` : `<p class="small muted">Bu açılışta ortak defter yok. İki telefonda çalışacaksanız birinde <b>Excel'e aktar</b>, öbüründe <b>Excel'den yükle</b>.</p>`}`}
   </section>`}
-  <section class="card stack" id="excel"><h2>Excel ile taşı ve yedekle</h2>
+  <section class="card stack" id="excel"><h2>Excel ile Taşı ve Yedekle</h2>
     <p class="small muted">Bütün kayıtlar (ürünler, faturalar, fireler, sayımlar, veresiye defteri, ayarlar) tek bir Excel dosyasına alınır. Bu dosyayı başka bir telefonda ya da tarayıcıda "Excel'den yükle" ile açarsan her şey aynen gelir. Excel'de satır ekleyip düzeltip geri de yükleyebilirsin.</p>
     ${importCard()}
-    <div class="row"><button class="primary" data-act="export">Excel'e aktar</button>
+    <div class="row"><button class="primary" data-act="export">Excel'e Aktar</button>
       <label class="btn" style="flex-direction:row;align-items:center;color:var(--ink);cursor:pointer">Excel'den yükle<input id="xlsFile" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label></div>
   </section>`;
   return html;
@@ -1546,21 +1593,21 @@ function viewPlan(){
   const totalCash = cash.reduce((a,c)=>a+c.v,0);
   const risky = plans.filter(x=>x.runOut && !x.unknown && !x.p.outSince);
   let html = backLink() + noticeHtml();
-  html += `<section class="card stack"><div class="row between"><h2>Önümüzdeki 7 gün nakit ihtiyacı</h2><span class="pill info num">${TL(totalCash)}</span></div>
+  html += `<section class="card stack"><div class="row between"><h2>Önümüzdeki 7 Gün Nakit İhtiyacı</h2><span class="pill info num">${TL(totalCash)}</span></div>
     <p class="small muted">Planlanan siparişlerin alış tutarı, malın geleceği güne göre. Kasada bu kadar nakit hazır olsun.</p>
     ${vbars(cash.map(c=>{ const t=t0+c.k*DAY+3*3600e3; return {v:Math.round(c.v), l:c.k===0?"Bugün":DS[new Date(t).getDay()], s:String(new Date(t).getDate()), c:c.k===0?"var(--c1)":"var(--c4)"}; }), {fmtv:v=>fmt(v)+"₺", label:"Günlük nakit ihtiyacı"})}
   </section>`;
   // takvim şeridi
   const sups = [...new Set(P.map(p=>p.supplier).filter(Boolean))];
-  html += `<section class="card stack"><h2>Araç takvimi</h2><div class="cal">${Array.from({length:7},(_,k)=>{ const t=t0+k*DAY+3*3600e3, dw=new Date(t).getDay();
+  html += `<section class="card stack"><h2>Araç Takvimi</h2><div class="cal">${Array.from({length:7},(_,k)=>{ const t=t0+k*DAY+3*3600e3, dw=new Date(t).getDay();
       const here = sups.filter(sp=>(S.suppliers[supKey(sp)]?.days||[]).includes(dw));
       const sd = specials().find(x=>x.d===ymd(t));
       return `<div class="cday ${k===0?"today":""}"><b>${k===0?"Bugün":DS[dw]}</b><span class="num">${new Date(t).getDate()}</span>${sd?`<em class="sd">${esc(sd.name)}</em>`:""}${here.map(sp=>`<i title="${esc(sp)}">${esc(sp.length>9?sp.slice(0,8)+"…":sp)}</i>`).join("")}</div>`; }).join("")}</div>
-    ${sups.some(sp=>!(S.suppliers[supKey(sp)]?.days||[]).length)?`<p class="small muted">Araç günü girilmemiş tedarikçiler "kaç günde bir" ayarına göre planlanır. <button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Araç günlerini gir</button></p>`:""}
+    ${sups.some(sp=>!(S.suppliers[supKey(sp)]?.days||[]).length)?`<p class="small muted">Araç günü girilmemiş tedarikçiler "kaç günde bir" ayarına göre planlanır. <button class="link" data-act="goto" data-tab="ayarlar" data-plain="1">Araç Günlerini Gir</button></p>`:""}
   </section>`;
   if (risky.length) html += `<div class="notice bad">${ic("alert",18)} ${risky.length} ürün plan dönemi içinde bitebilir: ${risky.slice(0,4).map(x=>esc(x.p.name)).join(", ")}${risky.length>4?"…":""}. Rafa bakıp sayıyı girersen plan netleşir.</div>`;
   const made = S.products.filter(isMade);
-  if (made.length) html += `<section class="card stack"><h2>Ürün ağacı (reçeteler)</h2>
+  if (made.length) html += `<section class="card stack"><h2>Ürün Ağacı (Reçeteler)</h2>
     <p class="small muted">Dükkânda hazırladığın ürünler, malzemelerinin ihtiyacına eklenir. Tabloda "↳ reçeteden" satırı bunu gösterir.</p>${made.map(recipeTree).join("")}</section>`;
   html += `<h3 style="margin-top:4px">Ürün ürün plan</h3>`;
   plans.sort((a,b)=>((!!b.runOut&&!b.unknown) - (!!a.runOut&&!a.unknown)) || (a.periods.find(x=>x.planned>0)?.k ?? 99) - (b.periods.find(x=>x.planned>0)?.k ?? 99));
@@ -1605,7 +1652,7 @@ function viewStock(){
   let value = 0; for (const r of rows) if (r.s.cur.known){ const b = r.st.money.buy ?? Number(r.p.buyPrice); if (b>0) value += r.s.cur.v*b; }
   const f = S.stockF || "all";
   let html = backLink() + noticeHtml();
-  html += `<section class="card stack"><h2>Raf durumu</h2>
+  html += `<section class="card stack"><h2>Raf Durumu</h2>
     ${donut(SKIND.map(([k,l,c])=>({l, v:cnt[k], c, act:"stockF", f:k})), {center:fmt(rows.length), sub:"ürün", label:"Stok durumu"})}
     <div class="tiles t2"><div class="tile"><span class="tn num">${TL(value)}</span><span>raftaki malın değeri (tahmini)</span></div>
       <div class="tile ${cnt.unk?"warn":""}"><span class="tn num">${cnt.unk}</span><span>üründe raf bilinmiyor</span></div></div>
@@ -1621,7 +1668,7 @@ function viewStock(){
       ${s.k==="unk" ? `<p class="small muted">Rafta kaç ${esc(u)} olduğu bilinmiyor.</p>
         <label class="row cnt" style="color:inherit"><input id="scnt-${p.id}" type="number" min="0" step="any" inputmode="decimal" placeholder="Rafta kaç var?"><button data-act="count" data-id="${p.id}" data-src="scnt-">Kaydet</button></label>`
       : `<div class="cover"><div class="hb tall"><span style="width:${(100*(cov||0)/scale).toFixed(1)}%;background:${s.c}"></span></div><i class="need" style="left:${Math.min(100,100*s.need/scale).toFixed(1)}%" title="sonraki araç"></i></div>
-        <p class="small muted">${st.mode==="pos"?"":"≈ "}<b class="num">${fmt(s.cur.v, s.cur.v<10?1:0)}</b> ${esc(u)} · ${s.k==="out"?"rafta yok":`<b>${fmt(s.cover, s.cover<10?1:0)} gün</b> yeter`}${nextTxt?` · ${nextTxt}`:""}${s.k==="out"?` · <button class="link" data-act="goto" data-tab="siparis" data-plain="1">Siparişe bak</button>`:""}</p>`}
+        <p class="small muted">${st.mode==="pos"?"":"≈ "}<b class="num">${fmt(s.cur.v, s.cur.v<10?1:0)}</b> ${esc(u)} · ${s.k==="out"?"rafta yok":`<b>${fmt(s.cover, s.cover<10?1:0)} gün</b> yeter`}${nextTxt?` · ${nextTxt}`:""}${s.k==="out"?` · <button class="link" data-act="goto" data-tab="siparis" data-plain="1">Siparişe Bak</button>`:""}</p>`}
     </div>`; }).join("") || `<p class="small muted">Bu filtrede ürün yok.</p>`}</section>
     <p class="small muted">Çubuk ürünün kaç gün yeteceğini, dikey çizgi bir sonraki aracın geleceği günü gösterir. Tahmin; faturalar, "Rafta bitti" ve raf sayımlarından hesaplanır.</p>`;
   return html;
@@ -1666,8 +1713,8 @@ function viewCost(){
     <div class="grid2"><label>Paranın aylık maliyeti (%) ${assumeH?`<span class="pill info">varsayılan 3</span>`:""}<input id="c-rate" type="number" min="0" step="0.1" inputmode="decimal" value="${S.settings?.monthlyRate??""}" placeholder="3"></label>
       <label>Bir ürünü sipariş edip rafa dizmenin emeği (TL) ${assumeO?`<span class="pill info">varsayılan 10</span>`:""}<input id="c-ord" type="number" min="0" step="1" inputmode="decimal" value="${S.settings?.orderCost??""}" placeholder="10"></label></div>
     <p class="small muted">Paranın maliyeti: enflasyon ya da kredi faizi. Emek: o ürün için saymak, sipariş vermek, teslim alıp rafa dizmek için harcadığın zamanın değeri.</p>
-    <button data-act="saveCost">Kaydet ve yeniden hesapla</button></div>`;
-  if (!ms.length) return html + `<div class="card empty stack"><div class="big">${ic("coin",40)}</div><h2>Hesap için alış fiyatı ve satış bilgisi lazım</h2>
+    <button data-act="saveCost">Kaydet ve Yeniden Hesapla</button></div>`;
+  if (!ms.length) return html + `<div class="card empty stack"><div class="big">${ic("coin",40)}</div><h2>Hesap İçin Alış Fiyatı ve Satış Bilgisi Lazım</h2>
     <p class="muted">Faturaları girdikçe alış fiyatı ve satış hızı öğrenilir. İstersen Ürünler'den alış fiyatını elle de yazabilirsin.</p></div>` + assum;
   const sum = k => ms.reduce((a,m)=>a+m.cur[k],0);
   const hold = sum("hold"), ord = sum("ord"), fire = sum("fire"), short = ms.reduce((a,m)=>a+m.short,0);
@@ -1693,14 +1740,14 @@ function viewCost(){
       <div><span class="small">Önerilerle</span>${hbar(total>0?100*(total-saveAll)/total:0,"var(--c1)")}<b class="num">${TL(total-saveAll)}</b></div></div>
     ${saveAll>0?`<p class="notice ok">Sipariş sıklığı önerilerini uygularsan ayda yaklaşık <b>${TL(saveAll)}</b>, yılda <b>${TL(saveAll*12)}</b> tasarruf.</p>`:`<p class="small muted">Sipariş sıklıkların zaten en ucuz düzende görünüyor.</p>`}
   </section>`;
-  html += `<section class="card stack"><h2>Maliyet neden oluşuyor?</h2>${donut([
+  html += `<section class="card stack"><h2>Maliyet Neden Oluşuyor?</h2>${donut([
       {l:"Rafta bağlı para", v:Math.round(hold), c:"var(--c4)"}, {l:"Sipariş emeği", v:Math.round(ord), c:"var(--c5)"},
       {l:"Bozulan mal (fire)", v:Math.round(fire), c:"var(--c3)"}, {l:"Bitince kaçan kâr", v:Math.round(short), c:"var(--c2)"}],
       {center:fmt(total), sub:"TL / ay", fmtv:v=>TL(v), label:"Stok maliyeti dağılımı"})}</section>`;
   if (sugg.length) html += `<section class="stack"><h3>Maliyeti düşürmek için</h3>${sugg.slice(0,8).map(s=>`<div class="card sugg"><span class="sic">${ic(s.icon,22)}</span>
       <div class="stack" style="gap:6px;min-width:0"><b>${esc(s.t)}</b><p class="small">${s.d}</p><div class="row"><button class="primary" ${s.act}>${s.btn}</button><span class="small muted">≈ ${TL(s.tl)} / ay</span></div></div></div>`).join("")}</section>`;
   const mx = Math.max(1, ...ms.map(m=>m.cur.tot+m.short));
-  html += `<section class="card"><div class="row between" style="margin-bottom:6px"><h2>Ürün ürün</h2><span class="small muted">TL / ay</span></div>
+  html += `<section class="card"><div class="row between" style="margin-bottom:6px"><h2>Ürün Ürün</h2><span class="small muted">TL / ay</span></div>
     <div class="legend small muted" style="margin-bottom:8px"><span><i class="sw" style="background:var(--c4)"></i>Bağlı para</span><span><i class="sw" style="background:var(--c5)"></i>Emek</span><span><i class="sw" style="background:var(--c3)"></i>Fire</span><span><i class="sw" style="background:var(--c2)"></i>Kaçan kâr</span></div>
     ${ms.slice().sort((a,b)=>(b.cur.tot+b.short)-(a.cur.tot+a.short)).map(m=>`<div class="prow"><div class="row between"><b>${esc(m.p.name)}</b><span class="num">${TL(m.cur.tot+m.short)}</span></div>
       ${stackBar([{v:m.cur.hold,c:"var(--c4)"},{v:m.cur.ord,c:"var(--c5)"},{v:m.cur.fire,c:"var(--c3)"},{v:m.short,c:"var(--c2)"}], mx)}
@@ -1740,7 +1787,7 @@ function viewVeresiye(){
   const custs = Object.values(S.customers||{});
   if (S.vEditCust) return html + custForm(S.vEditCust==="__new" ? null : S.customers[S.vEditCust]);
   if (S.vCust && S.customers[S.vCust]) return html + custDetail(S.customers[S.vCust]);
-  if (!custs.length) return html + `<div class="card empty stack"><div class="big">${ic("book",44)}</div><h2>Veresiye defteri</h2>
+  if (!custs.length) return html + `<div class="card empty stack"><div class="big">${ic("book",44)}</div><h2>Veresiye Defteri</h2>
     <p class="muted">Müşterilerin borçlarını burada tut: kim ne kadar aldı, ne kadar ödedi, kimin borcu ne zamandan beri bekliyor.</p>
     <div class="choices"><button class="primary" data-act="vNew">${ic("plus",18)} İlk müşteriyi ekle</button></div></div>`;
   const rows = custs.map(c=>({c, s:custStats(c)}));
@@ -1750,7 +1797,7 @@ function viewVeresiye(){
   html += `<div class="tiles"><div class="tile"><span class="tn num">${TL(total)}</span><span>toplam alacak</span></div>
     <div class="tile"><span class="tn num">${debtors.length}</span><span>borçlu müşteri</span></div>
     <div class="tile ${late.length?"bad":""}"><span class="tn num">${late.length}</span><span>30 günü geçen</span></div></div>`;
-  if (total>0) html += `<section class="card stack"><h2>Borçlar ne zamandır bekliyor?</h2>
+  if (total>0) html += `<section class="card stack"><h2>Borçlar Ne Zamandır Bekliyor?</h2>
     ${donut(AGE.map(([l,c],i)=>({l, v:Math.round(buckets[i]), c})), {center:fmt(total), sub:"TL alacak", fmtv:v=>TL(v), label:"Borç yaşlandırma"})}
     ${debtors.length>1?`<div class="stack" style="gap:8px"><h3>En çok borcu olanlar</h3>${debtors.slice().sort((a,b)=>b.s.bal-a.s.bal).slice(0,5).map(x=>`<div class="tb" data-act="vOpen" data-id="${x.c.id}" role="button" tabindex="0"><span class="row between"><span>${esc(x.c.name)}</span><b class="num">${TL(x.s.bal)}</b></span>${hbar(100*x.s.bal/debtors.reduce((m,y)=>Math.max(m,y.s.bal),0), x.s.ageDays>60?"var(--c3)":x.s.ageDays>30?"var(--c2)":"var(--c1)")}</div>`).join("")}</div>`:""}
   </section>`;
@@ -1819,13 +1866,13 @@ function phoneCard(){
   if (inApp) return `<div class="notice bad stack" style="margin-bottom:12px"><b>Bu sayfayı telefonun kendi tarayıcısında aç.</b>
     <span>Facebook, WhatsApp gibi uygulamaların içinden açınca kayıtlar silinebilir.</span>
     <span>${ios ? "Sağ alttaki <b>⋯</b> ya da paylaş düğmesine bas, <b>Safari'de aç</b>'ı seç." : "Sağ üstteki <b>⋮</b> üç noktaya bas, <b>Chrome'da aç</b> ya da <b>Tarayıcıda aç</b>'ı seç."}</span>
-    <button data-act="copyLink">Bağlantıyı kopyala</button></div>`;
+    <button data-act="copyLink">Bağlantıyı Kopyala</button></div>`;
   const standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
   let hid = false; try{ hid = localStorage.getItem("bd-ana-ekran")==="1"; }catch(_){}
   if (standalone || hid) return "";
   return `<div class="note stack" style="margin-bottom:12px"><b>Telefonda simge olarak dursun</b>
     <span class="small">${ios ? "Safari'de alttaki paylaş düğmesine (kare ve yukarı ok) bas, <b>Ana Ekrana Ekle</b>'yi seç." : "Chrome'da sağ üstteki <b>⋮</b> üç noktaya bas, <b>Ana ekrana ekle</b>'yi (ya da <b>Uygulamayı yükle</b>'yi) seç."} Bir dahakine telefonunda <b>Bakkal Defteri</b> simgesine basman yeter.</span>
-    <div class="row"><button class="link" data-act="hidePhone">Yaptım, gizle</button></div></div>`;
+    <div class="row"><button class="link" data-act="hidePhone">Yaptım, Gizle</button></div></div>`;
 }
 function viewHome(){
   const P = stockP();
@@ -1863,17 +1910,17 @@ function viewHome(){
   if (S.mode==="local" && (S.events.length || P.length)){ let last=0; try{ last=Number(localStorage.getItem("bd-son-yedek"))||0; }catch(_){}
     if (Date.now()-last > 7*DAY) todo.push({i:"list", c:"c4", t: last ? `Haftalık yedeğini al (son yedek ${agoTxt(last)}).` : `Kayıtların yalnız bu telefonda. <b>Excel'e yedek al</b>, WhatsApp'tan kendine gönder.`, a:`data-act="export"`, b:"Yedek al"}); }
   if (lateC.length) todo.push({i:"book", c:"c6", t:`<b>${lateC.length} müşterinin</b> borcu 30 günü geçti.`, a:`data-act="goto" data-tab="veresiye" data-plain="1"`, b:"Veresiye"});
-  html += `<section class="card stack"><h2>Bugün yapılacaklar</h2>${todo.length ? `<ul class="todo">${todo.map(x=>`<li class="${x.done?"done":""}"><span class="bi ${x.c}">${ic(x.i,18)}</span><span>${x.t}</span>${x.a?`<button ${x.a}>${x.b}</button>`:""}</li>`).join("")}</ul>` : `<p class="small muted">${ic("check",18)} Bugün acil bir iş görünmüyor.</p>`}</section>`;
+  html += `<section class="card stack"><h2>Bugün Yapılacaklar</h2>${todo.length ? `<ul class="todo">${todo.map(x=>`<li class="${x.done?"done":""}"><span class="bi ${x.c}">${ic(x.i,18)}</span><span>${x.t}</span>${x.a?`<button ${x.a}>${x.b}</button>`:""}</li>`).join("")}</ul>` : `<p class="small muted">${ic("check",18)} Bugün acil bir iş görünmüyor.</p>`}</section>`;
   if (all.length){
     const cnt = Object.fromEntries(SKIND.map(([k])=>[k, st2.filter(r=>r.s.k===k).length]));
-    html += `<section class="card stack"><div class="row between"><h2>Raf durumu</h2><button class="link" data-act="goto" data-tab="stok" data-plain="1">Ayrıntı</button></div>
+    html += `<section class="card stack"><div class="row between"><h2>Raf Durumu</h2><button class="link" data-act="goto" data-tab="stok" data-plain="1">Ayrıntı</button></div>
       ${donut(SKIND.map(([k,l,c])=>({l, v:cnt[k], c, act:"stockGo", f:k})), {center:fmt(all.length), sub:"ürün", label:"Raf durumu"})}</section>`;
     const plans = P.map(p=>mrpPlan(p, 7)), t0 = today0();
     const cash = Array.from({length:7},(_,k)=>({k, v:0})); for (const x of plans) for (const per of x.periods) if (per.k<7) cash[per.k].v += per.cash;
     const tot = cash.reduce((a,c)=>a+c.v,0);
-    if (tot>0) html += `<section class="card stack"><div class="row between"><h2>Bu hafta mal alımına</h2><b class="num">${TL(tot)}</b></div>
+    if (tot>0) html += `<section class="card stack"><div class="row between"><h2>Bu Hafta Mal Alımına</h2><b class="num">${TL(tot)}</b></div>
       ${vbars(cash.map(c=>{ const t=t0+c.k*DAY+3*3600e3; return {v:Math.round(c.v), l:c.k===0?"Bugün":DS[new Date(t).getDay()], c:c.k===0?"var(--c1)":"var(--c4)"}; }), {fmtv:v=>fmt(v)+"₺", h:120, label:"Günlük nakit ihtiyacı"})}
-      <button class="link" data-act="goto" data-tab="plan" data-plain="1">İhtiyaç planına git</button></section>`;
+      <button class="link" data-act="goto" data-tab="plan" data-plain="1">İhtiyaç Planına Git</button></section>`;
     const ms = P.map(costModel).filter(Boolean);
     if (ms.length){ const tc = ms.reduce((a,m)=>a+m.cur.tot+m.short,0), sv = ms.reduce((a,m)=>a+(m.best.N!==m.cur.N&&m.save>=5?m.save:0),0);
       html += `<button class="card wide" data-act="goto" data-tab="maliyet" data-plain="1"><span class="bi c2">${ic("coin",24)}</span><span class="stack" style="gap:2px;text-align:left"><b>Aylık stok maliyetin ≈ ${TL(tc)}</b><span class="small muted">${sv>0?`Önerilerle ayda ≈ ${TL(sv)} düşebilir.`:"Maliyet dağılımını gör."}</span></span><span class="muted">›</span></button>`; }
@@ -1881,14 +1928,15 @@ function viewHome(){
   return html;
 }
 function viewMenu(){
-  const items = [["stok","box","Stok durumu","Rafta ne kadar var, kaç gün yeter","c1"],["plan","plan","İhtiyaç planı (MRP)","14 günlük sipariş ve nakit planı","c4"],
-    ["maliyet","coin","Stok maliyeti","Maliyeti düşürme önerileri","c2"],["kar","chart","Kâr ve zarar","Ne kazanıyorsun, nerede kaybediyorsun","c1"],
+  const items = [["stok","box","Stok Durumu","Rafta ne kadar var, kaç gün yeter","c1"],["plan","plan","İhtiyaç Planı (MRP)","14 günlük sipariş ve nakit planı","c4"],
+    ["maliyet","coin","Stok Maliyeti","Maliyeti düşürme önerileri","c2"],["kar","chart","Kâr ve Zarar","Ne kazanıyorsun, nerede kaybediyorsun","c1"],
     ["fire","trash","Fire","Haftalık bozulan mal","c3"],["urunler","tag","Ürünler","Ekle, düzenle, reçete","c6"],["ayarlar","gear","Ayarlar","Araç günleri, özel günler, Excel","c5"]];
   return `<div class="mgrid">${items.map(([t,i,l,d,c])=>`<button class="mtile" data-act="goto" data-tab="${t}" data-plain="1"><span class="bi ${c}">${ic(i,26)}</span><b>${l}</b><span class="small muted">${d}</span></button>`).join("")}
     <button class="mtile" data-act="goRapor"><span class="bi c2">${ic("chart",26)}</span><b>Satış Raporları</b><span class="small muted">Günlük, haftalık, aylık, yıllık · Excel</span></button>
     <button class="mtile" data-act="goKasa"><span class="bi c1">${ic("box",26)}</span><b>Kasa</b><span class="small muted">Açılış, giriş/çıkış, gün kapanışı</span></button>
+    <a class="mtile" href="kolay/" style="text-decoration:none"><span class="bi c7">${ic("home",26)}</span><b>Kolay Sürüm</b><span class="small muted">Büyük düğmeler, sade ekran</span></a>
     <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
-    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="toAdmin"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici ekranı</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
+    ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="toAdmin"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici Ekranı</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
     ${S.mode==="cloud" ? `<button class="mtile" data-act="goto" data-tab="ayarlar" data-plain="1"><span class="bi c5">${ic("user",26)}</span><b>Hesabım</b><span class="small muted">${esc(S.cloud.ctx?.username||"")} · şifre, kişiler, çıkış</span></button>` : ""}</div>`;
 }
 
@@ -2061,7 +2109,7 @@ function importCard(){
   const I = S.imp; if (!I) return "";
   if (I.busy) return `<div class="card"><span class="spin"></span> Excel dosyası okunuyor…</div>`;
   if (I.err) return `<div class="notice bad">${esc(I.err)}</div>`;
-  return `<section class="card stack guide"><h2>Excel'den alınacaklar</h2>
+  return `<section class="card stack guide"><h2>Excel'den Alınacaklar</h2>
     <p class="small"><b>${esc(I.file)}</b></p>
     <div class="mrow"><span>Ürünler</span><span class="num"><b>${I.pNew}</b> yeni · ${I.pUpd} güncellenecek</span></div>
     <div class="mrow"><span>Hareketler (fatura, fire, sayım…)</span><span class="num"><b>${I.evs.length-(I.lNew||0)}</b> yeni${I.eDup?` · ${I.eDup} zaten var`:""}</span></div>
@@ -2070,7 +2118,7 @@ function importCard(){
     ${I.settings?`<div class="mrow"><span>Ayarlar (yoğun günler, özel günler)</span><span>güncellenecek</span></div>`:""}
     ${I.eSkip?`<p class="small fireNote">${I.eSkip} satır okunamadı (tarih, ürün ya da hareket türü eksik). Bunlar atlanacak.</p>`:""}
     <p class="small muted">Zaten var olan hareketler tekrar eklenmez; aynı dosyayı iki kez yüklemek kayıtları ikiye katlamaz.</p>
-    <div class="row"><button class="primary" data-act="applyImp">İçeri al</button><button data-act="cancelImp">Vazgeç</button></div></section>`;
+    <div class="row"><button class="primary" data-act="applyImp">İçeri Al</button><button data-act="cancelImp">Vazgeç</button></div></section>`;
 }
 
 /* ---------- Fatura okuma ---------- */
@@ -2242,7 +2290,7 @@ function fireImpactCard(){
         ${tip?`<div class="small" style="margin-top:4px">${esc(tip)}</div>`:""}</div>
       <div class="qty">${fmt(a.q)}<small>${a.q<b.q?`önce ${fmt(b.q)}`:a.q>b.q?`önce ${fmt(b.q)}`:"değişmedi"}</small></div></div>`;
   }).join("");
-  return `<section class="card stack"><div class="row between"><h2>Firenin etkisi</h2><button class="link" data-act="closeImpact">Kapat</button></div>
+  return `<section class="card stack"><div class="row between"><h2>Firenin Etkisi</h2><button class="link" data-act="closeImpact">Kapat</button></div>
     <p class="small muted">Bozulan ürün satılmış sayılmaz. Tahmin buna göre yeniden hesaplandı; sağdaki rakam yeni sipariş önerisi.</p>${rows}</section>`;
 }
 
@@ -2290,6 +2338,7 @@ document.addEventListener("click", async ev=>{
   if (t.dataset.tab && !t.dataset.act){ syncInv(); S.tab=t.dataset.tab; S.msg=null; S.fireImpact=null; S.vCust=null; S.vEditCust=null; S.vMode=null; S.editId=null; render(); window.scrollTo(0,0); return; }
   const a = t.dataset.act, id = t.dataset.id;
   try{
+    if (await nAct(a)) return;
     if (await posAct(a, t)) return;
     if (CLOUD_ON && await cloudAct(a, t, id)) return;
     if (a==="stockF"){ S.stockF = t.dataset.f||"all"; render(); }
@@ -2325,6 +2374,7 @@ document.addEventListener("click", async ev=>{
       const s0=custStats(c), type=S.vMode, eid=newId();
       await store.addEvent({id:eid, type, productId:"-", customerId:c.id, amount:Math.round(amt*100)/100, note:note||null, date:nowIso()});
       const nb = type==="borc" ? s0.bal+amt : s0.bal-amt;
+      if (type==="borc" && c.limit>0 && nb>c.limit) nSend("veresiye", "Borç sınırı aşıldı", `${c.name}: borç ${TLx(nb)} (sınır ${TLx(c.limit)}).`, "ver-"+c.id);
       S.msg = type==="borc" && c.limit>0 && nb>c.limit ? {kind:"bad", text:`${c.name} borç sınırını aştı: ${TLx(nb)} (sınır ${TLx(c.limit)}).`} : {kind:"ok", text:`${type==="borc"?"Veresiye yazıldı":"Ödeme alındı"}: ${TLx(amt)}. Kalan borç ${TLx(nb)}.`};
       S.vMode=null; offerUndo(type==="borc"?"Veresiye yazıldı.":"Ödeme alındı.", ()=>store.deleteEvent(eid)); render(); }
     else if (a==="vDelEntry"){ if (S.confirmV!==id){ S.confirmV=id; render(); return; } S.confirmV=null; const old={...S.events.find(x=>x.id===id)}; await store.deleteEvent(id); offerUndo("Kayıt silindi.", ()=>store.addEvent(old)); render(); }
@@ -2831,6 +2881,7 @@ async function doSignup(){
     const {error} = await SB.rpc("request_signup", {p_shop_name:f.shop, p_full_name:f.name, p_email:f.email, p_password:f.pass, p_phone:f.phone||null, p_note:f.note||null});
     if (error) throw error;
     S.signup = "done"; S.sgUser = f.email; S.sgForm = null;
+    try{ SB.functions.invoke("bildir", {body:{type:"basvuru"}}).catch(()=>{}); }catch(_){}
   }catch(e){ C.signupErr = sbMsg(e); }
   C.busy = false; render(); window.scrollTo(0,0);
 }
@@ -2905,13 +2956,13 @@ const pinFields = (mins) => `<div class="grid2"><label>PIN<input id="pin-1" type
     ${mins ? `<label>Kaç dakika kullanılmazsa kilitlensin?<select id="pin-mins">${PIN_MINS.map(([v,l])=>`<option value="${v}" ${v===mins?"selected":""}>${l}</option>`).join("")}</select></label>` : ""}`;
 // İlk girişte zorunlu PIN ekranı
 function viewSetPin(){
-  return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>PIN belirle</h2></div>
+  return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>PIN Belirle</h2></div>
     <p>Uygulamayı açarken ve bir süre kullanılmayınca kilidi açmak için <b>4 rakamlı bir PIN</b> seç.</p>
     <p class="small muted">PIN senin hesabına özel: hangi telefondan girersen gir aynı PIN geçer. Yeni bir telefonda ilk sefer kullanıcı adı ve şifre sorulur, sonra hep PIN.</p>
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
     ${pinFields(pinMins())}
     <span class="small muted" style="margin-top:-4px">1111, 1234 gibi kolay PIN'ler kabul edilmez.</span>
-    <button class="primary" data-act="pinGateSave">PIN'i kaydet ve devam et</button><button data-act="logout">Çıkış yap</button></div>`;
+    <button class="primary" data-act="pinGateSave">PIN'i Kaydet ve Devam Et</button><button data-act="logout">Çıkış Yap</button></div>`;
 }
 function viewLock(){
   const cfg = pinCfg() || {}, wait = Math.max(cfg.coolUntil||0, S.pinCoolUntil||0) - Date.now(), cool = wait > 0, n = (S.pinBuf||"").length;
@@ -2923,20 +2974,20 @@ function viewLock(){
     <div class="pindots" aria-label="${n} rakam girildi">${[0,1,2,3].map(i=>`<i class="${i<n?"on":""}"></i>`).join("")}</div>
     <div class="pinpad">${keys.map(k => k==="" ? `<span></span>` : `<button class="pk" data-act="pinKey" data-k="${k}" ${cool||S.pinBusy?"disabled":""} aria-label="${k==="del"?"Sil":k}">${k==="del" ? "⌫" : k}</button>`).join("")}</div>
     ${S.pinForgot ? `<p class="notice bad">${C.queue.length} kayıt henüz internete gönderilmedi. Şimdi çıkarsan kaybolur. Önce internete bağlanıp bekle.</p>
-        <div class="row"><button data-act="pinForgotCancel">Vazgeç</button><button class="danger" data-act="pinForgotForce">Yine de çık</button></div>`
-      : `<button class="link" data-act="pinForgot">PIN'imi unuttum (şifreyle gir, yeni PIN seç)</button>`}
+        <div class="row"><button data-act="pinForgotCancel">Vazgeç</button><button class="danger" data-act="pinForgotForce">Yine de Çık</button></div>`
+      : `<button class="link" data-act="pinForgot">PIN'imi Unuttum (Şifreyle Gir, Yeni PIN Seç)</button>`}
   </div>`;
 }
 function pinCard(){
   if (!pinOn()) return "";
-  if (S.pinSetup) return `<section class="card stack"><h2>PIN'i değiştir</h2>
+  if (S.pinSetup) return `<section class="card stack"><h2>PIN'i Değiştir</h2>
     <p class="small muted">Yeni 4 rakam seç. Bütün telefonlarında yeni PIN geçerli olur.</p>
     ${pinFields(0)}
-    <div class="row"><button class="primary" data-act="pinSetupSave">PIN'i kaydet</button><button data-act="pinSetupCancel">Vazgeç</button></div></section>`;
-  return `<section class="card stack"><h2>PIN ve ekran kilidi</h2>
+    <div class="row"><button class="primary" data-act="pinSetupSave">PIN'i Kaydet</button><button data-act="pinSetupCancel">Vazgeç</button></div></section>`;
+  return `<section class="card stack"><h2>PIN ve Ekran Kilidi</h2>
     <p class="small">Uygulama <select id="pin-mins-live" data-pinmins="1" aria-label="Kilit süresi" style="display:inline-block;width:auto;min-height:36px;padding:4px 8px">${PIN_MINS.map(([v,l])=>`<option value="${v}" ${v===pinMins()?"selected":""}>${l}</option>`).join("")}</select> kullanılmazsa kilitlenir; açmak için PIN'in sorulur.</p>
     <p class="small muted">PIN hesabına özel, her telefonda aynı. 5 kez yanlış girilirse hesaptan çıkılır; kullanıcı adı ve şifreyle girip yeni PIN seçilir.</p>
-    <div class="row"><button data-act="pinLockNow">Şimdi kilitle</button><button data-act="pinSetupOpen">PIN'i değiştir</button></div></section>`;
+    <div class="row"><button data-act="pinLockNow">Şimdi Kilitle</button><button data-act="pinSetupOpen">PIN'i Değiştir</button></div></section>`;
 }
 async function savePin(p1, mins){
   const {data, error} = await SB.rpc("set_my_pin", mins ? {p_pin:p1, p_mins:mins} : {p_pin:p1});
@@ -3050,32 +3101,32 @@ function viewLogin(){
     </form>
     <div class="stack" style="gap:6px;border-top:1px solid var(--line);padding-top:12px"><span class="small muted" style="text-align:center">Hesabın yok mu?</span>
       <button data-act="signupOpen">${ic("plus",18)} Dükkânımı kaydet</button></div>
-    <button class="link" data-act="forgotOpen">Şifremi unuttum</button>
+    <button class="link" data-act="forgotOpen">Şifremi Unuttum</button>
   </div>`;
 }
 function viewForgot(){
-  if (S.forgot==="sent") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>E-postana bak</h2></div>
+  if (S.forgot==="sent") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>E-postana Bak</h2></div>
     <p>Bu adres bir hesaba kayıtlıysa <b>${esc(S.fgEmail||"")}</b> adresine şifre yenileme bağlantısı gönderdik. Bağlantıya bas, yeni şifreni koy.</p>
     <p class="small muted">Birkaç dakikada gelmezse "Spam" ya da "Gereksiz" klasörüne bak. Bağlantı 1 saat geçerli ve bir kez kullanılır.</p>
     <p class="small muted">Hiç gelmezse yöneticiye ya da dükkân sahibine haber ver; sana yeni şifre versin.</p>
     <p class="small muted">Yine de gelmezse dükkân sahibine ya da yöneticiye haber ver; sana WhatsApp'tan yeni şifre gönderir.</p>
-    <button class="primary" data-act="forgotBack">Giriş ekranına dön</button></div>`;
-  return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Şifremi unuttum</h2></div>
+    <button class="primary" data-act="forgotBack">Giriş Ekranına Dön</button></div>`;
+  return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Şifremi Unuttum</h2></div>
     <p class="small">Hesabına kayıtlı e-posta adresini yaz; yeni şifre koyman için bir bağlantı gönderelim.</p>
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
     <form id="fgform" class="stack"><label>E-posta<input id="fg-email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="örn. mert@gmail.com"></label>
       <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Gönderiliyor':"Bağlantı gönder"}</button></form>
     <p class="small muted">Hesabında e-posta yoksa (ör. çalışan hesabı) dükkân sahibine ya da yöneticiye söyle; sana yeni şifre versin.</p>
-    <button class="link" data-act="forgotBack">← Giriş ekranına dön</button></div>`;
+    <button class="link" data-act="forgotBack">← Giriş Ekranına Dön</button></div>`;
 }
 function viewSignup(){
-  if (S.signup==="done") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Başvurun alındı</h2></div>
+  if (S.signup==="done") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Başvurun Alındı</h2></div>
     <p>Yönetici başvurunu inceleyip onaylayınca sana haber verilecek.</p>
     <p>Onaydan sonra bu bilgilerle gir:<br>E-posta: <b>${esc(S.sgUser||"")}</b><br>Şifre: başvururken yazdığın şifre</p>
-    <button class="primary" data-act="signupBack">Giriş ekranına dön</button></div>`;
+    <button class="primary" data-act="signupBack">Giriş Ekranına Dön</button></div>`;
   const v = S.sgForm || {};
   return `<div class="card stack login">
-    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("book",26)}</span><h2>Dükkânını kaydet</h2><p class="small muted">Bilgilerini yaz, başvurun yöneticiye gitsin. Onaylanınca hesabın açılır.</p></div>
+    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("book",26)}</span><h2>Dükkânını Kaydet</h2><p class="small muted">Bilgilerini yaz, başvurun yöneticiye gitsin. Onaylanınca hesabın açılır.</p></div>
     ${C.signupErr ? `<p class="notice bad">${esc(C.signupErr)}</p>` : ""}
     <form id="sgform" class="stack" autocomplete="on">
       <label>Dükkânının adı<input id="sg-shop" maxlength="60" value="${esc(v.shop||"")}" placeholder="örn. Yıldız Bakkal"></label>
@@ -3090,7 +3141,7 @@ function viewSignup(){
       <label class="check"><input id="sg-ok" type="checkbox"> Adımın, e-postamın, telefonumun ve dükkân bilgilerimin hesap açmak için saklanmasını kabul ediyorum.</label>
       <button class="primary" type="submit" ${C.busy?"disabled":""}>${C.busy?'<span class="spin"></span> Gönderiliyor':"Başvuruyu gönder"}</button>
     </form>
-    <button class="link" data-act="signupBack">← Hesabım var, giriş yap</button>
+    <button class="link" data-act="signupBack">← Hesabım Var, Giriş Yap</button>
   </div>`;
 }
 const fmtLeft = () => { const s = Math.max(0, Math.round(((C.tempDeadline||0) - Date.now())/1000)); return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); };
@@ -3098,27 +3149,27 @@ setInterval(()=>{ if (S.mode!=="newpass" || !C.tempDeadline) return; const el = 
   if (Date.now() >= C.tempDeadline){ C.tempDeadline = null; C.loginErr = "Tek kullanımlık şifrenin 5 dakikalık süresi doldu. Yöneticiden ya da dükkân sahibinden yeni şifre iste."; doLogout(true); } }, 1000);
 function viewGate(){
   if (S.mode==="setpin") return viewSetPin();
-  const out = `<button data-act="logout">Çıkış yap</button>`;
-  if (S.mode==="recover") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Yeni şifreni belirle</h2>
+  const out = `<button data-act="logout">Çıkış Yap</button>`;
+  if (S.mode==="recover") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Yeni Şifreni Belirle</h2>
       <p class="small muted">${esc(C.ctx?.email || C.ctx?.username || "")}</p></div>
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
     <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="8"></label>
     <label>Yeni şifre (tekrar)<input id="nw-2" type="password" autocomplete="new-password"></label>
     <span class="small muted" style="margin-top:-4px">En az 8 karakter. Kimseyle paylaşma.</span>
-    <button class="primary" data-act="recoverSave">Şifremi kaydet ve devam et</button>${out}</div>`;
-  if (S.mode==="newpass") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kendi şifreni belirle</h2></div>
+    <button class="primary" data-act="recoverSave">Şifremi Kaydet ve Devam Et</button>${out}</div>`;
+  if (S.mode==="newpass") return `<div class="card stack login"><div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kendi Şifreni Belirle</h2></div>
     <p>Sana verilen şifre <b>tek kullanımlıktı</b>. Devam etmek için sadece senin bileceğin yeni bir şifre koy.</p>
     ${C.tempDeadline ? `<p class="notice warn">Bu ekranın süresi: <b id="tmpLeft" class="num">${fmtLeft()}</b>. Süre dolarsa yeni şifre istemen gerekir.</p>` : ""}
     ${C.loginErr ? `<p class="notice bad">${esc(C.loginErr)}</p>` : ""}
     <label>Yeni şifre<input id="nw-1" type="password" autocomplete="new-password" minlength="8"></label>
     <label>Yeni şifre (tekrar)<input id="nw-2" type="password" autocomplete="new-password"></label>
     <span class="small muted" style="margin-top:-4px">En az 8 karakter. Kimseyle paylaşma.</span>
-    <button class="primary" data-act="newPassSave">Şifremi kaydet ve devam et</button>${out}</div>`;
-  if (S.mode==="pickshop") return `<div class="card stack"><h2>Hangi dükkân?</h2><p class="small muted">Hesabın birden fazla dükkâna bağlı. Birini seç; sonra Ayarlar'dan değiştirebilirsin.</p>
+    <button class="primary" data-act="newPassSave">Şifremi Kaydet ve Devam Et</button>${out}</div>`;
+  if (S.mode==="pickshop") return `<div class="card stack"><h2>Hangi Dükkân?</h2><p class="small muted">Hesabın birden fazla dükkâna bağlı. Birini seç; sonra Ayarlar'dan değiştirebilirsin.</p>
     ${(C.ctx?.shops||[]).map(s=>`<button class="mtile" data-act="pickShop" data-id="${s.id}"><b>${esc(s.name)}</b><span class="small muted">${ROLE[s.role]||s.role}${s.active?"":" · durduruldu"}</span></button>`).join("")}${out}</div>`;
   if (S.mode==="paused") return `<div class="card stack"><h2>${esc(C.shop?.name||"Dükkân")} durduruldu</h2><p>Dükkânının hesabı şu an kapalı. Kayıtların silinmedi; hesap açılınca aynen geri gelir.</p><p class="small muted">Yöneticiyle görüş.</p>
-    ${(C.ctx?.shops||[]).length>1?`<button data-act="chooseShop">Başka dükkân seç</button>`:""}${out}</div>`;
-  return `<div class="card stack"><h2>Bu hesaba bağlı dükkân yok</h2><p>Dükkândan çıkarılmış olabilirsin. Dükkân sahibine ya da yöneticiye haber ver.</p>${out}</div>`;
+    ${(C.ctx?.shops||[]).length>1?`<button data-act="chooseShop">Başka Dükkân Seç</button>`:""}${out}</div>`;
+  return `<div class="card stack"><h2>Bu Hesaba Bağlı Dükkân Yok</h2><p>Dükkândan çıkarılmış olabilirsin. Dükkân sahibine ya da yöneticiye haber ver.</p>${out}</div>`;
 }
 function accountCards(){
   if (S.mode!=="cloud") return "";
@@ -3129,21 +3180,21 @@ function accountCards(){
       <span class="small muted">${S.admin ? "Yönetici" : `${sh?`${esc(sh.name)} · ${ROLE[me?.role]||"yönetici"}`:"Dükkân seçilmedi"}${ctx.is_admin?" · yönetici":""}`}</span></span></div>
     ${S.emailOpen ? `<div class="stack" style="gap:6px"><label>E-posta adresin<input id="em-new" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" value="${esc(ctx.email||"")}" placeholder="örn. mert@gmail.com"></label>
         <div class="row"><button class="primary" data-act="emailSave">Kaydet</button><button data-act="emailCancel">Vazgeç</button></div></div>`
-      : `<p class="small">${ctx.email ? `E-posta: <b>${esc(ctx.email)}</b> <button class="link" data-act="emailOpen">Değiştir</button>` : `<span class="muted">E-posta kayıtlı değil. Eklersen şifreni unutunca kendin yenileyebilirsin.</span> <button class="link" data-act="emailOpen">E-posta ekle</button>`}</p>`}
+      : `<p class="small">${ctx.email ? `E-posta: <b>${esc(ctx.email)}</b> <button class="link" data-act="emailOpen">Değiştir</button>` : `<span class="muted">E-posta kayıtlı değil. Eklersen şifreni unutunca kendin yenileyebilirsin.</span> <button class="link" data-act="emailOpen">E-posta Ekle</button>`}</p>`}
     ${S.admin ? "" : `<p class="small muted">Kayıtların internette, dükkânın hesabında duruyor; telefon değişse de kaybolmaz. İnternet yokken girdiklerin telefonda bekler, bağlantı gelince kendiliğinden gönderilir.${wait?` <b>Şu an ${wait} kayıt gönderilmeyi bekliyor.</b>`:""}</p>`}
     ${S.pwOpen ? `<div class="stack" style="gap:6px"><label>Yeni şifre<input id="pw-new" type="password" autocomplete="new-password" minlength="8"></label>
         <label>Yeni şifre (tekrar)<input id="pw-new2" type="password" autocomplete="new-password"></label>
-        <div class="row"><button class="primary" data-act="pwSave">Şifremi değiştir</button><button data-act="pwCancel">Vazgeç</button></div></div>`
+        <div class="row"><button class="primary" data-act="pwSave">Şifremi Değiştir</button><button data-act="pwCancel">Vazgeç</button></div></div>`
       : ""}
     ${S.confirmOut ? `<p class="notice bad">${wait} kayıt henüz internete gönderilmedi. Şimdi çıkarsan bu kayıtlar kaybolur. Önce internete bağlanıp bekle.</p>
-        <div class="row"><button data-act="cancelOut">Vazgeç</button><button class="danger" data-act="logoutForce">Yine de çık</button></div>`
-      : `<div class="row">${S.pwOpen?"":`<button data-act="pwOpen">Şifremi değiştir</button>`}${(ctx.shops||[]).length>1?`<button data-act="chooseShop">Dükkân değiştir</button>`:""}<button data-act="logout">Çıkış yap</button></div>`}
+        <div class="row"><button data-act="cancelOut">Vazgeç</button><button class="danger" data-act="logoutForce">Yine de Çık</button></div>`
+      : `<div class="row">${S.pwOpen?"":`<button data-act="pwOpen">Şifremi Değiştir</button>`}${(ctx.shops||[]).length>1?`<button data-act="chooseShop">Dükkân Değiştir</button>`:""}<button data-act="logout">Çıkış Yap</button></div>`}
     ${ctx.is_admin && !S.admin ? `<button class="primary" data-act="toAdmin">${ic("grid",18)} Yönetici ekranına dön</button>` : ""}
   </section>`;
   h += pinCard();
   if (sh && SB && Date.now()-(C.peopleAt||0) > 15000 && !C.peopleLoading){ C.peopleLoading = true; setTimeout(()=>loadPeople().finally(()=>{ C.peopleLoading = false; renderData(); }), 0); }
   if (sh && owner){
-    h += `<section class="card stack"><h2>Dükkândaki kişiler</h2>
+    h += `<section class="card stack"><h2>Dükkândaki Kişiler</h2>
       <p class="small muted">Çırağına ya da yanında çalışana ayrı hesap aç: aynı defteri görür, kimin ne girdiği yazılır. Çalışan kişi ekleyemez, şifre değiştiremez.</p>
       ${C.people.map(p=>personRow(p, sh.id, p.role==="staff" && p.user_id!==C.user.id)).join("") || `<p class="small muted">Yükleniyor…</p>`}
       ${S.addPerson===sh.id ? personForm(sh.id) : `<button data-act="addPersonOpen" data-shop="${sh.id}">${ic("plus",18)} Çalışan ekle</button>`}
@@ -3155,7 +3206,7 @@ function accountCards(){
 function personRow(p, shopId, canManage){
   return `<div class="prow"><div><b>${esc(p.full_name||p.username)}</b> <span class="small muted">@${esc(p.username)} · ${ROLE[p.role]||p.role}</span><br><span class="small muted">${p.email ? esc(p.email) + " · " : ""}Son giriş: ${agoShort(p.last_seen)}</span>
     ${p.temp==="waiting" ? ` <span class="pill warn">geçici şifre bekliyor</span>` : p.temp==="expired" ? ` <span class="pill bad">geçici şifrenin süresi doldu</span>` : ""}</div>
-    ${canManage ? `<div class="row">${S.resetFor===p.user_id ? "" : `<button class="link" data-act="resetOpen" data-id="${p.user_id}">Şifre yenile</button>`}
+    ${canManage ? `<div class="row">${S.resetFor===p.user_id ? "" : `<button class="link" data-act="resetOpen" data-id="${p.user_id}">Şifre Yenile</button>`}
       <button class="link ${S.confirmRm===p.user_id?"dangerLink":""}" data-act="rmPerson" data-id="${p.user_id}" data-shop="${shopId}">${S.confirmRm===p.user_id?"Emin misin? Çıkar":"Çıkar"}</button></div>` : ""}
     ${S.resetFor===p.user_id ? `<div class="row" style="flex-wrap:nowrap"><input id="rs-pass" value="${genPass()}" aria-label="Yeni şifre" style="flex:1;min-width:0"><button class="primary" data-act="resetSave" data-id="${p.user_id}" data-u="${esc(p.username)}" data-shop="${shopId}">Kaydet</button><button data-act="resetCancel">Vazgeç</button></div>` : ""}
   </div>`;
@@ -3183,7 +3234,7 @@ function viewAdmin(){
   if (S.mode!=="cloud" || !C.ctx?.is_admin) return `<p class="notice bad">Bu bölüm sadece yönetici içindir.</p>`;
   const ov = C.overview;
   let h = S.msg ? `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>` : "";
-  h += `<section class="card stack"><div class="row between"><h2>Yönetici paneli</h2><button class="link" data-act="ovRefresh">Yenile</button></div>
+  h += `<section class="card stack"><div class="row between"><h2>Yönetici Paneli</h2><button class="link" data-act="ovRefresh">Yenile</button></div>
     <p class="small muted">Dükkânları ve hesapları buradan yönetirsin. Dükkânların kayıtlarının içeriğini göremezsin; sadece ne kadar kullanıldığını görürsün.</p>
     ${S.addPerson==="__shop" ? personForm("", true) : `<button data-act="newShopOpen">${ic("plus",18)} Yeni dükkânı kendim aç</button>`}
     ${S.created ? createdCard() : ""}
@@ -3198,8 +3249,8 @@ function viewAdmin(){
       <p class="small muted">${s.products} ürün · ${s.events} kayıt · ${s.last_write ? "son kayıt " + agoShort(s.last_write) : "henüz kayıt yok"} · açılış ${new Date(s.created_at).toLocaleDateString("tr-TR")}</p>
       ${(s.members||[]).map(p=>personRow(p, s.id, !(p.user_id===C.user.id))).join("")}
       ${S.addPerson===s.id ? personForm(s.id) : ""}
-      <div class="row">${S.addPerson===s.id?"":`<button class="link" data-act="addPersonOpen" data-shop="${s.id}">Kişi ekle</button>`}
-        ${(C.ctx.shops||[]).some(x=>x.id===s.id) && C.shop?.id!==s.id ? `<button class="link" data-act="pickShop" data-id="${s.id}">Bu dükkâna geç</button>` : ""}
+      <div class="row">${S.addPerson===s.id?"":`<button class="link" data-act="addPersonOpen" data-shop="${s.id}">Kişi Ekle</button>`}
+        ${(C.ctx.shops||[]).some(x=>x.id===s.id) && C.shop?.id!==s.id ? `<button class="link" data-act="pickShop" data-id="${s.id}">Bu Dükkâna Geç</button>` : ""}
         <button class="link ${s.active&&S.confirmPause===s.id?"dangerLink":""}" data-act="shopActive" data-id="${s.id}" data-v="${s.active?"0":"1"}">${s.active ? (S.confirmPause===s.id?"Emin misin? Durdur":"Dükkânı durdur") : "Dükkânı aç"}</button></div>
     </section>`).join("");
   return h;
@@ -3241,19 +3292,19 @@ function viewAdminHome(){
     (s.members||[]).forEach(p=>{ if (p.temp==="expired") warn.push([s, `${p.full_name||p.username}: geçici şifrenin süresi doldu`, "bad"]);
       else if (p.temp==="waiting") warn.push([s, `${p.full_name||p.username}: geçici şifreyle henüz girmedi`, "warn"]); });
   });
-  h += `<section class="card stack"><h2>Dikkat edilecekler</h2>${warn.length ? warn.map(([s,t,k])=>`<div class="prow"><div class="row between"><b>${esc(s.name)}</b><span class="pill ${k}">${k==="bad"?"Önemli":"Bak"}</span></div><span class="small muted">${esc(t)}</span></div>`).join("")
+  h += `<section class="card stack"><h2>Dikkat Edilecekler</h2>${warn.length ? warn.map(([s,t,k])=>`<div class="prow"><div class="row between"><b>${esc(s.name)}</b><span class="pill ${k}">${k==="bad"?"Önemli":"Bak"}</span></div><span class="small muted">${esc(t)}</span></div>`).join("")
     : `<p class="small muted">Her şey yolunda. Takılan dükkân yok.</p>`}</section>`;
   const recent = ov.filter(s=>s.last_write).sort((a,b)=>new Date(b.last_write)-new Date(a.last_write)).slice(0,5);
-  h += `<section class="card stack"><h2>Son hareketler</h2>${recent.length ? recent.map(s=>`<div class="row between prow" style="flex-direction:row"><span><b>${esc(s.name)}</b><br><span class="small muted">${s.products} ürün · ${s.events} kayıt</span></span><span class="small muted">${agoShort(s.last_write)}</span></div>`).join("")
+  h += `<section class="card stack"><h2>Son Hareketler</h2>${recent.length ? recent.map(s=>`<div class="row between prow" style="flex-direction:row"><span><b>${esc(s.name)}</b><br><span class="small muted">${s.products} ürün · ${s.events} kayıt</span></span><span class="small muted">${agoShort(s.last_write)}</span></div>`).join("")
     : `<p class="small muted">Henüz hiçbir dükkân kayıt girmedi.</p>`}</section>`;
-  h += `<section class="card stack"><h2>Hızlı işlemler</h2><div class="row"><button data-act="newShopOpen">${ic("plus",18)} Yeni dükkân aç</button><button data-act="ovRefresh">Yenile</button></div></section>`;
+  h += `<section class="card stack"><h2>Hızlı İşlemler</h2><div class="row"><button data-act="newShopOpen">${ic("plus",18)} Yeni dükkân aç</button><button data-act="ovRefresh">Yenile</button></div></section>`;
   return h;
 }
 function viewAdminSignups(){
   needOverview();
   const sg = C.signups || [];
   return msgBox() + (S.created ? `<section class="card stack">${createdCard()}</section>` : "") + (sg.length ? signupCards()
-    : `<section class="card empty stack"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Bekleyen başvuru yok</h2>
+    : `<section class="card empty stack"><span class="bi c1" style="margin:0 auto">${ic("check",26)}</span><h2>Bekleyen Başvuru Yok</h2>
       <p class="small muted">Biri "Dükkânımı kaydet" ile başvurunca burada görünür; Özet'te ve alttaki menüde de sayısı çıkar.</p><button data-act="ovRefresh">Yenile</button></section>`);
 }
 function shopCard(s){
@@ -3262,7 +3313,7 @@ function shopCard(s){
       <p class="small muted">${s.products} ürün · ${s.events} kayıt · ${s.last_write ? "son kayıt " + agoShort(s.last_write) : "henüz kayıt yok"} · açılış ${new Date(s.created_at).toLocaleDateString("tr-TR")}</p>
       ${(s.members||[]).map(p=>personRow(p, s.id, !(p.user_id===C.user.id))).join("")}
       ${S.addPerson===s.id ? personForm(s.id) : ""}
-      <div class="row">${S.addPerson===s.id?"":`<button class="link" data-act="addPersonOpen" data-shop="${s.id}">Kişi ekle</button>`}
+      <div class="row">${S.addPerson===s.id?"":`<button class="link" data-act="addPersonOpen" data-shop="${s.id}">Kişi Ekle</button>`}
         <button class="link ${s.active&&S.confirmPause===s.id?"dangerLink":""}" data-act="shopActive" data-id="${s.id}" data-v="${s.active?"0":"1"}">${s.active ? (S.confirmPause===s.id?"Emin misin? Durdur":"Dükkânı durdur") : "Dükkânı aç"}</button></div>
     </section>`;
 }
@@ -3279,7 +3330,7 @@ function viewAdminShops(){
 }
 function viewAdminAccount(){
   const shops = C.ctx?.shops || [];
-  return msgBox() + accountCards() + (shops.length ? `<section class="card stack"><h2>Dükkân görünümü</h2>
+  return msgBox() + accountCards() + (shops.length ? `<section class="card stack"><h2>Dükkân Görünümü</h2>
     <p class="small muted">Hesabın ${shops.length===1 ? `<b>${esc(shops[0].name)}</b> dükkânına` : `${shops.length} dükkâna`} da bağlı. Uygulamayı bir bakkalın gördüğü gibi denemek için geçebilirsin; Ayarlar'dan yönetici ekranına geri dönersin.</p>
     <button data-act="toShop">${ic("book",18)} Bakkal ekranına geç</button></section>` : "");
 }
@@ -3677,6 +3728,7 @@ async function posFinish(pay){
   S.pos = {items:[], cust:null, ret:false}; cartSave();
   S.posLast = sale; S.posGiven = ""; S.posErr = null; S.posWarn = null; S.posPick = false; S.posClear = false; S.posUnknown = null;
   offerUndo(`${ret?"İade":"Satış"} kaydedildi: ${TLx(tot)} ${PAY[pay].toLocaleLowerCase("tr")}.`, ()=>posCancel(sale.id, true));
+  setTimeout(()=>{ try{ nAfterSale(sale); }catch(_){} }, 300);
   render(); posFocus();
 }
 async function posCancel(id, undo){
@@ -3733,6 +3785,7 @@ async function kasaSave(f){
   if (f==="kapanis"){ const k = kasaDay(today0()); x.say = r2(a); x.beklenen = k.beklenen; x.fark = r2(a - k.beklenen); if (b >= 0) x.birak = r2(b); }
   await posMarkStart();
   await store.saveCash(x);
+  try{ nAfterCash(x); }catch(_){}
   S.kasaForm = null;
   S.msg = {kind:"ok", text: f==="kapanis" ? (Math.abs(x.fark)<0.01 ? "Gün kapatıldı. Kasa tuttu." : `Gün kapatıldı. Kasa ${TLx(Math.abs(x.fark))} ${x.fark>0?"fazla":"eksik"}.`) : `${CASH_T[f]} kaydedildi: ${TLx(x.a)}${r?` (${r})`:""}.`};
   render();
@@ -4120,6 +4173,127 @@ document.addEventListener("change", ev=>{ if (ev.target.id==="rp-from" || ev.tar
   document.addEventListener("focusin", later);
   document.addEventListener("focusout", () => { setTimeout(fix, 80); setTimeout(fix, 400); });
 })();
+
+/* ---------- Bildirimler (telefon, tablet, bilgisayar): web push ---------- */
+let N_KEY = null;
+async function nKey(){ if (N_KEY) return N_KEY; const {data, error} = await SB.functions.invoke("bildir", {body:{type:"anahtar"}});
+  if (error || !data?.publicKey) throw new Error("Bildirim servisine ulaşılamadı. İnternetini kontrol edip tekrar dene."); return (N_KEY = data.publicKey); }
+const abToB64u = ab => btoa(String.fromCharCode(...new Uint8Array(ab))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","alert","c3"],["kasa","Gün kapanışı (kasa özeti)","coin","c1"],
+  ["cikis","Kasadan büyük para çıkışı","minus","c3"],["veresiye","Veresiye borç sınırı aşıldı","book","c8"],["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
+const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
+const nSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const nIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+const nStandalone = () => (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true;
+const nSwUrl = () => window.KOLAY ? ["../sw.js", "../"] : ["sw.js", "./"];
+const b64u = s => { const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(b, c=>c.charCodeAt(0)); };
+async function nReg(){ if (!nSupported() || location.protocol!=="https:" && location.hostname!=="localhost") return null; const [u, sc] = nSwUrl(); try{ return await navigator.serviceWorker.register(u, {scope: sc}); }catch(_){ return null; } }
+async function nRefresh(){
+  if (!nSupported()){ N.state = "yok"; return; }
+  const reg = await nReg(); if (!reg){ N.state = "yok"; return; }
+  const sub = await reg.pushManager.getSubscription().catch(()=>null);
+  N.endpoint = sub ? sub.endpoint : null;
+  N.state = Notification.permission==="denied" ? "red" : sub ? "acik" : "kapali";
+  if (sub && SB && S.mode==="cloud" && N.types==null){ try{ const {data} = await SB.rpc("push_get", {p_endpoint: sub.endpoint}); N.types = data?.types || null; if (!data) N.state = "kapali"; }catch(_){} }
+}
+async function nEnable(){
+  N.err = null; N.ok = null; N.busy = true; render(true);
+  try{
+    if (!SB || S.mode!=="cloud" || !S.cloud.shop) throw new Error("Bildirimler için hesabınla giriş yapmış olman gerekiyor.");
+    if (nIOS() && !nStandalone()) throw new Error("iPhone'da bildirim için önce uygulamayı ana ekrana ekle: Safari'de Paylaş düğmesine bas, \"Ana Ekrana Ekle\"yi seç. Sonra ana ekrandaki simgeden açıp buraya gel.");
+    const reg = await nReg(); if (!reg) throw new Error("Bu tarayıcı bildirim desteklemiyor.");
+    const perm = await Notification.requestPermission();
+    if (perm!=="granted") throw new Error("Bildirim izni verilmedi. Tarayıcı ayarlarından bu site için bildirimlere izin ver.");
+    await navigator.serviceWorker.ready;
+    const key = await nKey();
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && sub.options?.applicationServerKey && abToB64u(sub.options.applicationServerKey) !== key){ await sub.unsubscribe().catch(()=>{}); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey: b64u(key)});
+    const j = sub.toJSON(), types = N.types || N_TYPES.map(x=>x[0]);
+    const {error} = await SB.rpc("push_save", {p_shop: S.cloud.shop.id, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_app: window.KOLAY ? "kolay" : "tam", p_types: types, p_ua: navigator.userAgent.slice(0,200)});
+    if (error) throw error;
+    N.types = types; N.endpoint = j.endpoint; N.state = "acik"; N.ok = "Bildirimler açıldı. Deneme bildirimi gönderebilirsin.";
+  }catch(e){ N.err = e?.message || String(e); }
+  N.busy = false; render(true);
+}
+async function nDisable(){
+  N.busy = true; render(true);
+  try{ const reg = await nReg(), sub = reg && await reg.pushManager.getSubscription();
+    if (sub){ try{ await SB?.rpc("push_remove", {p_endpoint: sub.endpoint}); }catch(_){} await sub.unsubscribe(); }
+    N.state = "kapali"; N.ok = "Bu cihazda bildirimler kapatıldı."; N.types = null; }catch(e){ N.err = e?.message || String(e); }
+  N.busy = false; render(true);
+}
+async function nToggle(t){
+  const cur = N.types || N_TYPES.map(x=>x[0]), next = cur.includes(t) ? cur.filter(x=>x!==t) : [...cur, t];
+  N.types = next; render(true);
+  try{ const reg = await nReg(), sub = reg && await reg.pushManager.getSubscription(); if (!sub) return; const j = sub.toJSON();
+    await SB.rpc("push_save", {p_shop: S.cloud.shop.id, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_app: window.KOLAY ? "kolay" : "tam", p_types: next, p_ua: navigator.userAgent.slice(0,200)}); }catch(_){}
+}
+async function nTest(){
+  N.err = null; N.ok = null;
+  try{ const {data, error} = await SB.functions.invoke("bildir", {body:{type:"deneme", shop_id: S.cloud.shop.id, endpoint: N.endpoint, title:"Bildirimler çalışıyor", body:"Bakkal Defteri bundan sonra önemli şeyleri buraya yazacak."}});
+    if (error) throw error; N.ok = data?.sent ? "Deneme bildirimi gönderildi. Birkaç saniye içinde gelmeli." : "Gönderilemedi: bu cihazın kaydı bulunamadı. Bildirimleri kapatıp yeniden aç."; }
+  catch(e){ N.err = "Deneme gönderilemedi: " + (e?.message||e); }
+  render(true);
+}
+// Arka planda gönder: hata kasayı durdurmasın
+function nSend(type, title, body, tag){
+  try{ if (!SB || S.mode!=="cloud" || !S.cloud.shop || !navigator.onLine) return;
+    SB.functions.invoke("bildir", {body:{type, title, body, tag, shop_id: S.cloud.shop.id, exclude: N.endpoint}}).catch(()=>{}); }catch(_){}
+}
+function nOnce(key){ const k = "bd-n-" + key + "-" + ymd(Date.now()); try{ if (localStorage.getItem(k)) return false; localStorage.setItem(k, "1"); }catch(_){} return true; }
+function nAfterSale(sale){
+  if (sale.r) return;
+  for (const it of sale.it||[]){ if (!(it.q > 0) || !it.p || it.p==="-") continue;
+    const p = S.products.find(x=>x.id===it.p); if (!p) continue;
+    const s = stockStatus(p, stats(p));
+    if (s.k==="out" && nOnce("bitti-"+p.id)) nSend("bitti", `${p.name} bitti`, "Rafta kalmadı. Siparişe eklemeyi unutma.", "bitti-"+p.id);
+    else if (s.k==="low" && nOnce("stok-"+p.id)) nSend("stok", "Stok azalıyor", `${p.name}: ${fmt(s.cur.v, s.cur.v<10?1:0)} ${unitOf(p)} kaldı.`, "stok-"+p.id);
+  }
+  if (sale.pay==="veresiye" && sale.c){ const c = S.customers[sale.c]; if (c && c.limit>0){ const bal = custStats(c).bal;
+    if (bal > c.limit) nSend("veresiye", "Borç sınırı aşıldı", `${c.name}: borç ${TLx(bal)} (sınır ${TLx(c.limit)}).`, "ver-"+c.id); } }
+}
+function nAfterCash(x){
+  const who = S.cloud?.ctx?.username ? ` · ${S.cloud.ctx.username}` : "";
+  if (x.t==="kapanis"){ const k = kasaDay(today0()); const f = Number(x.fark)||0;
+    nSend("kasa", "Gün kapandı", `Satış ${TLx(k.ciro)} · ${k.fis} fiş · ${Math.abs(f)<0.01 ? "kasa tuttu" : f>0 ? `kasa ${TLx(f)} fazla` : `kasa ${TLx(-f)} eksik`}${who}`, "kasa-"+ymd(Date.now())); }
+  else if (x.t==="cikis" && Number(x.a) >= (Number(S.settings?.nCikis) || 500))
+    nSend("cikis", "Kasadan para çıktı", `${TLx(x.a)}${x.r?` · ${x.r}`:""}${x.n?` · ${x.n}`:""}${who}`, "cikis-"+x.id);
+}
+function nSection(){
+  if (S.mode!=="cloud") return `<section class="card stack"><h2>${ic("bell",20)} Bildirimler</h2><p class="small muted">Bildirimler için hesabınla giriş yapman gerekiyor.</p></section>`;
+  if (N.state==="?"){ nRefresh().then(()=>render(true)); }
+  const on = N.state==="acik", types = N.types || N_TYPES.map(x=>x[0]);
+  let h = `<section class="card stack nsec" id="bildirim"><div class="row between"><h2>${ic("bell",20)} Bildirimler</h2>${on ? `<span class="pill ok">Açık</span>` : ""}</div>`;
+  if (N.state==="yok") h += `<p class="small muted">Bu tarayıcı bildirim desteklemiyor. Telefonda Chrome ya da Safari (ana ekrana eklenmiş) kullan.</p>`;
+  else if (N.state==="red") h += `<p class="notice warn small">Bildirim izni kapalı. Tarayıcının site ayarlarından bu sayfa için bildirimlere izin verip tekrar dene.</p>`;
+  else if (!on){
+    h += `<p class="small">Stok azalınca, bir ürün bitince, gün kapanınca ya da kasadan büyük para çıkınca telefonuna, tabletine ya da bilgisayarına bildirim gelsin.</p>`;
+    if (nIOS() && !nStandalone()) h += `<p class="notice warn small">iPhone ve iPad'de önce uygulamayı ana ekrana ekle: Safari'de <b>Paylaş</b> düğmesine bas, <b>Ana Ekrana Ekle</b>'yi seç. Sonra ana ekrandaki simgeden açıp buraya gel.</p>`;
+    h += `<button class="primary big" data-act="nOn" ${N.busy?"disabled":""}>${ic("bell",18)} Bildirimleri Aç</button>`;
+  } else {
+    h += `<p class="small muted">Hangi durumlarda bildirim gelsin? (Bu cihaz için)</p><div class="nlist">${N_TYPES.filter(([t])=>t!=="basvuru" || S.cloud?.ctx?.is_admin).map(([t,l,i,c])=>`<label class="check nrow"><span class="bi ${c}">${ic(i,18)}</span><span>${l}</span><input type="checkbox" data-ntype="${t}" ${types.includes(t)?"checked":""}></label>`).join("")}</div>
+      <label>Kasadan kaç TL ve üstü çıkış bildirilsin?<input id="n-cikis" inputmode="decimal" value="${esc(String(S.settings?.nCikis ?? 500))}"></label>
+      <div class="row"><button data-act="nTest">Deneme Bildirimi Gönder</button><button class="link" data-act="nOff">Bu cihazda kapat</button></div>`;
+  }
+  if (N.err) h += `<p class="notice bad small">${esc(N.err)}</p>`;
+  if (N.ok) h += `<p class="notice ok small">${esc(N.ok)}</p>`;
+  return h + `</section>`;
+}
+async function nAct(a){
+  if (a==="nOn"){ await nEnable(); return true; }
+  if (a==="nOff"){ await nDisable(); return true; }
+  if (a==="nTest"){ await nTest(); return true; }
+  if (a==="nGo"){ S.tab = "ayarlar"; S.msg = null; render(); setTimeout(()=>document.getElementById("bildirim")?.scrollIntoView({block:"start"}), 50); return true; }
+  return false;
+}
+document.addEventListener("change", ev=>{
+  const t = ev.target;
+  if (t.dataset?.ntype) nToggle(t.dataset.ntype);
+  else if (t.id==="n-cikis"){ const v = Number(String(t.value).replace(",",".")); if (v >= 0) store.saveSettings({...S.settings, nCikis: v}); }
+});
+
+ICONS.bell = '<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>';
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

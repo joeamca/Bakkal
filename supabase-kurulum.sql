@@ -722,4 +722,53 @@ grant execute on function public.push_save(uuid, text, text, text, text, text[],
 grant execute on function public.push_remove(text) to authenticated;
 grant execute on function public.push_get(text) to authenticated;
 
+-- Bildirim servisi (sunucudaki "bildir" fonksiyonu) dükkân üyeliğini ve cihaz kayıtlarını okuyabilsin
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant usage on schema public to service_role;
+    grant select on public.members, public.shops, public.profiles, public.signup_requests to service_role;
+    grant select, delete on public.push_subs to service_role;
+  end if;
+end $$;
+
+-- Bildirim servisi (sunucudaki "bildir" fonksiyonu) için: tablolara genel izin vermeden, sadece gereken işi yapan fonksiyonlar.
+create or replace function public.push_targets(p_uid uuid, p_shop uuid, p_type text, p_exclude text, p_endpoint text)
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
+begin
+  if not exists (select 1 from members m join shops s on s.id = m.shop_id where m.shop_id = p_shop and m.user_id = p_uid and s.active) then
+    return jsonb_build_object('ok', false);
+  end if;
+  return jsonb_build_object('ok', true, 'subs', coalesce((
+    select jsonb_agg(jsonb_build_object('endpoint', endpoint, 'p256dh', p256dh, 'auth', auth, 'app', app)) from (
+      select endpoint, p256dh, auth, app from push_subs
+      where case when p_type = 'deneme' then user_id = p_uid and endpoint = p_endpoint
+                 else shop_id = p_shop and p_type = any(types) and endpoint is distinct from p_exclude end
+      limit 60) x), '[]'::jsonb));
+end $$;
+
+create or replace function public.push_admin_targets()
+returns jsonb language sql stable security definer set search_path = public, pg_temp as $$
+  select jsonb_build_object(
+    'yeni', (select count(*) from signup_requests where status = 'pending' and created_at > now() - interval '3 minutes'),
+    'bekleyen', (select count(*) from signup_requests where status = 'pending'),
+    'subs', coalesce((select jsonb_agg(jsonb_build_object('endpoint', x.endpoint, 'p256dh', x.p256dh, 'auth', x.auth, 'app', x.app))
+      from push_subs x join profiles p on p.user_id = x.user_id where p.is_admin and 'basvuru' = any(x.types)), '[]'::jsonb));
+$$;
+
+create or replace function public.push_drop(p_endpoint text)
+returns void language sql security definer set search_path = public, pg_temp as $$
+  delete from push_subs where endpoint = p_endpoint;
+$$;
+
+revoke all on function public.push_targets(uuid, uuid, text, text, text) from public, anon, authenticated;
+revoke all on function public.push_admin_targets() from public, anon, authenticated;
+revoke all on function public.push_drop(text) from public, anon, authenticated;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.push_targets(uuid, uuid, text, text, text) to service_role;
+    grant execute on function public.push_admin_targets() to service_role;
+    grant execute on function public.push_drop(text) to service_role;
+  end if;
+end $$;
+
 select 'Bakkal Defteri veritabanı hazır.' as sonuc;

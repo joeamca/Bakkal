@@ -4236,8 +4236,9 @@ async function nToggle(t){
 async function nTest(){
   N.err = null; N.ok = null;
   try{ const {data, error} = await SB.functions.invoke("bildir", {body:{type:"deneme", shop_id: S.cloud.shop.id, endpoint: N.endpoint, title:"Bildirimler çalışıyor", body:"Bakkal Defteri bundan sonra önemli şeyleri buraya yazacak."}});
-    if (error) throw error; N.ok = data?.sent ? "Deneme bildirimi gönderildi. Birkaç saniye içinde gelmeli." : "Gönderilemedi: bu cihazın kaydı bulunamadı. Bildirimleri kapatıp yeniden aç."; }
-  catch(e){ N.err = "Deneme gönderilemedi: " + (e?.message||e); }
+    if (error){ let m = error.message; try{ const b = await error.context?.json?.(); if (b?.error) m = b.error; }catch(_){} throw new Error(m); }
+    N.ok = data?.sent ? "Deneme bildirimi gönderildi. Birkaç saniye içinde gelmeli." : "Gönderilemedi: bu cihazın kaydı bulunamadı. Bildirimleri kapatıp yeniden aç."; }
+  catch(e){ let m = e?.message || String(e); try{ const j = await e.context?.json(); if (j?.error) m = j.error; }catch(_){} N.err = "Deneme gönderilemedi: " + m; }
   render(true);
 }
 // Arka planda gönder: hata kasayı durdurmasın

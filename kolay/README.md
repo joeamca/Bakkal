@@ -39,6 +39,10 @@ Tek bir **Ürün Ekle** düğmesi var; barkodlu ya da barkodsuz fark etmez. Form
 
 Çok ürün girerken **Kaydet + Yeni** ile kaydedip hemen sıradakini okutursun. Satışta tanınmayan bir barkod okutulursa aynı form açılır; kaydedince ürün doğrudan sepete eklenir.
 
+## Rapor bildirimi
+
+Her akşam 21:45'te "Günün raporu hazır" bildirimi gelir; pazar akşamı haftanın, ayın son günü ayın raporu da gelir. Bildirimde satış, fiş sayısı ve kâr yazar; dokununca rapor açılır, **Excel'i İndir** ile dosya iner. Ayarlar → Bildirimler'den hangilerinin geleceği seçilir.
+
 ## Kâr nasıl hesaplanır?
 
 - **Brüt kâr** = satış − satılan malın alış fiyatı

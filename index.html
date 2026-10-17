@@ -307,6 +307,8 @@ nav.tabs{will-change:transform}
 .nrow:first-child{border-top:0}
 .nrow .bi{width:32px;height:32px;border-radius:10px}
 .nrow input{width:22px;height:22px}
+.rpush{border-color:color-mix(in srgb,var(--c6) 35%,var(--line));background:linear-gradient(160deg,color-mix(in srgb,var(--c6) 12%,var(--card)),var(--card) 70%)}
+.rpush .primary{min-height:56px;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
@@ -4061,6 +4063,7 @@ function viewReport(){
     <div class="row" role="group" aria-label="Gruplama">${Object.entries(RG).map(([k,l])=>`<button class="tog ${R.g===k?"on":""}" data-act="rpG" data-g="${k}">${l}</button>`).join("")}</div>
     <button class="primary" data-act="rpGo" ${S.rpBusy?"disabled":""}>${S.rpBusy?'<span class="spin"></span> Hazırlanıyor':"Raporu Göster"}</button>
     ${S.rpErr ? `<p class="notice bad">${esc(S.rpErr)}</p>` : ""}</section>`;
+  if (d && S.rpFromPush){ const T0 = rpSum(d); h = `<section class="card stack rpush"><div class="row" style="gap:12px"><span class="bi c6">${ic("chart",26)}</span><div><h2>${S.rpFromPush==="gun" ? "Günün Raporu" : S.rpFromPush==="hafta" ? "Haftanın Raporu" : "Ayın Raporu"}</h2><p class="small muted">${fmt(T0.fis)} satış · ${TLx(T0.ciro)} · kâr ${TLx(T0.kar)}</p></div></div><button class="primary big" data-act="rpXlsx">${ic("sheet",22)} Excel'i İndir</button><button class="link" data-act="rpPushClose">Kapat</button></section>` + h; }
   if (!d) return h + `<p class="small muted">Tarih aralığını ve Günlük, Haftalık, Aylık ya da Yıllık gruplamayı seç; "Raporu Göster"e bas. Raporu Excel olarak da indirebilirsin.</p>`;
   const T = rpSum(d), eksik = (d.products||[]).filter(p=>p.eksik).length;
   h += `<section class="card stack"><div class="row between"><h2>${esc(new Date(ymdLocalT(d.from)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}))} – ${esc(new Date(ymdLocalT(d.to)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}))}</h2>
@@ -4116,6 +4119,7 @@ async function rpAct(a, t){
   if (a==="rpG"){ S.rp = {...rpState(), g:t.dataset.g}; if (S.rpData) await rpLoad(); else render(); return true; }
   if (a==="rpGo"){ const f = document.getElementById("rp-from")?.value, to = document.getElementById("rp-to")?.value; S.rp = {...rpState(), ...(f?{from:f}:{}), ...(to?{to}:{}), pre:null}; await rpLoad(); return true; }
   if (a==="rpXlsx"){ await rpXlsx(); return true; }
+  if (a==="rpPushClose"){ S.rpFromPush = null; render(); return true; }
   if (a==="goRapor"){ S.tab = "rapor"; S.msg = null; render(); window.scrollTo(0,0); if (!S.rpData) rpLoad(); return true; }
   return false;
 }
@@ -4184,7 +4188,9 @@ async function nKey(){ if (N_KEY) return N_KEY; const {data, error} = await SB.f
   if (error || !data?.publicKey) throw new Error("Bildirim servisine ulaşılamadı. İnternetini kontrol edip tekrar dene."); return (N_KEY = data.publicKey); }
 const abToB64u = ab => btoa(String.fromCharCode(...new Uint8Array(ab))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","alert","c3"],["kasa","Gün kapanışı (kasa özeti)","coin","c1"],
-  ["cikis","Kasadan büyük para çıkışı","minus","c3"],["veresiye","Veresiye borç sınırı aşıldı","book","c8"],["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
+  ["cikis","Kasadan büyük para çıkışı","minus","c3"],["veresiye","Veresiye borç sınırı aşıldı","book","c8"],
+  ["rgun","Günün raporu (her akşam, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar akşamı)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
+  ["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
 const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
 const nSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 const nIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
@@ -4198,7 +4204,11 @@ async function nRefresh(){
   const sub = await reg.pushManager.getSubscription().catch(()=>null);
   N.endpoint = sub ? sub.endpoint : null;
   N.state = Notification.permission==="denied" ? "red" : sub ? "acik" : "kapali";
-  if (sub && SB && S.mode==="cloud" && N.types==null){ try{ const {data} = await SB.rpc("push_get", {p_endpoint: sub.endpoint}); N.types = data?.types || null; if (!data) N.state = "kapali"; }catch(_){} }
+  if (sub && SB && S.mode==="cloud" && N.types==null){ try{ const {data} = await SB.rpc("push_get", {p_endpoint: sub.endpoint}); N.types = data?.types || null; if (!data) N.state = "kapali";
+    let done = false; try{ done = localStorage.getItem("bd-n-rapor")==="1"; }catch(_){}
+    if (data && !done && !N.types.some(t=>t[0]==="r" && t!=="")){ try{ localStorage.setItem("bd-n-rapor","1"); }catch(_){} const j = sub.toJSON(), types = [...new Set([...N.types, "rgun","rhafta","ray"])];
+      const {error} = await SB.rpc("push_save", {p_shop: S.cloud.shop.id, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_app: window.KOLAY ? "kolay" : "tam", p_types: types, p_ua: navigator.userAgent.slice(0,200)});
+      if (!error) N.types = types; } }catch(_){} }
 }
 async function nEnable(){
   N.err = null; N.ok = null; N.busy = true; render(true);
@@ -4297,6 +4307,21 @@ document.addEventListener("change", ev=>{
   if (t.dataset?.ntype) nToggle(t.dataset.ntype);
   else if (t.id==="n-cikis"){ const v = Number(String(t.value).replace(",",".")); if (v >= 0) store.saveSettings({...S.settings, nCikis: v}); }
 });
+
+// Bildirime dokununca: ?rapor=gun|hafta|ay&a=YYYY-MM-DD&b=YYYY-MM-DD
+(function(){
+  let q; try{ q = new URLSearchParams(location.search); }catch(_){ return; }
+  const kind = q.get("rapor"), a = q.get("a"), b = q.get("b");
+  if (!kind || !/^\d{4}-\d{2}-\d{2}$/.test(a||"") || !/^\d{4}-\d{2}-\d{2}$/.test(b||"")) return;
+  let tries = 0;
+  const go = async () => {
+    if (!(S.mode==="cloud" && S.cloud?.shop && !S.locked) && !(S.mode==="local")){ if (++tries < 240) setTimeout(go, 500); return; }
+    try{ history.replaceState(null, "", location.pathname); }catch(_){}
+    S.rp = {g: kind==="ay" ? "day" : "day", from:a, to:b, pre:null}; S.rpFromPush = kind; S.tab = "rapor"; S.msg = null; render(); window.scrollTo(0,0);
+    await rpLoad(); S.rpFromPush = kind; render();
+  };
+  setTimeout(go, 300);
+})();
 
 ICONS.bell = '<path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>';
 

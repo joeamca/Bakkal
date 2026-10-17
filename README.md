@@ -24,6 +24,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 - **Veresiye:** Kim ne kadar borçlu, ne zamandır bekliyor; borç sınırı.
 - **Kâr-zarar ve raporlar:** Günlük, haftalık, aylık, yıllık satış raporu ve Excel çıktısı (kasa giriş-çıkış sebepleri dahil).
 - **Bildirimler:** Stok azalınca, ürün bitince, gün kapanınca, kasadan büyük para çıkınca telefona, tablete ya da bilgisayara simgeli bildirim.
+- **Rapor bildirimi:** Her akşam "Günün raporu hazır", pazar akşamı haftanın, ayın son günü ayın raporu bildirim olarak gelir (satış, fiş, kâr). Dokununca o dönemin raporu açılır, tek dokunuşla Excel iner.
 - **Güvenlik:** Hesaba özel PIN kilidi, e-postayla şifre yenileme. Bir dükkân başka dükkânın kayıtlarını göremez; yönetici de kayıtların içeriğini görmez.
 
 ## Nasıl kullanılır?

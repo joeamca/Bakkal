@@ -696,7 +696,7 @@ begin
     raise exception 'Bildirim kaydı hatalı.' using errcode = 'P0001'; end if;
   insert into push_subs (endpoint, user_id, shop_id, p256dh, auth, app, types, ua)
   values (p_endpoint, auth.uid(), p_shop, p_p256dh, p_auth, case when p_app = 'kolay' then 'kolay' else 'tam' end,
-          coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t where t in ('stok','bitti','kasa','cikis','veresiye','basvuru')), '{}'),
+          coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t where t in ('stok','bitti','kasa','cikis','veresiye','basvuru','rgun','rhafta','ray')), '{}'),
           left(p_ua, 200))
   on conflict (endpoint) do update set user_id = excluded.user_id, shop_id = excluded.shop_id, p256dh = excluded.p256dh, auth = excluded.auth,
     app = excluded.app, types = excluded.types, ua = excluded.ua, updated_at = now();
@@ -768,6 +768,59 @@ do $$ begin
     grant execute on function public.push_targets(uuid, uuid, text, text, text) to service_role;
     grant execute on function public.push_admin_targets() to service_role;
     grant execute on function public.push_drop(text) to service_role;
+  end if;
+end $$;
+
+-- ===== Rapor bildirimleri (gün / hafta / ay sonu) =====
+-- Sunucunun kendi zamanlayıcısı her akşam 21:45'te (Türkiye) bildirim servisini çağırır. Çağrıyı doğrulayan anahtar burada üretilir, kimse okuyamaz.
+create table if not exists public.app_secrets (name text primary key, val text not null);
+alter table public.app_secrets enable row level security;
+revoke all on public.app_secrets from anon, authenticated;
+insert into public.app_secrets (name, val) values ('cron', encode(extensions.gen_random_bytes(24), 'hex')) on conflict (name) do nothing;
+
+create or replace function public.push_report_targets(p_key text, p_now timestamptz default now())
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
+declare d date := (p_now at time zone 'Europe/Istanbul')::date; res jsonb := '[]'::jsonb; k record;
+begin
+  if p_key is null or p_key is distinct from (select val from app_secrets where name = 'cron') then return jsonb_build_object('ok', false); end if;
+  for k in select * from (values ('gun', 'rgun', d, d + 1), ('hafta', 'rhafta', d - 6, d + 1), ('ay', 'ray', date_trunc('month', d)::date, d + 1)) v(kind, typ, a, b)
+           where kind = 'gun' or (kind = 'hafta' and extract(isodow from d) = 7) or (kind = 'ay' and extract(day from d + 1) = 1)
+  loop
+    res := res || coalesce((
+      select jsonb_agg(jsonb_build_object('kind', k.kind, 'from', k.a, 'to', k.b - 1, 'shop', sh.id, 'name', sh.name,
+        'ciro', coalesce(t.ciro, 0), 'fis', coalesce(t.fis, 0), 'kar', coalesce(t.kar, 0), 'subs', x.subs))
+      from shops sh
+      join lateral (select jsonb_agg(jsonb_build_object('endpoint', ps.endpoint, 'p256dh', ps.p256dh, 'auth', ps.auth, 'app', ps.app)) subs
+                    from push_subs ps where ps.shop_id = sh.id and k.typ = any(ps.types)) x on x.subs is not null
+      left join lateral (
+        select sum((s.data->>'tot')::numeric) ciro, count(*) filter (where not coalesce((s.data->>'r')::boolean, false)) fis,
+               sum((select coalesce(sum((i->>'q')::numeric * ((i->>'u')::numeric - (i->>'b')::numeric)), 0)
+                    from jsonb_array_elements(coalesce(s.data->'it', '[]'::jsonb)) i where i ? 'b')) kar
+        from docs s where s.shop_id = sh.id and s.kind = 'sale' and not s.deleted and not coalesce((s.data->>'x')::boolean, false)
+          and (s.data->>'d')::timestamptz >= (k.a::timestamp at time zone 'Europe/Istanbul')
+          and (s.data->>'d')::timestamptz <  (k.b::timestamp at time zone 'Europe/Istanbul')) t on true
+      where sh.active), '[]'::jsonb);
+  end loop;
+  return jsonb_build_object('ok', true, 'items', res);
+end $$;
+revoke all on function public.push_report_targets(text, timestamptz) from public, anon, authenticated;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.push_report_targets(text, timestamptz) to service_role;
+  end if;
+end $$;
+
+-- Zamanlayıcı (Supabase'te hazır gelen pg_cron ve pg_net eklentileri)
+do $$ begin
+  if exists (select 1 from pg_available_extensions where name = 'pg_cron') and exists (select 1 from pg_available_extensions where name = 'pg_net') then
+    create extension if not exists pg_cron;
+    create extension if not exists pg_net with schema extensions;
+    perform cron.schedule('bakkal-rapor-bildirimi', '45 18 * * *', $job$
+      select net.http_post(
+        url := 'https://mvonvaoatjhfmezlidrv.supabase.co/functions/v1/bildir',
+        headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12b252YW9hdGpoZm1lemxpZHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTg0NjAsImV4cCI6MjEwNzQ3NDQ2MH0.Rwg4ZXS9XXLGKeM4eZb_hOYLbGDgL_o03yz4c8bkapA'),
+        body := jsonb_build_object('type', 'rapor', 'key', (select val from public.app_secrets where name = 'cron')))
+    $job$);
   end if;
 end $$;
 

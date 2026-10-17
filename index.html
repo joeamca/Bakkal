@@ -299,6 +299,8 @@ html,body{overscroll-behavior-y:contain}
   .givenbox input{flex:1 1 100%}
   .givenbox .chip{flex:1}
 }
+body.kb nav.tabs{display:none}
+nav.tabs{will-change:transform}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
@@ -4093,6 +4095,30 @@ document.addEventListener("change", ev=>{ if (ev.target.id==="rp-from" || ev.tar
     setTimeout(()=>location.reload(), 250);
   }, {passive:true});
   document.addEventListener("touchcancel", ()=>{ y0 = null; hide(); }, {passive:true});
+})();
+
+
+/* ---------- Alt menü: görünen ekranın dibine yapışsın ---------- */
+(function(){
+  const vv = window.visualViewport;
+  const typing = t => !!(t && t.matches && t.matches("input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=file]),textarea,select"));
+  let raf = 0;
+  function fix(){
+    raf = 0; const n = document.querySelector("nav.tabs"); if (!n || !vv) return;
+    // Ekran klavyesi açık: görünen alan belirgin küçülür -> menüyü gizle (alan açılsın, klavyenin üstünde uçmasın)
+    const kb = typing(document.activeElement) && vv.height < window.innerHeight * 0.8;
+    document.body.classList.toggle("kb", kb);
+    // iOS klavye kapandıktan sonra sabit öğeleri eski yerde bırakabiliyor: menüyü görünen alanın dibine taşı
+    const off = Math.round(vv.offsetTop + vv.height - window.innerHeight);
+    n.style.transform = (!kb && Math.abs(off) > 1) ? "translateY(" + off + "px)" : "";
+  }
+  const later = () => { if (!raf) raf = requestAnimationFrame(fix); };
+  window.navFix = fix;
+  if (vv){ vv.addEventListener("resize", later); vv.addEventListener("scroll", later); }
+  window.addEventListener("scroll", later, {passive:true});
+  window.addEventListener("orientationchange", () => setTimeout(fix, 350));
+  document.addEventListener("focusin", later);
+  document.addEventListener("focusout", () => { setTimeout(fix, 80); setTimeout(fix, 400); });
 })();
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}

@@ -1194,6 +1194,24 @@ function renderToast(){
   el.hidden = false; el.innerHTML = `<span>${esc(u.text)}</span><button data-act="undo">Geri Al</button>`;
 }
 function offerUndo(text, run){ S.undo = {text, run, until: Date.now()+9000}; renderToast(); clearTimeout(offerUndo.t); offerUndo.t = setTimeout(()=>{ S.undo=null; renderToast(); }, 9100); }
+// Yenilikler kutusu: her güncellemede bir kez gösterilir, "Tamam" denince bu cihazda bir daha çıkmaz.
+// Yeni güncellemede YENI_VER'i değiştir ve YENI_NOT listesini yenile.
+const YENI_VER = "2026-10-18";
+const YENI_BASLIK = "Yenilikler · 18 Ekim 2026";
+const YENI_NOT = [
+  "Telefonun geri tuşu artık önce açık formu ya da ayrıntı ekranını kapatır; seni uygulamadan hemen çıkarmaz.",
+  "Küçük telefonlarda Menü ve Satış sekmeleri taşmaz, hepsi görünür.",
+  "Tutarlar doğru okunur: 1.500 yazarsan 1.500 TL, 12,5 yazarsan 12,5 TL olur.",
+  "Çok büyük sayılar (1 milyar üstü) kabul edilmez. Çok yüksek tutarlarda \"doğruysa tekrar bas\" uyarısı çıkar.",
+  "Kâr ekranında \"−0 TL\" yazmaz.",
+  "Kasada olandan fazla para çıkarırsan ya da günü ikinci kez kapatırsan önce uyarır."
+];
+function yenilikHtml(){
+  if (S.locked || !(S.products && S.products.length || S.events && S.events.length)) return "";   // yeni kullanıcıya gösterme
+  let seen = ""; try{ seen = localStorage.getItem("bd-yenilik") || ""; }catch(_){}
+  if (seen===YENI_VER) return "";
+  return `<div class="notice ok stack" style="margin-bottom:12px"><b>${YENI_BASLIK}</b><ul style="margin:0;padding-left:20px;display:grid;gap:6px">${YENI_NOT.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="primary" data-act="yeniOk">Tamam</button></div>`;
+}
 function render(keep){
   if (window.KOLAY) kRoute();
   $("#pageTitle").textContent = titles[S.tab];
@@ -1212,6 +1230,7 @@ function render(keep){
   { const bd = document.getElementById("adBadge"), n = (S.cloud && S.cloud.ctx && S.cloud.ctx.pending_signups) || 0; if (bd){ bd.textContent = n; bd.hidden = !n; } }
   if (S.mode==="cloud" && !adm && S.cloud.ctx?.is_admin && S.cloud.ctx.pending_signups > 0)
     b += `<div class="notice ok row between" style="margin-bottom:12px"><span><b>${S.cloud.ctx.pending_signups} yeni kayıt başvurusu</b> onayını bekliyor.</span><button data-act="toAdmin">Yönetici Ekranı</button></div>`;
+  b = yenilikHtml() + b;
   $("#banner").innerHTML = b;
   const v = $("#view");
   const gated = ["login","pickshop","noshop","paused","newpass","setpin","recover"].includes(S.mode) || (S.mode==="cloud" && !!S.locked);
@@ -2733,6 +2752,7 @@ document.addEventListener("click", async ev=>{
     else if (a==="export"){ t.disabled=true; await exportXlsx(); t.disabled=false; }
     else if (a==="shareOn"){ t.disabled=true; await switchShared(true); }
     else if (a==="shareOff"){ t.disabled=true; await switchShared(false); }
+    else if (a==="yeniOk"){ try{ localStorage.setItem("bd-yenilik", YENI_VER); }catch(_){} render(true); }
     else if (a==="saveRate"){ const v=document.getElementById("mrate").value; await store.saveSettings({...S.settings, monthlyRate: v===""?null:Number(v)}); S.msg={kind:"ok",text:"Kaydedildi."}; render(); }
     else if (a==="tday"){ const sp=t.dataset.sup, d=Number(t.dataset.d), k=supKey(sp); const cur=S.suppliers[k]?.days||[];
       const days = cur.includes(d) ? cur.filter(x=>x!==d) : [...cur, d]; await store.saveSupplier({...(S.suppliers[k]||{}), id:k, name:sp, days}); }

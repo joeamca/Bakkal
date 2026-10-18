@@ -22,6 +22,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 - **Kasa:** Açılış parası, kasaya giriş ve kasadan çıkış (sebebiyle), gün kapanışı ve kasa farkı.
 - **Sipariş ve fatura:** Hangi üründen ne kadar alınacağını, araç günlerine ve özel günlere göre hesaplar.
 - **Veresiye:** Kim ne kadar borçlu, ne zamandır bekliyor; borç sınırı.
+- **Tedarikçiler:** Veresiyenin tersi: kime ne kadar borcun var. **Mal Geldi** ile stok artar ve tedarikçiye borç yazılır (ya da peşin ödenir); fatura girişi de borç yazar. Kasadan tedarikçiye ödeme yapınca borç düşer. Vade dolunca "ödeme zamanı" hatırlatması gelir. **Sayım** ise sadece düzeltmedir, kimseye borç yazmaz.
 - **Kâr-zarar ve raporlar:** Günlük, haftalık, aylık, yıllık satış raporu ve Excel çıktısı (kasa giriş-çıkış sebepleri dahil).
 - **Bildirimler:** Stok azalınca, ürün bitince, gün kapanınca, kasadan büyük para çıkınca telefona, tablete ya da bilgisayara simgeli bildirim.
 - **Rapor bildirimi:** Her akşam "Günün raporu hazır", pazar akşamı haftanın, ayın son günü ayın raporu bildirim olarak gelir (satış, fiş, kâr). Dokununca o dönemin raporu açılır, tek dokunuşla Excel iner.

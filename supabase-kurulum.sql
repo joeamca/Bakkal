@@ -696,7 +696,7 @@ begin
     raise exception 'Bildirim kaydı hatalı.' using errcode = 'P0001'; end if;
   insert into push_subs (endpoint, user_id, shop_id, p256dh, auth, app, types, ua)
   values (p_endpoint, auth.uid(), p_shop, p_p256dh, p_auth, case when p_app = 'kolay' then 'kolay' else 'tam' end,
-          coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t where t in ('stok','bitti','kasa','cikis','veresiye','basvuru','rgun','rhafta','ray')), '{}'),
+          coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t where t in ('stok','bitti','kasa','cikis','veresiye','basvuru','rgun','rhafta','ray','tedarik')), '{}'),
           left(p_ua, 200))
   on conflict (endpoint) do update set user_id = excluded.user_id, shop_id = excluded.shop_id, p256dh = excluded.p256dh, auth = excluded.auth,
     app = excluded.app, types = excluded.types, ua = excluded.ua, updated_at = now();
@@ -807,6 +807,39 @@ revoke all on function public.push_report_targets(text, timestamptz) from public
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant execute on function public.push_report_targets(text, timestamptz) to service_role;
+  end if;
+end $$;
+
+-- Tedarikçiye ödeme zamanı: en eski ödenmemiş alım vadeyi geçince (sonra haftada bir) hatırlat
+create or replace function public.push_supplier_targets(p_key text, p_now timestamptz default now())
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
+begin
+  if p_key is null or p_key is distinct from (select val from app_secrets where name = 'cron') then return jsonb_build_object('ok', false); end if;
+  return jsonb_build_object('ok', true, 'items', coalesce((
+    with ev as (
+      select d.shop_id, d.data->>'supplierId' sid, coalesce(d.data->>'supName', d.data->>'supplierId') nm, d.data->>'type' t,
+             coalesce((d.data->>'amount')::numeric, 0) a, (d.data->>'date')::timestamptz dt, d.id
+      from docs d join shops sh on sh.id = d.shop_id and sh.active
+      where d.kind = 'event' and not d.deleted and d.data->>'type' in ('tborc', 'todeme') and d.data->>'supplierId' is not null),
+    paid as (select shop_id, sid, sum(a) p from ev where t = 'todeme' group by shop_id, sid),
+    b as (select e.shop_id, e.sid, e.nm, e.dt, e.a, sum(e.a) over (partition by e.shop_id, e.sid order by e.dt, e.id rows unbounded preceding) cum
+          from ev e where e.t = 'tborc'),
+    agg as (select b.shop_id, b.sid, max(b.nm) nm, sum(b.a) - coalesce(max(p.p), 0) bal,
+                   min(b.dt) filter (where b.cum > coalesce(p.p, 0) + 0.005) oldest
+            from b left join paid p on p.shop_id = b.shop_id and p.sid = b.sid group by b.shop_id, b.sid),
+    due as (select a.shop_id, a.sid, coalesce(s.data->>'name', a.nm) sname, a.bal,
+                   coalesce(nullif(s.data->>'vade', '')::int, 15) vade, floor(extract(epoch from (p_now - a.oldest)) / 86400)::int age
+            from agg a left join docs s on s.shop_id = a.shop_id and s.kind = 'supplier' and s.id = a.sid and not s.deleted
+            where a.bal > 0.005 and a.oldest is not null)
+    select jsonb_agg(jsonb_build_object('shop', d.shop_id, 'sid', d.sid, 'name', d.sname, 'bal', round(d.bal, 2), 'age', d.age, 'vade', d.vade, 'subs', x.subs))
+    from due d join lateral (select jsonb_agg(jsonb_build_object('endpoint', ps.endpoint, 'p256dh', ps.p256dh, 'auth', ps.auth, 'app', ps.app)) subs
+                             from push_subs ps where ps.shop_id = d.shop_id and 'tedarik' = any(ps.types)) x on x.subs is not null
+    where d.age >= d.vade and (d.age - d.vade) % 7 = 0), '[]'::jsonb));
+end $$;
+revoke all on function public.push_supplier_targets(text, timestamptz) from public, anon, authenticated;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.push_supplier_targets(text, timestamptz) to service_role;
   end if;
 end $$;
 

@@ -39,6 +39,12 @@ Tek bir **Ürün Ekle** düğmesi var; barkodlu ya da barkodsuz fark etmez. Form
 
 Çok ürün girerken **Kaydet + Yeni** ile kaydedip hemen sıradakini okutursun. Satışta tanınmayan bir barkod okutulursa aynı form açılır; kaydedince ürün doğrudan sepete eklenir.
 
+## Tedarikçiler, mal geldi, sayım
+
+- **Mal Geldi** (Stok'ta her ürünün yanında): kimden aldın, kaç tane, kaça. Stok artar; borç yazılır ya da peşin ödenir (kasadan / kasa dışı).
+- **Sayım:** Rafa bakıp şu an kaç tane olduğunu yazarsın. Eklenmez, rafın yeni durumu olur; kimseye borç yazılmaz.
+- **Tedarikçiler** (Ana Sayfa'daki kısayol ya da ayar düğmesi): kime ne kadar borcun var, ne aldın, ne ödedin. Kasadan "Para Al" yaparken tedarikçi seçersen borcundan düşer. Vade dolunca Ana Sayfa'da "Ödeme Zamanı" çıkar ve bildirim gelir.
+
 ## Rapor bildirimi
 
 Her akşam 21:45'te "Günün raporu hazır" bildirimi gelir; pazar akşamı haftanın, ayın son günü ayın raporu da gelir. Bildirimde satış, fiş sayısı ve kâr yazar; dokununca rapor açılır, **Excel'i İndir** ile dosya iner. Ayarlar → Bildirimler'den hangilerinin geleceği seçilir.

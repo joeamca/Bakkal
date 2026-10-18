@@ -309,6 +309,24 @@ nav.tabs{will-change:transform}
 .nrow input{width:22px;height:22px}
 .rpush{border-color:color-mix(in srgb,var(--c6) 35%,var(--line));background:linear-gradient(160deg,color-mix(in srgb,var(--c6) 12%,var(--card)),var(--card) 70%)}
 .rpush .primary{min-height:56px;font-size:18px;display:flex;align-items:center;justify-content:center;gap:8px}
+.suprow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-top:1px solid var(--line);border-radius:0;background:none;padding:12px 0;font:inherit;color:inherit;min-height:0}
+.suprow:first-child{border-top:0}
+.suprow .bi{width:40px;height:40px}
+.supbal{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;font-weight:600}
+.supbal b{font-size:26px;font-family:var(--display)}
+.supbal.ok{background:color-mix(in srgb,var(--c1) 12%,transparent);color:var(--c1)}
+.supbal.warn{background:color-mix(in srgb,var(--c2) 14%,transparent);color:var(--warn)}
+.supbal.bad{background:color-mix(in srgb,var(--c3) 14%,transparent);color:var(--bad)}
+.supbtns{display:flex;flex-wrap:wrap;gap:8px}
+.supbtns > *{flex:1 1 140px}
+.supf{border-top:1px dashed var(--line);padding-top:12px}
+.smlines{display:flex;flex-direction:column;gap:8px}
+.smline{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:12px}
+.smline b{grid-column:1/-1}
+.smline .link{grid-column:1/-1;justify-self:start}
+.num.pos{color:var(--c1)}
+.kbdhint{display:none}
+@media (pointer:fine){.kbdhint{display:block}}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
 .login{max-width:420px;margin:12px auto}
@@ -879,7 +897,7 @@ function guideCard(){
     </div></section>`;
 }
 const shopTitle = () => S.settings?.shopName || (S.mode==="cloud" && S.cloud?.shop?.name) || "";
-const titles = {satis:"Satış", rapor:"Satış Raporları", yonetim:"Yönetici Paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş Listesi", fatura:"Fatura Gir", veresiye:"Veresiye Defteri", menu:"Menü", stok:"Stok Durumu", plan:"İhtiyaç Planı", maliyet:"Stok Maliyeti", fire:"Haftalık Fire", kar:"Kâr ve Zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
+const titles = {tedarik:"Tedarikçiler", satis:"Satış", rapor:"Satış Raporları", yonetim:"Yönetici Paneli", "y-ozet":"Yönetim", "y-basvuru":"Başvurular", "y-dukkan":"Dükkânlar", "y-hesap":"Hesabım", ana:"Bugün", siparis:"Sipariş Listesi", fatura:"Fatura Gir", veresiye:"Veresiye Defteri", menu:"Menü", stok:"Stok Durumu", plan:"İhtiyaç Planı", maliyet:"Stok Maliyeti", fire:"Haftalık Fire", kar:"Kâr ve Zarar", urunler:"Ürünler", ayarlar:"Ayarlar"};
 
 function renderData(){ if (!S.quiet) render(true); }
 function renderToast(){
@@ -920,7 +938,7 @@ function render(keep){
   const saved = {};
   if (keep) v.querySelectorAll("input,select").forEach(el=>{ if (el.id && el.type!=="file") saved[el.id] = (el.type==="checkbox"||el.type==="radio") ? el.checked : el.value; });
   const openHow = keep ? [...v.querySelectorAll("details[open]")].map(d=>d.dataset.id).filter(Boolean) : [];
-  const VIEWS = {satis:viewPos, rapor:viewReport, yonetim:viewAdmin, "y-ozet":viewAdminHome, "y-basvuru":viewAdminSignups, "y-dukkan":viewAdminShops, "y-hesap":viewAdminAccount, ana:viewHome, siparis:viewOrder, fatura:viewInvoice, veresiye:viewVeresiye, menu:viewMenu, stok:viewStock, plan:viewPlan, maliyet:viewCost, fire:viewFire, kar:viewProfit, urunler:viewProducts, ayarlar:viewSettings};
+  const VIEWS = {tedarik:viewSup, satis:viewPos, rapor:viewReport, yonetim:viewAdmin, "y-ozet":viewAdminHome, "y-basvuru":viewAdminSignups, "y-dukkan":viewAdminShops, "y-hesap":viewAdminAccount, ana:viewHome, siparis:viewOrder, fatura:viewInvoice, veresiye:viewVeresiye, menu:viewMenu, stok:viewStock, plan:viewPlan, maliyet:viewCost, fire:viewFire, kar:viewProfit, urunler:viewProducts, ayarlar:viewSettings};
   const pre = ["fire","kar","urunler","ayarlar","yonetim","rapor"].includes(S.tab) && !S.editId ? backLink() : "";
   document.body.classList.toggle("wide", S.tab==="satis");
   v.innerHTML = (S.guide ? guideCard() : "") + pre + (VIEWS[S.tab]||viewHome)();
@@ -1174,6 +1192,7 @@ function viewInvoice(){
       <label>Tedarikçi<input id="inv-sup" value="${esc(inv.supplier)}"></label>
       <label>Fatura no<input id="inv-no" value="${esc(inv.no)}"></label>
       <label>Tarih<input id="inv-date" type="date" max="${ymd(Date.now())}" value="${esc(inv.date)}"></label>
+      <label>Ödeme<select id="inv-pay">${[["borc","Borç yaz (sonra öderim)"],["kasa","Peşin (kasadan)"],["disari","Peşin (kasa dışı)"]].map(([v,l])=>`<option value="${v}" ${(inv.pay||"borc")===v?"selected":""}>${l}</option>`).join("")}</select></label>
     </div>
     ${S.invErr ? `<p class="notice bad">${esc(S.invErr)}</p>` : ""}
     ${dup ? `<p class="notice bad">Bu fatura numarası daha önce kaydedilmiş. İki kez kaydedersen stok iki kat görünür.</p>` : ""}
@@ -1501,7 +1520,7 @@ function lineChart(pts, o={}){ // pts: [{v, l, mark}]
 const isMade = p => Array.isArray(p.recipe) && p.recipe.length>0;
 const usedIn = id => S.products.filter(x=>isMade(x) && x.recipe.some(r=>r.id===id));
 const stockP = () => S.products.filter(p=>!isMade(p));
-const MENU_TABS = ["menu","stok","plan","maliyet","kar","fire","urunler","ayarlar","yonetim","rapor"];
+const MENU_TABS = ["tedarik","menu","stok","plan","maliyet","kar","fire","urunler","ayarlar","yonetim","rapor"];
 function dayWeight(t){ const w=dayW(), m=w.reduce((x,y)=>x+y,0)/7||1, sd=specials().find(x=>x.d===ymd(t)); return sd ? (SPECIAL[sd.k]?.w??1) : w[new Date(t).getDay()]/m; }
 function depDaily(){ const d={}; for (const m of S.products) if (isMade(m)) for (const c of m.recipe){ d[c.id]=(d[c.id]||0)+(Number(m.dailyEst)||0)*(Number(c.qty)||0); } return d; }
 function gotToday(pid){ const k=ymd(Date.now()); return S.events.some(e=>e.productId===pid && e.type==="gelen" && ymd(new Date(e.date).getTime())===k); }
@@ -1914,6 +1933,7 @@ function viewHome(){
   if (P.some(p=>p.perishable) && (!fireT || Date.now()-fireT > 6.5*DAY)) todo.push({i:"trash", c:"c3", t:`Fire kutusunu say${fireT?` (son sayım ${agoTxt(fireT)})`:""}.`, a:`data-act="goto" data-tab="fire" data-plain="1"`, b:"Fire"});
   if (S.mode==="local" && (S.events.length || P.length)){ let last=0; try{ last=Number(localStorage.getItem("bd-son-yedek"))||0; }catch(_){}
     if (Date.now()-last > 7*DAY) todo.push({i:"list", c:"c4", t: last ? `Haftalık yedeğini al (son yedek ${agoTxt(last)}).` : `Kayıtların yalnız bu telefonda. <b>Excel'e yedek al</b>, WhatsApp'tan kendine gönder.`, a:`data-act="export"`, b:"Yedek al"}); }
+  for (const {s:sp, st:ss} of supDue().slice(0,3)) todo.push({i:"truck", c:"c3", t:`<b>${esc(sp.name)}</b> ödeme zamanı: ${TLx(ss.bal)} borcun ${fmt(ss.ageDays)} gündür bekliyor.`, a:`data-act="goto" data-tab="tedarik" data-plain="1"`, b:"Öde"});
   if (lateC.length) todo.push({i:"book", c:"c6", t:`<b>${lateC.length} müşterinin</b> borcu 30 günü geçti.`, a:`data-act="goto" data-tab="veresiye" data-plain="1"`, b:"Veresiye"});
   html += `<section class="card stack"><h2>Bugün Yapılacaklar</h2>${todo.length ? `<ul class="todo">${todo.map(x=>`<li class="${x.done?"done":""}"><span class="bi ${x.c}">${ic(x.i,18)}</span><span>${x.t}</span>${x.a?`<button ${x.a}>${x.b}</button>`:""}</li>`).join("")}</ul>` : `<p class="small muted">${ic("check",18)} Bugün acil bir iş görünmüyor.</p>`}</section>`;
   if (all.length){
@@ -1938,6 +1958,7 @@ function viewMenu(){
     ["fire","trash","Fire","Haftalık bozulan mal","c3"],["urunler","tag","Ürünler","Ekle, düzenle, reçete","c6"],["ayarlar","gear","Ayarlar","Araç günleri, özel günler, Excel","c5"]];
   return `<div class="mgrid">${items.map(([t,i,l,d,c])=>`<button class="mtile" data-act="goto" data-tab="${t}" data-plain="1"><span class="bi ${c}">${ic(i,26)}</span><b>${l}</b><span class="small muted">${d}</span></button>`).join("")}
     <button class="mtile" data-act="goRapor"><span class="bi c2">${ic("chart",26)}</span><b>Satış Raporları</b><span class="small muted">Günlük, haftalık, aylık, yıllık · Excel</span></button>
+    <button class="mtile" data-act="goto" data-tab="tedarik" data-plain="1"><span class="bi c2">${ic("truck",26)}</span><b>Tedarikçiler</b><span class="small muted">${(()=>{ const t = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return t>0.005 ? `Borcum: ${TLx(r2(t))}` : "Borç, mal geldi, ödeme"; })()}</span></button>
     <button class="mtile" data-act="goKasa"><span class="bi c1">${ic("box",26)}</span><b>Kasa</b><span class="small muted">Açılış, giriş/çıkış, gün kapanışı</span></button>
     <a class="mtile" href="kolay/" style="text-decoration:none"><span class="bi c7">${ic("home",26)}</span><b>Kolay Sürüm</b><span class="small muted">Büyük düğmeler, sade ekran</span></a>
     <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
@@ -1979,7 +2000,8 @@ async function exportXlsx(){
         "Birim":p.unit||"tane", "Raf ömrü (gün)":p.shelfDays??"", "Kaç teslimatta bir":Number(p.everyN)||1, "Hazırlanan (reçeteli)":"", "Reçete":"", "Günlük hazırlama":"",
         "— Hesaplanan —":"", "Haftalık satış (tahmini)":+st.weekly.toFixed(1), "Önerilen sipariş":st.q, "Rafta (tahmini)":sh==null?"":Math.round(sh),
         "Son alış TL":m.buy??"", "Adet kârı TL":m.unit==null?"":+m.unit.toFixed(2), "Fire oranı %":+(st.fireRate*100).toFixed(1), "Kod":p.id}; });
-    const mov = S.events.filter(e=>!isLedger(e)).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({"Tarih":localStamp(e.date), "Ürün":e.productId==="-"?"":nm(e.productId), "Hareket":TYP[e.type]||e.type,
+    const supLed = S.events.filter(isSupLedger).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({"Tarih":localStamp(e.date), "Tedarikçi":supName(e.supplierId), "İşlem":e.type==="tborc"?"Alım / borç":"Ödeme", "Tutar TL":Number(e.amount), "Not":e.note||"", "Kasadan":e.cashId?"Evet":"", "Kod":e.id}));
+    const mov = S.events.filter(e=>!isLedger(e) && !isSupLedger(e)).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({"Tarih":localStamp(e.date), "Ürün":e.productId==="-"?"":nm(e.productId), "Hareket":TYP[e.type]||e.type,
       "Miktar":e.type==="bos"?"":e.qty, "Gün":e.type==="bos"?e.days:"", "Adet fiyatı TL":e.price??"", "Fatura no":e.invoiceNo||"", "Tedarikçi":e.supplier||"",
       "Neden":e.reason?(WHY[e.reason]||e.reason):"", "Not":e.note||"", "Ürün kodu":e.productId, "Fatura kodu":e.invKey||"", "Kod":e.id}));
     const sup = Object.values(S.suppliers).map(x=>({"Tedarikçi":x.name||x.id, "Araç günleri":(x.days||[]).slice().sort((a,b)=>WEEK.indexOf(a)-WEEK.indexOf(b)).map(d=>DS[d]).join(", "), "Sipariş kaç gün önce":Number(x.lead)||0}));
@@ -1991,7 +2013,7 @@ async function exportXlsx(){
       ...specials().map(x=>({"Ayar":"Özel gün: "+x.d, "Değer":(SPECIAL[x.k]?.t||"")+" | "+(x.name||"")})),
       {"Ayar":"Paranın aylık maliyeti %", "Değer":S.settings?.monthlyRate??""}, {"Ayar":"Sipariş başına emek TL", "Değer":S.settings?.orderCost??""}, {"Ayar":"Dükkân adı", "Değer":S.settings?.shopName??""}];
     const add = (rows, name, blank) => X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rows.length?rows:[blank]), name);
-    add(prod, "Ürünler", {"Ürün":""}); add(mov, "Hareketler", {"Tarih":""}); add(sup, "Tedarikçiler", {"Tedarikçi":""}); add(cust, "Müşteriler", {"Ad":""}); add(led, "Veresiye", {"Tarih":""}); add(set, "Ayarlar", {"Ayar":""});
+    add(prod, "Ürünler", {"Ürün":""}); add(mov, "Hareketler", {"Tarih":""}); add(supLed, "Tedarikçi hesabı", {"Tarih":""}); add(sup, "Tedarikçiler", {"Tedarikçi":""}); add(cust, "Müşteriler", {"Ad":""}); add(led, "Veresiye", {"Tarih":""}); add(set, "Ayarlar", {"Ayar":""});
     const buf = X.write(wb, {type:"array", bookType:"xlsx"});
     try{ localStorage.setItem("bd-son-yedek", String(Date.now())); }catch(_){}
     const how = await saveFile(`bakkal-defteri-${ymd(Date.now())}.xlsx`, buf, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -2166,6 +2188,7 @@ Bakkalın ürün listesi: ${JSON.stringify(catalog)}`;
 
 const invKeyOf = e => e.invKey || (e.invoiceNo ? "no:"+e.invoiceNo : "d:"+ymd(new Date(e.date).getTime())+"|"+(e.supplier||""));
 async function deleteInvoice(key){
+  for (const e of S.events.filter(x=>isSupLedger(x) && x.invKey===key)){ if (e.cashId && S.cash.some(c=>c.id===e.cashId)) await store.deleteCash(e.cashId); await store.deleteEvent(e.id); }
   const evs = S.events.filter(e=>(e.type==="gelen"||e.type==="iade"||e.type==="bos") && invKeyOf(e)===key);
   for (const e of evs){
     if (e.type==="bos"){ const p = S.products.find(x=>x.id===e.productId);
@@ -2184,6 +2207,7 @@ function syncInv(){
   if (g("inv-sup")) S.inv.supplier = g("inv-sup").value.trim();
   if (g("inv-no")) S.inv.no = g("inv-no").value.trim();
   if (g("inv-date")) S.inv.date = g("inv-date").value;
+  if (g("inv-pay")) S.inv.pay = g("inv-pay").value;
   if (g("inv-force")) S.inv.force = g("inv-force").checked;
   S.inv.lines.forEach((l,i)=>{
     if (g("ln-p-"+i)) l.productId = g("ln-p-"+i).value;
@@ -2249,6 +2273,10 @@ async function saveInvoice(){
     if (!l.iade){ (before[p.id] ||= {name:p.name, days:null, minus:null, shelf:null, add:0}).add += l.qty; }
     n++;
   }
+  const supTot = r2(inv.lines.filter(l=>l.productId && l.qty>0 && l.price>0).reduce((a,l)=>a + (l.iade?-1:1)*l.qty*l.price, 0));
+  if (n && inv.supplier && Math.abs(supTot) > 0.005){ const sk = await supEnsure(inv.supplier), nt = "Fatura" + (inv.no ? " " + inv.no : "");
+    if (supTot > 0){ await supRecord({supId:sk, amount:supTot, kind:"borc", note:nt, invKey, date}); if ((inv.pay||"borc")!=="borc") await supRecord({supId:sk, amount:supTot, kind:"odeme", note:nt + " (peşin)", invKey, fromCash:inv.pay==="kasa", date}); }
+    else await supRecord({supId:sk, amount:-supTot, kind:"odeme", note:nt + " (iade)", invKey, date}); }
   S.inv = null;
   S.invSummary = Object.values(before).filter(x=>x.add>0);
   if (created.length) S.newProds = {ids:created, sup:inv.supplier||""};
@@ -2314,6 +2342,7 @@ const SEED = [
 ];
 
 async function seedDemo(){
+  if (S.products.some(p=>/\(örnek\)/.test(p.name))){ S.msg = {kind:"ok", text:"Örnek ürünler zaten yüklü."}; render(); return; }
   S.quiet = true;
   try{
     const ids = {}; const now = Date.now();
@@ -2344,6 +2373,7 @@ document.addEventListener("click", async ev=>{
   const a = t.dataset.act, id = t.dataset.id;
   try{
     if (await nAct(a)) return;
+    if (await supAct(a, t)) return;
     if (await posAct(a, t)) return;
     if (CLOUD_ON && await cloudAct(a, t, id)) return;
     if (a==="stockF"){ S.stockF = t.dataset.f||"all"; render(); }
@@ -2418,7 +2448,7 @@ document.addEventListener("click", async ev=>{
     else if (a==="guide"){ S.guide=!S.guide; if (S.guide) S.editId=null; render(); window.scrollTo(0,0); }
     else if (a==="guideClose"){ S.guide=false; render(); }
     else if (a==="guideGo"){ syncInv(); S.tab=t.dataset.tab; S.editId=null; S.msg=null; render(); window.scrollTo(0,0); }
-    else if (a==="goto"){ S.tab=t.dataset.tab; if (S.tab==="urunler" && !t.dataset.plain){ S.editId="__new"; S.rcFor=null; } else S.editId=null; S.guide=false; S.msg=null; S.vCust=null; S.vEditCust=null; render(); window.scrollTo(0,0); }
+    else if (a==="goto"){ if (t.dataset.tab==="tedarik"){ S.supOpen=null; S.supForm=null; S.supEdit=null; } S.tab=t.dataset.tab; if (S.tab==="urunler" && !t.dataset.plain){ S.editId="__new"; S.rcFor=null; } else S.editId=null; S.guide=false; S.msg=null; S.vCust=null; S.vEditCust=null; render(); window.scrollTo(0,0); }
     else if (a==="seed"){ t.disabled=true; await seedDemo(); }
     else if (a==="out"){ const p=S.products.find(x=>x.id===id); await store.saveProduct({...p,outSince:nowIso()}); offerUndo(`${p.name}: bitti olarak işaretlendi.`, ()=>store.saveProduct({...S.products.find(x=>x.id===id), outSince:null})); }
     else if (a==="unout"){ const p=S.products.find(x=>x.id===id); await store.saveProduct({...p,outSince:null}); }
@@ -2973,7 +3003,7 @@ function viewLock(){
   const cfg = pinCfg() || {}, wait = Math.max(cfg.coolUntil||0, S.pinCoolUntil||0) - Date.now(), cool = wait > 0, n = (S.pinBuf||"").length;
   const keys = ["1","2","3","4","5","6","7","8","9","","0","del"];
   return `<div class="card stack login lockcard">
-    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kilitli</h2>
+    <div class="stack" style="gap:4px;text-align:center"><span class="bi c1" style="margin:0 auto">${ic("user",26)}</span><h2>Kilitli</h2><span class="small muted kbdhint">PIN'i klavyeden de yazabilirsin.</span>
       <p class="small muted">${esc(C.ctx?.full_name || C.ctx?.username || "")}${C.shop ? " · " + esc(C.shop.name) : ""}</p></div>
     ${cool ? `<p class="notice bad">Çok fazla yanlış deneme. ${Math.ceil(wait/60000)} dakika sonra tekrar dene.</p>` : S.pinErr ? `<p class="notice bad">${esc(S.pinErr)}</p>` : `<p class="small" style="text-align:center">${S.pinBusy ? '<span class="spin"></span> Kontrol ediliyor' : "PIN'ini gir"}</p>`}
     <div class="pindots" aria-label="${n} rakam girildi">${[0,1,2,3].map(i=>`<i class="${i<n?"on":""}"></i>`).join("")}</div>
@@ -3764,6 +3794,7 @@ function viewKasa(){
     h += `<form id="kasaform" class="card stack kform" data-f="${f}"><b>${CASH_T[f]}</b>
       ${f==="kapanis" ? `<p class="small">Kasadaki parayı say ve yaz. Uygulama olması gerekenle karşılaştırır.</p>` : ""}
       <label>${f==="kapanis" ? "Sayılan para (TL)" : "Tutar (TL)"}<input id="kf-a" inputmode="decimal" required placeholder="${f==="acilis" && left!=null ? fmt(left,2) : "Örn. 800"}" value="${f==="acilis" && left!=null ? String(left).replace(".",",") : ""}"></label>
+      ${f==="cikis" ? supSelectHtml() : ""}
       ${reasons ? `<label>Sebep<select id="kf-r"><option value="">Seç</option>${reasons.map(r=>`<option>${esc(r)}</option>`).join("")}</select></label>` : ""}
       ${f==="kapanis" ? `<label>Yarına kasada bırakılan (isteğe bağlı)<input id="kf-b" inputmode="decimal" placeholder="Örn. 500"></label>` : ""}
       <label>${f==="cikis"||f==="giris" ? "Açıklama (kime, ne için)" : "Not (isteğe bağlı)"}<input id="kf-n" maxlength="120" placeholder="${f==="cikis" ? "Örn. Ekmekçi Hasan, haftalık hesap" : ""}"></label>
@@ -3781,15 +3812,16 @@ function viewKasa(){
 }
 async function kasaSave(f){
   const a = pnum(document.getElementById("kf-a")?.value), r = document.getElementById("kf-r")?.value || "", n = (document.getElementById("kf-n")?.value||"").trim();
-  const b = pnum(document.getElementById("kf-b")?.value);
+  const b = pnum(document.getElementById("kf-b")?.value), supSel = f==="cikis" ? (document.getElementById("kf-sup")?.value || "") : "";
   S.kasaErr = null;
   if (!(a >= 0) || (f!=="kapanis" && !(a > 0))){ S.kasaErr = "Tutarı yaz."; render(true); return; }
-  if ((f==="cikis"||f==="giris") && !r){ S.kasaErr = "Sebebini seç."; render(true); return; }
+  if ((f==="cikis"||f==="giris") && !r && !supSel){ S.kasaErr = "Sebebini seç."; render(true); return; }
   if ((f==="cikis"||f==="giris") && r==="Diğer" && !n){ S.kasaErr = "\"Diğer\" seçtiysen açıklamaya ne olduğunu yaz."; render(true); return; }
-  const x = {id: newId(), d: nowIso(), t: f, a: r2(a), ...(r ? {r} : {}), ...(n ? {n} : {})};
+  const x = {id: newId(), d: nowIso(), t: f, a: r2(a), ...(r ? {r} : {}), ...(n ? {n} : {}), ...(supSel ? {sup:supSel, ...(r ? {} : {r:supCashReason(supName(supSel))}), ...(n ? {} : {n:supName(supSel)})} : {})};
   if (f==="kapanis"){ const k = kasaDay(today0()); x.say = r2(a); x.beklenen = k.beklenen; x.fark = r2(a - k.beklenen); if (b >= 0) x.birak = r2(b); }
   await posMarkStart();
   await store.saveCash(x);
+  if (x.sup){ const eid = newId(); await store.addEvent({id:eid, type:"todeme", productId:"-", supplierId:x.sup, supName:supName(x.sup), amount:x.a, note:"Kasadan ödeme", date:x.d, cashId:x.id}); }
   try{ nAfterCash(x); }catch(_){}
   S.kasaForm = null;
   S.msg = {kind:"ok", text: f==="kapanis" ? (Math.abs(x.fark)<0.01 ? "Gün kapatıldı. Kasa tuttu." : `Gün kapatıldı. Kasa ${TLx(Math.abs(x.fark))} ${x.fark>0?"fazla":"eksik"}.`) : `${CASH_T[f]} kaydedildi: ${TLx(x.a)}${r?` (${r})`:""}.`};
@@ -3906,7 +3938,7 @@ async function posAct(a, t){
   if (a==="posOpen"){ S.posOpen = S.posOpen===t.dataset.id ? null : t.dataset.id; S.posXc = null; render(); return true; }
   if (a==="posCancel"){ const id = t.dataset.id; if (S.posXc!==id){ S.posXc = id; render(); return true; } S.posXc = null; await posCancel(id); return true; }
   if (a==="kasaForm"){ S.kasaForm = t.dataset.f || null; S.kasaErr = null; S.msg = null; render(); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
-  if (a==="kasaDel"){ const id = t.dataset.id; if (S.kasaDel!==id){ S.kasaDel = id; render(); return true; } S.kasaDel = null; await store.deleteCash(id); S.msg = {kind:"ok", text:"Kasa hareketi silindi."}; render(); return true; }
+  if (a==="kasaDel"){ const id = t.dataset.id; if (S.kasaDel!==id){ S.kasaDel = id; render(); return true; } S.kasaDel = null; for (const e of S.events.filter(e=>e.cashId===id)) await store.deleteEvent(e.id); await store.deleteCash(id); S.msg = {kind:"ok", text:"Kasa hareketi silindi."}; render(); return true; }
   if (a==="tanClose"){ S.tan = null; const back = S.tanBack; S.tanBack = false; if (back){ S.posView = "sat"; render(); posFocus(); } else { render(); setTimeout(()=>document.getElementById("tan-scan")?.focus(),0); } return true; }
   if (a==="tanMode"){ if (S.tan) S.tan.mode = t.dataset.v; render(); return true; }
   return false;
@@ -4189,6 +4221,7 @@ async function nKey(){ if (N_KEY) return N_KEY; const {data, error} = await SB.f
 const abToB64u = ab => btoa(String.fromCharCode(...new Uint8Array(ab))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","alert","c3"],["kasa","Gün kapanışı (kasa özeti)","coin","c1"],
   ["cikis","Kasadan büyük para çıkışı","minus","c3"],["veresiye","Veresiye borç sınırı aşıldı","book","c8"],
+  ["tedarik","Tedarikçiye ödeme zamanı","truck","c2"],
   ["rgun","Günün raporu (her akşam, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar akşamı)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
   ["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
 const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
@@ -4205,8 +4238,9 @@ async function nRefresh(){
   N.endpoint = sub ? sub.endpoint : null;
   N.state = Notification.permission==="denied" ? "red" : sub ? "acik" : "kapali";
   if (sub && SB && S.mode==="cloud" && N.types==null){ try{ const {data} = await SB.rpc("push_get", {p_endpoint: sub.endpoint}); N.types = data?.types || null; if (!data) N.state = "kapali";
-    let done = false; try{ done = localStorage.getItem("bd-n-rapor")==="1"; }catch(_){}
-    if (data && !done && !N.types.some(t=>t[0]==="r" && t!=="")){ try{ localStorage.setItem("bd-n-rapor","1"); }catch(_){} const j = sub.toJSON(), types = [...new Set([...N.types, "rgun","rhafta","ray"])];
+    let done = false; try{ done = localStorage.getItem("bd-n-v2")==="1"; }catch(_){}
+    const want = ["rgun","rhafta","ray","tedarik"].filter(t=>!N.types.includes(t));
+    if (data && !done && want.length){ try{ localStorage.setItem("bd-n-v2","1"); }catch(_){} const j = sub.toJSON(), types = [...new Set([...N.types, ...want])];
       const {error} = await SB.rpc("push_save", {p_shop: S.cloud.shop.id, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_app: window.KOLAY ? "kolay" : "tam", p_types: types, p_ua: navigator.userAgent.slice(0,200)});
       if (!error) N.types = types; } }catch(_){} }
 }
@@ -4311,6 +4345,10 @@ document.addEventListener("change", ev=>{
 // Bildirime dokununca: ?rapor=gun|hafta|ay&a=YYYY-MM-DD&b=YYYY-MM-DD
 (function(){
   let q; try{ q = new URLSearchParams(location.search); }catch(_){ return; }
+  const ted = q.get("ted");
+  if (ted){ let n = 0; const go2 = () => { if (!(S.mode==="cloud" && S.cloud?.shop && !S.locked) && S.mode!=="local"){ if (++n < 240) setTimeout(go2, 500); return; }
+      try{ history.replaceState(null, "", location.pathname); }catch(_){} S.tab = "tedarik"; S.supOpen = ted; S.supForm = null; S.supEdit = null; S.msg = null; render(); window.scrollTo(0,0); };
+    setTimeout(go2, 300); return; }
   const kind = q.get("rapor"), a = q.get("a"), b = q.get("b");
   if (!kind || !/^\d{4}-\d{2}-\d{2}$/.test(a||"") || !/^\d{4}-\d{2}-\d{2}$/.test(b||"")) return;
   let tries = 0;
@@ -4355,6 +4393,227 @@ Object.assign(ICONS, {
 });
 (function(){ const M = {satis:"scan", ana:"home", siparis:"list", fatura:"receipt", veresiye:"book", menu:"grid"};
   document.querySelectorAll('nav.tabs[aria-label="Bölümler"] button').forEach(b=>{ const k = M[b.dataset.tab], sv = b.querySelector("svg"); if (k && sv) sv.outerHTML = ic(k, 24); }); })();
+
+/* ---------- Tedarikçiler: veresiyenin tersi — kime ne kadar borcum var ---------- */
+const isSupLedger = e => e.type==="tborc" || e.type==="todeme";
+const SUP_VADE = 15;
+function supList(){
+  const m = {};
+  for (const s of Object.values(S.suppliers||{})) if (s && s.name) m[s.id] = s;
+  for (const p of S.products) if (p.supplier){ const k = supKey(p.supplier); if (!m[k]) m[k] = {id:k, name:p.supplier, days:[]}; }
+  for (const e of S.events) if (isSupLedger(e) && e.supplierId && !m[e.supplierId]) m[e.supplierId] = {id:e.supplierId, name:e.supName||e.supplierId, days:[]};
+  return Object.values(m).sort((a,b)=>String(a.name).localeCompare(String(b.name),"tr"));
+}
+const supName = id => (S.suppliers[id]?.name) || (S.events.find(e=>e.supplierId===id && e.supName)?.supName) || (S.products.find(p=>p.supplier && supKey(p.supplier)===id)?.supplier) || "Tedarikçi";
+function supStats(id){
+  const ev = S.events.filter(e=>isSupLedger(e) && e.supplierId===id).sort((a,b)=>a.date.localeCompare(b.date));
+  let bal = 0, bought = 0, paid = 0, lastT = 0, lastPay = 0; const debts = [];
+  for (const e of ev){ const a = Number(e.amount)||0, t = new Date(e.date).getTime();
+    if (e.type==="tborc"){ bal += a; bought += a; debts.push({t, left:a}); }
+    else { bal -= a; paid += a; lastPay = t; let pay = a; for (const d of debts){ if (pay<=0) break; const k = Math.min(d.left, pay); d.left -= k; pay -= k; } }
+    lastT = t; }
+  const open = debts.filter(d=>d.left>0.005), oldest = open.length ? open[0].t : null, ageDays = oldest ? (Date.now()-oldest)/DAY : 0;
+  const vade = Number(S.suppliers[id]?.vade) || SUP_VADE;
+  return {bal: r2(bal), ev, bought: r2(bought), paid: r2(paid), oldest, ageDays, vade, due: bal > 0.005 && ageDays >= vade, lastT, lastPay};
+}
+function supDue(){ return supList().map(s=>({s, st:supStats(s.id)})).filter(x=>x.st.due).sort((a,b)=>b.st.ageDays-a.st.ageDays); }
+async function supEnsure(name){
+  const nm = String(name||"").trim(); if (!nm) return null;
+  const k = supKey(nm); if (!S.suppliers[k]) await store.saveSupplier({id:k, name:nm, days:[], lead:0}); return k;
+}
+const supCashReason = name => /ekmek|fırın|firin/i.test(name||"") ? "Ekmekçi" : "Toptancı / plasiyer ödemesi";
+async function supRecord({supId, amount, kind, note, invKey, fromCash, date}){
+  const d = date || nowIso(), eid = newId(), nm = supName(supId);
+  const ev = {id:eid, type: kind==="odeme" ? "todeme" : "tborc", productId:"-", supplierId:supId, supName:nm, amount:r2(amount), note:note||null, date:d, ...(invKey ? {invKey} : {})};
+  if (kind==="odeme" && fromCash){
+    const cid = newId(); ev.cashId = cid;
+    await store.addEvent(ev);
+    await posMarkStart();
+    await store.saveCash({id:cid, d, t:"cikis", a:r2(amount), r:supCashReason(nm), n:nm + (note ? " · " + note : ""), sup:supId, ev:eid});
+    try{ nAfterCash({id:cid, t:"cikis", a:r2(amount), r:supCashReason(nm), n:nm}); }catch(_){}
+  } else await store.addEvent(ev);
+  return eid;
+}
+async function supReceive({supName:nm, lines, pay, note}){
+  const k = await supEnsure(nm); if (!k) throw new Error("Kimden aldığını yaz.");
+  const date = nowIso(), invKey = newId(); let tot = 0, n = 0;
+  await posMarkStart();
+  for (const l of lines){ const p0 = S.products.find(x=>x.id===l.p); if (!p0 || !(l.qty > 0)) continue;
+    const price = l.price > 0 ? r2(l.price) : null;
+    await store.addEvent({id:newId(), type:"gelen", productId:p0.id, qty:l.qty, price, invoiceNo:null, supplier:supName(k), date, invKey});
+    const upd = {}; if (price && Number(p0.buyPrice)!==price) upd.buyPrice = price; if (!p0.supplier) upd.supplier = supName(k); if (p0.outSince) upd.outSince = null;
+    if (Object.keys(upd).length) await store.saveProduct({...S.products.find(x=>x.id===p0.id), ...upd});
+    if (price) tot += l.qty * price; n++; }
+  tot = r2(tot);
+  if (tot > 0){ await supRecord({supId:k, amount:tot, kind:"borc", note: note || "Mal alımı", invKey, date});
+    if (pay==="kasa" || pay==="disari") await supRecord({supId:k, amount:tot, kind:"odeme", note:"Peşin ödendi", invKey, fromCash: pay==="kasa", date}); }
+  return {k, tot, n, invKey};
+}
+async function supDeleteEntry(id){
+  const e = S.events.find(x=>x.id===id); if (!e) return;
+  if (e.invKey && S.events.some(x=>x.type==="gelen" && x.invKey===e.invKey)){ await deleteInvoice(e.invKey); return; }
+  if (e.cashId){ const c = S.cash.find(x=>x.id===e.cashId); if (c) await store.deleteCash(c.id); }
+  await store.deleteEvent(id);
+}
+function supSelectHtml(sel){
+  const ss = supList(); if (!ss.length) return "";
+  return `<label>Tedarikçiye ödeme mi? <span class="muted">(seç, borcundan düşsün)</span><select id="kf-sup"><option value="">Hayır</option>${ss.map(s=>{ const b = supStats(s.id).bal; return `<option value="${esc(s.id)}" ${sel===s.id?"selected":""}>${esc(s.name)}${b>0.005?` · borç ${TLx(b)}`:""}</option>`; }).join("")}</select></label>`;
+}
+
+/* --- görünüm --- */
+function viewSup(){
+  let h = noticeHtml();
+  if (S.supForm==="mal") return h + supMalForm();
+  if (S.supEdit) return h + supEditForm();
+  if (S.supOpen) return h + supDetail(S.supOpen);
+  const rows = supList().map(s=>({s, st:supStats(s.id)}));
+  const tot = r2(rows.reduce((a,x)=>a + Math.max(0, x.st.bal), 0)), due = rows.filter(x=>x.st.due);
+  const m0 = new Date(); m0.setDate(1); m0.setHours(0,0,0,0);
+  const month = r2(S.events.filter(e=>e.type==="tborc" && new Date(e.date) >= m0).reduce((a,e)=>a+(Number(e.amount)||0),0));
+  h += `<section class="card stack"><div class="row between"><h2>${ic("truck",22)} Tedarikçilere Borcum</h2><button class="primary" data-act="supNew">${ic("plus",18)} Yeni Tedarikçi</button></div>
+    <div class="tiles t4"><div class="tile ${tot>0?"bad":""}"><span class="tn num">${TLx(tot)}</span><span>toplam borç</span></div>
+      <div class="tile ${due.length?"warn":""}"><span class="tn num">${due.length}</span><span>ödeme zamanı geçen</span></div>
+      <div class="tile"><span class="tn num">${TLx(month)}</span><span>bu ay alınan mal</span></div>
+      <div class="tile"><span class="tn num">${rows.length}</span><span>tedarikçi</span></div></div>
+    <button class="big" data-act="supMal">${ic("box",20)} Mal Geldi</button>
+    <p class="small muted">Mal gelince stok artar ve tedarikçiye borç yazılır. Kasadan ödeme yapınca borç düşer. Sayım ise sadece düzeltmedir, kimseye borç yazmaz.</p></section>`;
+  if (!rows.length) return h + `<p class="muted">Henüz tedarikçi yok. "Yeni Tedarikçi" ya da "Mal Geldi" ile başla.</p>`;
+  rows.sort((a,b)=>(b.st.due-a.st.due) || (b.st.bal-a.st.bal) || a.s.name.localeCompare(b.s.name,"tr"));
+  h += `<section class="card">${rows.map(({s,st})=>`<button class="suprow" data-act="supOpen" data-id="${esc(s.id)}"><span class="bi ${st.due?"c3":st.bal>0.005?"c2":"c1"}">${ic("truck",20)}</span>
+      <span class="stack" style="gap:2px;min-width:0"><b>${esc(s.name)}</b><span class="small muted">${st.bal>0.005 ? (st.due ? `Ödeme zamanı geçti · en eskisi ${fmt(st.ageDays)} gün` : `En eskisi ${fmt(st.ageDays)} gün · vade ${st.vade} gün`) : st.lastT ? "Borç yok" : "Henüz alım yok"}</span></span>
+      <b class="num ${st.due?"neg":""}">${st.bal>0.005 ? TLx(st.bal) : "0 TL"}</b></button>`).join("")}</section>`;
+  return h;
+}
+function supDetail(id){
+  const s = supList().find(x=>x.id===id) || {id, name:supName(id)}, st = supStats(id), f = S.supForm;
+  let h = `<button class="link back" data-act="supBack">${ic("back",18)} Tedarikçiler</button>
+  <section class="card stack"><div class="row between"><div class="row" style="gap:12px"><span class="bi ${st.due?"c3":"c2"}">${ic("truck",24)}</span><div><h2>${esc(s.name)}</h2>
+      <span class="small muted">${s.phone ? `<a href="tel:${esc(s.phone)}">${esc(s.phone)}</a> · ` : ""}vade ${st.vade} gün</span></div></div><button class="link" data-act="supEditOpen" data-id="${esc(id)}">Düzenle</button></div>
+    <div class="supbal ${st.bal>0.005?(st.due?"bad":"warn"):"ok"}"><span>${st.bal>0.005 ? "Borcum" : st.bal < -0.005 ? "Alacağım (fazla ödedim)" : "Borcum yok"}</span><b class="num">${TLx(Math.abs(st.bal))}</b></div>
+    ${st.due ? `<p class="notice bad">Ödeme zamanı geçti: en eski borç ${fmt(st.ageDays)} gündür ödenmedi (vade ${st.vade} gün).</p>` : ""}
+    <div class="tiles t2"><div class="tile"><span class="tn num">${TLx(st.bought)}</span><span>toplam alım</span></div><div class="tile"><span class="tn num">${TLx(st.paid)}</span><span>toplam ödeme</span></div></div>
+    <div class="supbtns"><button class="primary" data-act="supForm" data-f="odeme">${ic("coin",18)} Ödeme Yap</button><button data-act="supMal" data-id="${esc(id)}">${ic("box",18)} Mal Geldi</button><button data-act="supForm" data-f="borc">${ic("plus",18)} Borç Yaz</button></div>`;
+  if (f==="odeme" || f==="borc"){
+    h += `<form id="supform" class="stack supf" data-f="${f}"><b>${f==="odeme" ? "Ödeme Yap" : "Borç Yaz (fatura dışı ya da eski borç)"}</b>
+      <label>Tutar (TL)<input id="sf-a" inputmode="decimal" required placeholder="Örn. 500"></label>
+      ${f==="odeme" && st.bal>0.005 ? `<div class="row"><button type="button" class="tog" data-act="supAll" data-v="${st.bal}">Borcun tamamı: ${TLx(st.bal)}</button></div>` : ""}
+      ${f==="odeme" ? `<div class="row" role="radiogroup"><label class="check"><input type="radio" name="sf-src" value="kasa" checked> Kasadan ödedim</label><label class="check"><input type="radio" name="sf-src" value="disari"> Banka / kasa dışı</label></div>` : ""}
+      <label>Not (isteğe bağlı)<input id="sf-n" maxlength="120" placeholder="${f==="odeme" ? "Örn. haftalık hesap" : "Örn. geçen aydan kalan"}"></label>
+      ${S.supErr ? `<p class="notice bad">${esc(S.supErr)}</p>` : ""}
+      <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="supForm" data-f="">Vazgeç</button></div></form>`;
+  }
+  h += `</section>`;
+  const ev = st.ev.slice().reverse();
+  h += `<section class="card stack"><h2>Hesap Hareketleri</h2>${ev.length ? ev.map(e=>{ const g = e.invKey ? S.events.filter(x=>x.type==="gelen" && x.invKey===e.invKey) : [];
+      const what = e.type==="tborc" ? (g.length ? g.slice(0,3).map(x=>`${esc((S.products.find(p=>p.id===x.productId)||{}).name||"?")} ×${fmt(x.qty,3)}`).join(", ") + (g.length>3?" …":"") : "Borç") : (e.cashId ? "Ödeme (kasadan)" : "Ödeme");
+      return `<div class="krow3"><span><b>${e.type==="tborc" ? "Alım" : "Ödeme"}</b> · <span class="small">${what}</span><br><span class="small muted">${new Date(e.date).toLocaleDateString("tr-TR",{day:"numeric",month:"short",year:"numeric"})}${e.note?` · ${esc(e.note)}`:""}</span></span>
+        <span class="stack" style="align-items:flex-end;gap:2px"><b class="num ${e.type==="todeme"?"pos":""}">${e.type==="todeme"?"−":"+"}${TLx(e.amount)}</b><button class="link ${S.supDel===e.id?"dangerLink":""}" data-act="supDel" data-id="${e.id}">${S.supDel===e.id ? (g.length ? "Mal girişiyle birlikte sil?" : "Emin misin? Sil") : "Sil"}</button></span></div>`; }).join("")
+    : `<p class="muted">Henüz hareket yok.</p>`}</section>`;
+  return h;
+}
+function supEditForm(){
+  const s = S.supEdit==="__new" ? {name:"", phone:"", vade:"", note:""} : (supList().find(x=>x.id===S.supEdit) || {name:supName(S.supEdit)});
+  return `<button class="link back" data-act="supBack">${ic("back",18)} Tedarikçiler</button>
+  <form id="supeform" class="card stack"><h2>${S.supEdit==="__new" ? "Yeni Tedarikçi" : "Tedarikçiyi Düzenle"}</h2>
+    <label>Adı<input id="se-name" required value="${esc(s.name||"")}" placeholder="Örn. Ekmekçi Hasan"></label>
+    <label>Telefon (isteğe bağlı)<input id="se-phone" inputmode="tel" value="${esc(s.phone||"")}"></label>
+    <label>Kaç gün içinde ödüyorsun? (vade)<input id="se-vade" inputmode="numeric" value="${esc(String(s.vade??""))}" placeholder="${SUP_VADE}"></label>
+    <span class="small muted">Borcun bu süreyi geçince "ödeme zamanı" hatırlatması gelir.</span>
+    <label>Not (isteğe bağlı)<input id="se-note" value="${esc(s.note||"")}"></label>
+    ${S.supErr ? `<p class="notice bad">${esc(S.supErr)}</p>` : ""}
+    <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="supBack">Vazgeç</button></div></form>`;
+}
+function supMalForm(){
+  const lines = S.supLines || (S.supLines = []);
+  const P = stockP().slice().sort((a,b)=>a.name.localeCompare(b.name,"tr"));
+  const sup = S.supMalSup || "";
+  const tot = r2(lines.reduce((a,l)=>a + (Number(l.qty)||0)*(Number(l.price)||0), 0));
+  return `<button class="link back" data-act="${S.supMalBack==="k-stok" ? "kGo" : "supBack"}" ${S.supMalBack==="k-stok" ? 'data-tab="k-stok"' : ""}>${ic("back",18)} Geri</button>
+  <form id="supmform" class="card stack supm" autocomplete="off"><div class="row" style="gap:12px"><span class="bi c2">${ic("box",24)}</span><div><h2>Mal Geldi</h2><p class="small muted">Stok artar, tedarikçiye borç yazılır.</p></div></div>
+    <label>Kimden aldın?<input id="sm-sup" list="sm-sups" required value="${esc(sup)}" placeholder="Örn. Ekmekçi Hasan"><datalist id="sm-sups">${supList().map(s=>`<option value="${esc(s.name)}">`).join("")}</datalist></label>
+    <div class="kuscan">${ic("scan",24)}<input id="sm-scan" inputmode="numeric" placeholder="Barkod okut ya da aşağıdan ürün seç"></div>
+    <label>Ürün ekle<select id="sm-add"><option value="">Ürün seç</option>${P.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></label>
+    ${lines.length ? `<div class="smlines">${lines.map((l,i)=>{ const p = S.products.find(x=>x.id===l.p)||{}; return `<div class="smline"><b>${esc(p.name||"?")}</b>
+        <label>Kaç ${esc(unitOf(p))}<input data-sml="${i}" data-k="qty" inputmode="decimal" value="${esc(String(l.qty??""))}"></label>
+        <label>Tanesi (TL)<input data-sml="${i}" data-k="price" inputmode="decimal" value="${esc(String(l.price??""))}"></label>
+        <button type="button" class="link dangerLink" data-act="supLineDel" data-i="${i}">Çıkar</button></div>`; }).join("")}</div>
+      <div class="supbal warn"><span>Toplam</span><b class="num" id="sm-tot">${TLx(tot)}</b></div>` : `<p class="small muted">Gelen ürünleri barkodla okut ya da listeden seç.</p>`}
+    <div class="stack" style="gap:6px"><span class="small"><b>Ödeme</b></span>
+      <div class="supbtns">${[["borc","Borç yaz (sonra öderim)"],["kasa","Peşin ödedim (kasadan)"],["disari","Peşin ödedim (kasa dışı)"]].map(([v,l])=>`<label class="check"><input type="radio" name="sm-pay" value="${v}" ${(S.supMalPay||"borc")===v?"checked":""}> ${l}</label>`).join("")}</div></div>
+    ${S.supErr ? `<p class="notice bad">${esc(S.supErr)}</p>` : ""}
+    <div class="row"><button class="primary big" type="submit">${ic("check",20)} Kaydet</button></div></form>`;
+}
+function supSyncLines(){
+  document.querySelectorAll("[data-sml]").forEach(el=>{ const l = (S.supLines||[])[Number(el.dataset.sml)]; if (l) l[el.dataset.k] = pnum(el.value); });
+  const s = document.getElementById("sm-sup"); if (s) S.supMalSup = s.value;
+  const p = document.querySelector('input[name="sm-pay"]:checked'); if (p) S.supMalPay = p.value;
+}
+function supAddLine(p){ if (!p) return; supSyncLines(); const L = S.supLines || (S.supLines = []); const ex = L.find(l=>l.p===p.id);
+  if (ex) ex.qty = (Number(ex.qty)||0) + 1; else L.push({p:p.id, qty:1, price: Number(p.buyPrice) || (stats(p).money.buy ?? null)});
+  if (!S.supMalSup && p.supplier) S.supMalSup = p.supplier; render(); setTimeout(()=>document.getElementById("sm-scan")?.focus(),0); }
+async function supAct(a, t){
+  const id = t.dataset.id;
+  if (a==="supOpen"){ S.supOpen = id; S.supForm = null; S.supEdit = null; S.supErr = null; S.msg = null; render(); window.scrollTo(0,0); return true; }
+  if (a==="supBack"){ if (S.supForm==="mal" && S.supOpen){ S.supForm = null; } else { S.supOpen = null; S.supForm = null; } S.supEdit = null; S.supErr = null; S.supDel = null; render(); window.scrollTo(0,0); return true; }
+  if (a==="supNew"){ S.supEdit = "__new"; S.supErr = null; render(); setTimeout(()=>document.getElementById("se-name")?.focus(),0); return true; }
+  if (a==="supEditOpen"){ S.supEdit = id; S.supErr = null; render(); return true; }
+  if (a==="supForm"){ S.supForm = t.dataset.f || null; S.supErr = null; render(); setTimeout(()=>document.getElementById("sf-a")?.focus(),0); return true; }
+  if (a==="supAll"){ const el = document.getElementById("sf-a"); if (el) el.value = String(t.dataset.v).replace(".",","); return true; }
+  if (a==="supDel"){ if (S.supDel!==id){ S.supDel = id; render(); return true; } S.supDel = null; await supDeleteEntry(id); S.msg = {kind:"ok", text:"Hareket silindi."}; render(); return true; }
+  if (a==="supMal"){ S.tab = "tedarik"; S.supForm = "mal"; S.supLines = []; S.supErr = null; S.msg = null; S.supMalPay = "borc";
+    S.supMalBack = t.dataset.back || null; const p = t.dataset.p ? S.products.find(x=>x.id===t.dataset.p) : null;
+    S.supMalSup = id ? supName(id) : (p?.supplier || ""); if (id) S.supOpen = id;
+    if (p) S.supLines.push({p:p.id, qty:null, price: Number(p.buyPrice) || (stats(p).money.buy ?? null)});
+    render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById(p ? 'input[data-sml="0"]' : (S.supMalSup ? "sm-scan" : "sm-sup"))?.focus?.() || document.querySelector('input[data-sml="0"]')?.focus(),0); return true; }
+  if (a==="supLineDel"){ supSyncLines(); S.supLines.splice(Number(t.dataset.i),1); render(); return true; }
+  return false;
+}
+async function supSubmit(form){
+  const g = id => (document.getElementById(id)?.value ?? "").trim();
+  S.supErr = null;
+  if (form.id==="supeform"){
+    const name = g("se-name"); if (!name){ S.supErr = "Adını yaz."; render(true); return; }
+    const vade = pnum(g("se-vade")), oldId = S.supEdit!=="__new" ? S.supEdit : null, k = oldId || supKey(name);
+    if (!oldId && S.suppliers[k]){ S.supErr = "Bu isimde tedarikçi zaten var."; render(true); return; }
+    const old = S.suppliers[k] || {days:[], lead:0};
+    await store.saveSupplier({...old, id:k, name, phone:g("se-phone")||null, vade: vade > 0 ? Math.round(vade) : null, note:g("se-note")||null});
+    if (oldId && old.name && old.name!==name){ for (const p of S.products.filter(x=>x.supplier===old.name)) await store.saveProduct({...p, supplier:name}); }
+    S.supEdit = null; S.supOpen = k; S.msg = {kind:"ok", text:`${name} kaydedildi.`}; render(); return;
+  }
+  if (form.id==="supform"){
+    const a = pnum(g("sf-a")); if (!(a > 0)){ S.supErr = "Tutarı yaz."; render(true); return; }
+    const f = form.dataset.f, src = document.querySelector('input[name="sf-src"]:checked')?.value || "kasa";
+    await supRecord({supId:S.supOpen, amount:a, kind: f==="odeme" ? "odeme" : "borc", note:g("sf-n"), fromCash: f==="odeme" && src==="kasa"});
+    S.supForm = null; S.msg = {kind:"ok", text: f==="odeme" ? `${TLx(a)} ödeme kaydedildi${src==="kasa" ? ", kasadan düşüldü" : ""}.` : `${TLx(a)} borç yazıldı.`}; render(); return;
+  }
+  if (form.id==="supmform"){
+    supSyncLines();
+    const lines = (S.supLines||[]).filter(l=>l.qty > 0);
+    if (!S.supMalSup?.trim()){ S.supErr = "Kimden aldığını yaz."; render(true); return; }
+    if (!lines.length){ S.supErr = "En az bir ürün ve miktar gir."; render(true); return; }
+    try{ const r = await supReceive({supName:S.supMalSup, lines, pay:S.supMalPay||"borc"});
+      const back = S.supMalBack; S.supForm = null; S.supLines = []; S.supMalBack = null;
+      S.msg = {kind:"ok", text:`${r.n} ürün stoğa eklendi${r.tot>0 ? `; ${supName(r.k)} için ${TLx(r.tot)} ${S.supMalPay==="borc" ? "borç yazıldı" : "peşin ödendi"}` : ""}.`};
+      if (back==="k-stok"){ S.tab = "k-stok"; } else S.supOpen = r.k;
+      render(); window.scrollTo(0,0);
+    }catch(e){ S.supErr = e?.message || String(e); render(true); }
+  }
+}
+document.addEventListener("submit", ev=>{ if (["supeform","supform","supmform"].includes(ev.target.id)){ ev.preventDefault(); supSubmit(ev.target); } });
+document.addEventListener("change", ev=>{ if (ev.target.id==="sm-add" && ev.target.value){ supAddLine(S.products.find(x=>x.id===ev.target.value)); } });
+document.addEventListener("input", ev=>{ if (ev.target.dataset?.sml){ supSyncLines(); const t = document.getElementById("sm-tot"); if (t) t.textContent = TLx(r2((S.supLines||[]).reduce((a,l)=>a+(Number(l.qty)||0)*(Number(l.price)||0),0))); } });
+document.addEventListener("keydown", ev=>{ if (ev.target?.id==="sm-scan" && ev.key==="Enter"){ ev.preventDefault(); const c = cleanCode(ev.target.value); ev.target.value = "";
+  const hit = c && findByBarcode(c); if (hit){ supSyncLines(); const L = S.supLines || (S.supLines = []); const ex = L.find(l=>l.p===hit.p.id), q = hit.q || 1;
+    if (ex) ex.qty = (Number(ex.qty)||0) + q; else L.push({p:hit.p.id, qty:q, price: Number(hit.p.buyPrice) || (stats(hit.p).money.buy ?? null)}); if (!S.supMalSup && hit.p.supplier) S.supMalSup = hit.p.supplier; render(); setTimeout(()=>document.getElementById("sm-scan")?.focus(),0); }
+  else if (c){ S.supErr = `${c} barkodlu ürün bulunamadı. Önce ürünü ekle.`; supSyncLines(); render(true); } } });
+
+// Kilit ekranı: PIN klavyeden de girilebilsin (rakamlar, Backspace)
+document.addEventListener("keydown", ev=>{
+  if (!S.locked || S.mode!=="cloud" || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+  const k = /^[0-9]$/.test(ev.key) ? ev.key : (ev.key==="Backspace" || ev.key==="Delete") ? "del" : null; if (!k) return;
+  ev.preventDefault(); const b = document.querySelector(`.pinpad .pk[data-k="${k}"]`); if (b && !b.disabled) b.click();
+});
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

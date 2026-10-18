@@ -45,14 +45,17 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 
 ## Dosyalar
 
-| Dosya | Ne |
+| Dosya / klasör | Ne işe yarar |
 |---|---|
-| `index.html` | Tam sürüm (tek dosya uygulama) |
-| `kolay/` | Bakkal Kolay |
-| `sw.js` | Bildirimler ve internetsiz açılış (sayfa önce internetten istenir, yoksa telefondaki kopya açılır) |
-| `manifest.webmanifest` | Ana ekrana ekleme bilgileri |
-| `icons/` | Uygulama ve bildirim simgeleri |
-| `supabase-kurulum.sql` | Veritabanı kurulumu |
+| `index.html` | **Bakkal Defteri** (tam sürüm). HTML, CSS ve JS tek dosyada |
+| `kolay/` | **Bakkal Kolay** (sade sürüm): kendi `index.html`, `manifest.webmanifest` ve [README](kolay/README.md) dosyası |
+| `sw.js` | Bildirimleri alır ve internetsiz açılışı sağlar. Sayfa önce internetten istenir, yoksa telefondaki kopya açılır |
+| `manifest.webmanifest` | Tam sürümü ana ekrana ekleme bilgileri (ad, renk, simge) |
+| `icons/` | Uygulama simgeleri (`app-*`, `kolay-*`) ve bildirim simgeleri (`n-*`, `badge.png`) |
+| `ekran/` | Bu sayfadaki ekran görüntüleri |
+| `supabase-kurulum.sql` | Veritabanı kurulumu: tablolar, güvenlik kuralları, zamanlayıcı. Tekrar çalıştırmak güvenli |
+| `supabase/functions/bildir/` | Bildirimleri gönderen Supabase fonksiyonunun kaynağı |
+| `.nojekyll` | GitHub Pages'in dosyaları olduğu gibi yayınlaması için gerekli |
 
 ## Kurulum (yönetici için)
 

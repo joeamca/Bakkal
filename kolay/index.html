@@ -1201,7 +1201,7 @@ const YENI_BASLIK = "Yenilikler";
 const YENI_NOT = [
   "Günü Kapat'a basınca günün raporu telefona gelir.",
   "Geri tuşu artık bir önceki ekrana döner.",
-  "Yazılar kısaldı; Veresiye, Kâr, Ayarlar ve Mal Geldi sadeleşti.",
+  "Yazılar kısaldı; bildirimler kendiliğinden hepsi gelir.",
   "Tutarı 1.500 ya da 12,5 diye yazabilirsin."
 ];
 function yenilikHtml(){
@@ -4524,6 +4524,8 @@ const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","a
   ["tedarik","Tedarikçiye ödeme zamanı","truck","c2"],
   ["rgun","Günün raporu (gün kapanınca, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar günü kapanınca)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
   ["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
+// Kolay: bildirim türü seçtirmez; dükkânda olan her şey için bildirim gelir
+const nAll = () => N_TYPES.map(x=>x[0]).filter(t=>t!=="basvuru" || S.cloud?.ctx?.is_admin);
 const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
 const nSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 const nIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
@@ -4538,9 +4540,8 @@ async function nRefresh(){
   N.endpoint = sub ? sub.endpoint : null;
   N.state = Notification.permission==="denied" ? "red" : sub ? "acik" : "kapali";
   if (sub && SB && S.mode==="cloud" && N.types==null){ try{ const {data} = await SB.rpc("push_get", {p_endpoint: sub.endpoint}); N.types = data?.types || null; if (!data) N.state = "kapali";
-    let done = false; try{ done = localStorage.getItem("bd-n-v2")==="1"; }catch(_){}
-    const want = ["rgun","rhafta","ray","tedarik"].filter(t=>!N.types.includes(t));
-    if (data && !done && want.length){ try{ localStorage.setItem("bd-n-v2","1"); }catch(_){} const j = sub.toJSON(), types = [...new Set([...N.types, ...want])];
+    const want = nAll().filter(t=>!(N.types||[]).includes(t));
+    if (data && want.length){ const j = sub.toJSON(), types = [...new Set([...(N.types||[]), ...want])];
       const {error} = await SB.rpc("push_save", {p_shop: S.cloud.shop.id, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_app: window.KOLAY ? "kolay" : "tam", p_types: types, p_ua: navigator.userAgent.slice(0,200)});
       if (!error) N.types = types; } }catch(_){} }
 }
@@ -4557,7 +4558,7 @@ async function nEnable(){
     let sub = await reg.pushManager.getSubscription();
     if (sub && sub.options?.applicationServerKey && abToB64u(sub.options.applicationServerKey) !== key){ await sub.unsubscribe().catch(()=>{}); sub = null; }
     if (!sub) sub = await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey: b64u(key)});
-    const j = sub.toJSON(), types = N.types || N_TYPES.map(x=>x[0]);
+    const j = sub.toJSON(), types = nAll();
     const {error} = await SB.rpc("push_save", {p_shop: S.cloud.shop.id, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_app: window.KOLAY ? "kolay" : "tam", p_types: types, p_ua: navigator.userAgent.slice(0,200)});
     if (error) throw error;
     N.types = types; N.endpoint = j.endpoint; N.state = "acik"; N.ok = "Bildirimler açıldı. Deneme bildirimi gönderebilirsin.";
@@ -4624,13 +4625,12 @@ function nSection(){
   if (N.state==="yok") h += `<p class="small muted">Bu tarayıcı bildirim desteklemiyor. Telefonda Chrome ya da Safari (ana ekrana eklenmiş) kullan.</p>`;
   else if (N.state==="red") h += `<p class="notice warn small">Bildirim izni kapalı. Tarayıcının site ayarlarından bu sayfa için bildirimlere izin verip tekrar dene.</p>`;
   else if (!on){
-    h += `<p class="small">Stok azalınca, bir ürün bitince, gün kapanınca ya da kasadan büyük para çıkınca telefonuna, tabletine ya da bilgisayarına bildirim gelsin.</p>`;
+    h += `<p class="small">Stok bitince, gün kapanınca, borç ve rapor için telefonuna haber gelir.</p>`;
     if (nIOS() && !nStandalone()) h += `<p class="notice warn small">iPhone ve iPad'de önce uygulamayı ana ekrana ekle: Safari'de <b>Paylaş</b> düğmesine bas, <b>Ana Ekrana Ekle</b>'yi seç. Sonra ana ekrandaki simgeden açıp buraya gel.</p>`;
     h += `<button class="primary big" data-act="nOn" ${N.busy?"disabled":""}>${ic("bell",18)} Bildirimleri Aç</button>`;
   } else {
-    h += `<p class="small muted">Hangi durumlarda bildirim gelsin? (Bu cihaz için)</p><div class="nlist">${N_TYPES.filter(([t])=>t!=="basvuru" || S.cloud?.ctx?.is_admin).map(([t,l,i,c])=>`<label class="check nrow"><span class="bi ${c}">${ic(i,18)}</span><span>${l}</span><input type="checkbox" data-ntype="${t}" ${types.includes(t)?"checked":""}></label>`).join("")}</div>
-      <label>Kasadan kaç TL ve üstü çıkış bildirilsin?<input id="n-cikis" inputmode="decimal" value="${esc(String(S.settings?.nCikis ?? 500))}"></label>
-      <div class="row"><button data-act="nTest">Deneme Bildirimi Gönder</button><button class="link" data-act="nOff">Bu cihazda kapat</button></div>`;
+    h += `<p class="small">Stok, kasa, veresiye, tedarikçi ve raporlar için bildirim gelir.</p>
+      <div class="row"><button data-act="nTest">Deneme Gönder</button><button class="link" data-act="nOff">Bu cihazda kapat</button></div>`;
   }
   if (N.err) h += `<p class="notice bad small">${esc(N.err)}</p>`;
   if (N.ok) h += `<p class="notice ok small">${esc(N.ok)}</p>`;

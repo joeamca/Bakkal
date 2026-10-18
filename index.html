@@ -508,6 +508,32 @@ header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(
 .pmerge{border-color:color-mix(in srgb,var(--c2) 40%,var(--line))}
 .pmrow{gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .pmrow:first-of-type{border-top:0}
+
+/* sepette ürün adı kesilmesin (iki satıra kadar) */
+.cname b{white-space:normal;overflow:hidden;text-overflow:clip;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25}
+/* küçük telefon (320-380px): üst başlık ve satış sekmeleri sığsın */
+@media (max-width:380px){
+  header.top{gap:8px}
+  header.top h1{font-size:22px;line-height:1.15;overflow-wrap:anywhere}
+  header.top>.row{gap:4px}
+  header.top>.row>button{min-width:40px;width:40px;height:40px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+  nav.seg{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;max-width:100%;min-width:0}
+  #view,#view > *{min-width:0;max-width:100%}
+  .pos > *{min-width:0}
+  .paybtns{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .pay{min-width:0;font-size:15px;padding-left:4px;padding-right:4px}
+  nav.seg::-webkit-scrollbar{display:none}
+  nav.seg button{flex:none}
+  #view input,#view select{min-width:0;max-width:100%}
+}
+/* satış ekranı ızgarası dar ekranda içeriğe göre genişlemesin */
+.pos{grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){.pos{grid-template-columns:minmax(0,1fr) 380px}}
+/* çok büyük sayılar kutudan taşmasın */
+.tiles > *{min-width:0}
+.tile .tn{overflow-wrap:anywhere}
+/* Kolay: rapor sade */
+html.kolay .rpctl .grid2,html.kolay .rpctl [aria-label="Gruplama"],html.kolay .rpctl [data-act="rpGo"]{display:none}
 </style>
 </head>
 <body>
@@ -963,6 +989,7 @@ function render(keep){
   const pre = ["fire","kar","urunler","ayarlar","yonetim","rapor"].includes(S.tab) && !S.editId ? backLink() : "";
   document.body.classList.toggle("wide", S.tab==="satis");
   v.innerHTML = (S.guide ? guideCard() : "") + pre + (VIEWS[S.tab]||viewHome)();
+  queueMicrotask(histSync);
   if (S.tab==="satis" && (S.posView||"sat")==="sat") posFocus();
   if (keep){
     for (const [id,val] of Object.entries(saved)){ const el = document.getElementById(id); if (!el) continue;
@@ -1170,12 +1197,12 @@ function viewOrder(){
           ${howCard(p, st)}
           ${movCard(p, st)}
           <div class="row pact">
-            ${!st.checkShelf && p.showCount ? `<label class="row cnt"><span>Rafta kaç var?</span><input id="cnt-${p.id}" type="number" min="0" inputmode="numeric"><button data-act="count" data-id="${p.id}">Kaydet</button></label>`
+            ${!st.checkShelf && p.showCount ? `<label class="row cnt"><span>Rafta kaç var?</span><input id="cnt-${p.id}" type="text" data-num="1" min="0" inputmode="numeric"><button data-act="count" data-id="${p.id}">Kaydet</button></label>`
                          : `<button class="link" data-act="showcount" data-id="${p.id}">Rafa Baktım, Sayı Gir</button>`}
             <button class="link" data-act="edit" data-id="${p.id}" data-totab="urunler">Ürünü Düzenle</button>
           </div></div></details>
         ${st.checkShelf ? `<div class="fireNote stack" style="gap:6px"><span class="small"><b>Rafa bir bak:</b> şu an kaç tane var? Bu bilgi tahmini en çok düzelten şey.</span>
-          <label class="row cnt" style="color:inherit"><input id="cntq-${p.id}" type="number" min="0" inputmode="numeric" placeholder="adet"><button data-act="count" data-id="${p.id}" data-src="cntq-">Kaydet</button></label></div>`:""}
+          <label class="row cnt" style="color:inherit"><input id="cntq-${p.id}" type="text" data-num="1" min="0" inputmode="numeric" placeholder="adet"><button data-act="count" data-id="${p.id}" data-src="cntq-">Kaydet</button></label></div>`:""}
       </article>`;
     }
     html += `</section>`;
@@ -1224,8 +1251,8 @@ function viewInvoice(){
       <label>Ürün<select id="ln-p-${i}">${opts(l.productId)}</select></label>
       ${l.productId==="__new" || (!l.productId && !l.raw) ? `<label>Yeni ürün adı<input id="ln-n-${i}" value="${esc(l.newName||l.raw||"")}"></label>` : ""}
       <div class="grid2">
-        <label>Miktar (adet)<input id="ln-q-${i}" type="number" min="0" step="1" inputmode="numeric" value="${l.qty??""}"></label>
-        <label>Adet fiyatı (TL)<input id="ln-pr-${i}" type="number" min="0" step="0.01" inputmode="decimal" value="${l.price??""}"></label>
+        <label>Miktar (adet)<input id="ln-q-${i}" type="text" data-num="1" min="0" step="1" inputmode="numeric" value="${l.qty??""}"></label>
+        <label>Adet fiyatı (TL)<input id="ln-pr-${i}" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${l.price??""}"></label>
       </div>
       <div class="row between"><label class="check"><input id="ln-r-${i}" type="checkbox" ${l.iade?"checked":""}> İade (geri verildi)</label>
       <button class="link" data-act="delLine" data-i="${i}">Satırı Sil</button></div>
@@ -1249,7 +1276,7 @@ function viewFire(){
   const list = stockP().sort((a,b)=>(b.perishable-a.perishable)||a.name.localeCompare(b.name,"tr"));
   html += list.map(p=>`<div class="fireRow">
       <span>${esc(p.name)}${p.perishable?` <span class="chip warn">bozulabilir</span>`:""}</span>
-      <input id="fire-${p.id}" data-fire="${p.id}" type="number" min="0" inputmode="numeric" placeholder="0" aria-label="${esc(p.name)} fire adedi">
+      <input id="fire-${p.id}" data-fire="${p.id}" type="text" data-num="1" min="0" inputmode="numeric" placeholder="0" aria-label="${esc(p.name)} fire adedi">
       <div id="fd-${p.id}" class="fireDetail" hidden>
         <label>Neden?<select id="fwhy-${p.id}">${Object.entries(WHY).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label>
         <label>Açıklama (isteğe bağlı)<input id="fnote-${p.id}" maxlength="140" placeholder="Örn. koli ezik geldi, raf arkasında unutuldu"></label>
@@ -1336,7 +1363,7 @@ function viewProfit(){
     ${tiedKnown ? `<p class="say">Raftaki ve depodaki mallara yaklaşık <b class="num">${TL(tied)}</b> bağlı.${mr?` Paranın aylık maliyeti %${fmt(mr,1)} ise bu, ayda yaklaşık <b class="num">${TL(tied*mr/100)}</b> demek.`:""}</p>
       ${tiedRows.sort((a,b)=>b.v-a.v).slice(0,5).map(x=>`<div class="row between small"><span>${esc(x.p.name)} <span class="muted">≈${fmt(x.sh)} tane</span></span><span class="num">${TL(x.v)}</span></div>`).join("")}`
       : `<p class="small muted">Hesaplamak için ürünlerin rafta kaç tane olduğunu bilmem gerekiyor: yeni üründe başlangıç sayısını gir, ya da "Rafa baktım" ile say.</p>`}
-    <div class="row" style="align-items:flex-end"><label style="flex:1;min-width:180px">Paranın aylık maliyeti (%): enflasyon ya da kredi faizi<input id="mrate" type="number" min="0" step="0.1" inputmode="decimal" value="${S.settings?.monthlyRate??""}" placeholder="Örn. 3"></label><button data-act="saveRate">Kaydet</button></div>
+    <div class="row" style="align-items:flex-end"><label style="flex:1;min-width:180px">Paranın aylık maliyeti (%): enflasyon ya da kredi faizi<input id="mrate" type="text" data-num="1" min="0" step="0.1" inputmode="decimal" value="${S.settings?.monthlyRate??""}" placeholder="Örn. 3"></label><button data-act="saveRate">Kaydet</button></div>
     <p class="small muted">Yavaş satan üründe fazla mal tutmak bu parayı bağlar. Alış fiyatları hızlı artıyorsa erken alınan mal değer kazanabilir; bu durumda biraz fazla stok mantıklı olabilir.</p></section>`;
   if (missing.length) html += `<section class="card stack"><h3>Fiyatı eksik ürünler</h3>
     ${missing.map(({p,st})=>`<div class="row between"><span>${esc(p.name)} <span class="small muted">${st.money.sale==null?"satış fiyatı yok":"alış fiyatı yok"}</span></span><button data-act="edit" data-id="${p.id}" data-totab="urunler">Fiyat Gir</button></div>`).join("")}</section>`;
@@ -1355,12 +1382,12 @@ function viewProducts(){
     const comps = stockP().filter(x=>x.id!==S.editId).sort((a,b)=>a.name.localeCompare(b.name,"tr"));
     html += `<form id="pform" class="card stack">
       <h2>${p?"Ürünü düzenle":"Yeni ürün"}</h2>
-      <label>Ürün adı<input id="f-name" required value="${esc(v.name)}" placeholder="${S.formMade?"Örn. Kaşarlı tost":"Örn. Pınar süt 1 L"}"></label>
+      <label>Ürün adı<input id="f-name" required maxlength="80" value="${esc(v.name)}" placeholder="${S.formMade?"Örn. Kaşarlı tost":"Örn. Pınar süt 1 L"}"></label>
       ${p ? "" : `<div id="pdup-box"></div>`}
       <label class="check"><input id="f-made" type="checkbox" ${S.formMade?"checked":""}> Dükkânda hazırladığım ürün (tost, sandviç gibi: reçetesi var)</label>
       ${S.formMade ? `
-      <div class="grid2"><label>Günde kaç tane hazırlıyorsun?<input id="f-daily" type="number" min="0" step="1" inputmode="numeric" value="${esc(v.dailyEst??"")}"></label>
-        <label>Satış fiyatı (TL)<input id="f-sale" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}"></label></div>
+      <div class="grid2"><label>Günde kaç tane hazırlıyorsun?<input id="f-daily" type="text" data-num="1" min="0" step="1" inputmode="numeric" value="${esc(v.dailyEst??"")}"></label>
+        <label>Satış fiyatı (TL)<input id="f-sale" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}"></label></div>
       <div class="stack" style="gap:8px"><b>Reçete: 1 tanesi için ne gidiyor?</b>
         ${S.rcRows.map((r,i)=>`<div class="rcrow"><label>Malzeme<select id="rc-p-${i}"><option value="">Seç</option>${comps.map(c=>`<option value="${c.id}" ${r.id===c.id?"selected":""}>${esc(c.name)} (${esc(unitOf(c))})</option>`).join("")}</select></label>
           <label>Miktar<input id="rc-q-${i}" type="text" inputmode="decimal" value="${esc(r.qty??"")}" placeholder="0,5"></label>
@@ -1371,15 +1398,15 @@ function viewProducts(){
       : `
       <label>Tedarikçi / plasiyer<input id="f-sup" list="suplist" value="${esc(v.supplier)}" placeholder="Örn. Pınar bayi"><datalist id="suplist">${sups.map(s=>`<option value="${esc(s)}">`).join("")}</datalist></label>
       <div class="grid2">
-        <label>Haftada kaç ${esc(v.unit||"tane")} satarsın? (tahmin)<input id="f-init" type="number" min="0" step="any" inputmode="decimal" value="${esc(v.initialWeekly)}"></label>
+        <label>Haftada kaç ${esc(v.unit||"tane")} satarsın? (tahmin)<input id="f-init" type="text" data-num="1" min="0" step="any" inputmode="decimal" value="${esc(v.initialWeekly)}"></label>
         <label>Birim<select id="f-unit">${units.map(u=>`<option ${ (v.unit||"tane")===u?"selected":""}>${u}</option>`).join("")}</select></label>
-        <label>Kaç günde bir sipariş verirsin?<input id="f-int" type="number" min="1" inputmode="numeric" value="${esc(v.intervalDays)}"></label>
+        <label>Kaç günde bir sipariş verirsin?<input id="f-int" type="text" data-num="1" min="1" inputmode="numeric" value="${esc(v.intervalDays)}"></label>
         <label>Kaç teslimatta bir alınsın?<select id="f-every">${[1,2,3,4].map(n=>`<option value="${n}" ${(Number(v.everyN)||1)===n?"selected":""}>${n===1?"Her teslimatta":n+" teslimatta bir"}</option>`).join("")}</select></label>
-        ${p?"":`<label>Şu an rafta ve depoda kaç tane var?<input id="f-stock" type="number" min="0" step="any" inputmode="decimal" placeholder="Bilmiyorsan boş bırak"></label>`}
-        <label>Koli içi adet<input id="f-case" type="number" min="1" inputmode="numeric" value="${esc(v.caseSize)}"></label>
-        <label>Raf satış fiyatı (TL)<input id="f-sale" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}"></label>
-        <label>Alış fiyatı (TL, faturadan gelmezse)<input id="f-buy" type="number" min="0" step="0.01" inputmode="decimal" value="${esc(v.buyPrice??"")}"></label>
-        <label>Raf ömrü (gün, bozuluyorsa)<input id="f-life" type="number" min="1" inputmode="numeric" value="${esc(v.shelfDays??"")}" placeholder="Örn. süt 5"></label>
+        ${p?"":`<label>Şu an rafta ve depoda kaç tane var?<input id="f-stock" type="text" data-num="1" min="0" step="any" inputmode="decimal" placeholder="Bilmiyorsan boş bırak"></label>`}
+        <label>Koli içi adet<input id="f-case" type="text" data-num="1" min="1" inputmode="numeric" value="${esc(v.caseSize)}"></label>
+        <label>Raf satış fiyatı (TL)<input id="f-sale" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}"></label>
+        <label>Alış fiyatı (TL, faturadan gelmezse)<input id="f-buy" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.buyPrice??"")}"></label>
+        <label>Raf ömrü (gün, bozuluyorsa)<input id="f-life" type="text" data-num="1" min="1" inputmode="numeric" value="${esc(v.shelfDays??"")}" placeholder="Örn. süt 5"></label>
       </div>
       <label class="check"><input id="f-per" type="checkbox" ${v.perishable?"checked":""}> Çabuk bozulur (süt, yoğurt, ekmek, şarküteri)</label>
       <label class="check"><input id="f-core" type="checkbox" ${v.core?"checked":""}> Temel ürün, bitmesin (müşteri bulamazsa başka dükkâna gider)</label>
@@ -1567,7 +1594,7 @@ function stockStatus(p, st){
   return {...base, k:"ok", t:"Yeterli", c:"var(--c1)", cover};
 }
 const SKIND = [["ok","Yeterli","var(--c1)"],["low","Yetmeyebilir","var(--c2)"],["out","Bitti","var(--c3)"],["over","Fazla","var(--c4)"],["unk","Bilinmiyor","var(--c5)"]];
-const backLink = () => `<button class="link back" data-act="goto" data-tab="menu" data-plain="1">${ic("back",18)} Menü</button>`;
+const backLink = () => window.KOLAY ? `<button class="link back" data-act="kGo" data-tab="k-daha">${ic("back",18)} Diğer İşler</button>` : `<button class="link back" data-act="goto" data-tab="menu" data-plain="1">${ic("back",18)} Menü</button>`;
 const noticeHtml = () => S.msg ? `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>` : "";
 
 /* ---------- MRP: ihtiyaç planı ---------- */
@@ -1713,7 +1740,7 @@ function viewStock(){
     const nextTxt = st.sch ? (st.sch.a===0 ? "araç bugün" : `araç ${st.sch.a} gün sonra`) : "";
     return `<div class="srow"><div class="row between srhead"><span class="sname"><b>${esc(p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.t}</span></span>${s.k==="unk" ? "" : pStepper(p)}</div>
       ${s.k==="unk" ? `<p class="small muted">Rafta kaç ${esc(u)} olduğu bilinmiyor.</p>
-        <label class="row cnt" style="color:inherit"><input id="scnt-${p.id}" type="number" min="0" step="any" inputmode="decimal" placeholder="Rafta kaç var?"><button data-act="count" data-id="${p.id}" data-src="scnt-">Kaydet</button></label>`
+        <label class="row cnt" style="color:inherit"><input id="scnt-${p.id}" type="text" data-num="1" min="0" step="any" inputmode="decimal" placeholder="Rafta kaç var?"><button data-act="count" data-id="${p.id}" data-src="scnt-">Kaydet</button></label>`
       : `<div class="cover"><div class="hb tall"><span style="width:${(100*(cov||0)/scale).toFixed(1)}%;background:${s.c}"></span></div><i class="need" style="left:${Math.min(100,100*s.need/scale).toFixed(1)}%" title="sonraki araç"></i></div>
         <p class="small muted">${st.mode==="pos"?"":"≈ "}<b class="num">${fmt(s.cur.v, s.cur.v<10?1:0)}</b> ${esc(u)} · ${s.k==="out"?"rafta yok":`<b>${fmt(s.cover, s.cover<10?1:0)} gün</b> yeter`}${nextTxt?` · ${nextTxt}`:""}${s.k==="out"?` · <button class="link" data-act="goto" data-tab="siparis" data-plain="1">Siparişe Bak</button>`:""}</p>`}
     </div>`; }).join("") || `<p class="small muted">Bu filtrede ürün yok.</p>`}</section>
@@ -1757,8 +1784,8 @@ function viewCost(){
   let html = backLink() + noticeHtml();
   const assumeH = S.settings?.monthlyRate==null, assumeO = S.settings?.orderCost==null;
   const assum = `<div class="card stack"><h3>Hesaptaki iki varsayım</h3>
-    <div class="grid2"><label>Paranın aylık maliyeti (%) ${assumeH?`<span class="pill info">varsayılan 3</span>`:""}<input id="c-rate" type="number" min="0" step="0.1" inputmode="decimal" value="${S.settings?.monthlyRate??""}" placeholder="3"></label>
-      <label>Bir ürünü sipariş edip rafa dizmenin emeği (TL) ${assumeO?`<span class="pill info">varsayılan 10</span>`:""}<input id="c-ord" type="number" min="0" step="1" inputmode="decimal" value="${S.settings?.orderCost??""}" placeholder="10"></label></div>
+    <div class="grid2"><label>Paranın aylık maliyeti (%) ${assumeH?`<span class="pill info">varsayılan 3</span>`:""}<input id="c-rate" type="text" data-num="1" min="0" step="0.1" inputmode="decimal" value="${S.settings?.monthlyRate??""}" placeholder="3"></label>
+      <label>Bir ürünü sipariş edip rafa dizmenin emeği (TL) ${assumeO?`<span class="pill info">varsayılan 10</span>`:""}<input id="c-ord" type="text" data-num="1" min="0" step="1" inputmode="decimal" value="${S.settings?.orderCost??""}" placeholder="10"></label></div>
     <p class="small muted">Paranın maliyeti: enflasyon ya da kredi faizi. Emek: o ürün için saymak, sipariş vermek, teslim alıp rafa dizmek için harcadığın zamanın değeri.</p>
     <button data-act="saveCost">Kaydet ve Yeniden Hesapla</button></div>`;
   if (!ms.length) return html + `<div class="card empty stack"><div class="big">${ic("coin",40)}</div><h2>Hesap İçin Alış Fiyatı ve Satış Bilgisi Lazım</h2>
@@ -1871,7 +1898,7 @@ function custDetail(c){
     <div class="vbtns"><button class="vbtn borc ${S.vMode==="borc"?"on":""}" data-act="vMode" data-m="borc">${ic("plus",22)}<span>Veresiye yaz</span></button>
       <button class="vbtn odeme ${S.vMode==="odeme"?"on":""}" data-act="vMode" data-m="odeme">${ic("minus",22)}<span>Ödeme al</span></button></div>
     ${S.vMode ? `<div class="entry stack"><b>${S.vMode==="borc"?"Ne kadar veresiye?":"Ne kadar ödedi?"}</b>
-      <input id="v-amt" class="amt num" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0" aria-label="Tutar">
+      <input id="v-amt" class="amt num" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" placeholder="0" aria-label="Tutar">
       <div class="row qchips">${[10,20,50,100,200,500].map(v=>`<button class="tog" data-act="vQuick" data-v="${v}">+${v}</button>`).join("")}${S.vMode==="odeme"&&s.bal>0?`<button class="tog" data-act="vQuick" data-v="all">Tamamı (${TLx(s.bal)})</button>`:""}</div>
       <input id="v-note" maxlength="80" placeholder="${S.vMode==="borc"?"Ne aldı? (ekmek, süt, sigara…)":"Not (isteğe bağlı)"}" aria-label="Not">
       <p class="small neg" id="v-err" hidden></p>
@@ -1898,7 +1925,7 @@ function custForm(c){
   <form id="vform" class="card stack"><h2>${c?"Müşteriyi düzenle":"Yeni müşteri"}</h2>
     <label>Adı soyadı<input id="vc-name" required maxlength="50" value="${esc(v.name)}" placeholder="Örn. Ayşe Yılmaz"></label>
     <div class="grid2"><label>Telefon (isteğe bağlı)<input id="vc-phone" type="tel" maxlength="20" value="${esc(v.phone||"")}" placeholder="05xx xxx xx xx"></label>
-      <label>Borç sınırı TL (isteğe bağlı)<input id="vc-limit" type="number" min="0" step="1" inputmode="numeric" value="${esc(v.limit??"")}" placeholder="Örn. 1000"></label></div>
+      <label>Borç sınırı TL (isteğe bağlı)<input id="vc-limit" type="text" data-num="1" min="0" step="1" inputmode="numeric" value="${esc(v.limit??"")}" placeholder="Örn. 1000"></label></div>
     <label>Not (isteğe bağlı)<input id="vc-note" maxlength="80" value="${esc(v.note||"")}" placeholder="Örn. 3. kat, ayın 15'inde öder"></label>
     <p class="small neg" id="vc-err" hidden>Müşterinin adını yaz.</p>
     <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="vBack">Vazgeç</button></div></form>`;
@@ -2548,6 +2575,8 @@ document.addEventListener("submit", async ev=>{
       salePriceAt: (old && String(old.salePrice??"")===g("f-sale")) ? (old.salePriceAt||null) : nowIso(), buyPrice: g("f-buy")==="" ? null : Number(g("f-buy"))};
   }
   if (!p.name) return;
+  if ((Number(p.salePrice) >= 100000 || Number(p.buyPrice) >= 100000) && S.bigOk!==p.name+p.salePrice+"/"+p.buyPrice){ S.bigOk = p.name+p.salePrice+"/"+p.buyPrice;
+    S.msg = {kind:"bad", text:`Fiyat çok yüksek görünüyor: ${TLx(Math.max(Number(p.salePrice)||0, Number(p.buyPrice)||0))}. Yanlışlıkla fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`}; render(true); window.scrollTo(0,0); return; }
   { const codes = s => String(s||"").split(/[,;\s]+/).map(x=>x.replace(/[^\dA-Za-z\-]/g,"")).filter(Boolean);
     const kq = Math.max(2, Math.round(Number(g("f-bckq"))) || Number(p.caseSize) || 2);
     const bcs = [...new Set(codes(g("f-bc")))].map(c=>({c, q:1})).concat([...new Set(codes(g("f-bck")))].map(c=>({c, q:kq})));
@@ -3624,6 +3653,8 @@ function cartAdd(p, q, u, opt){
   if (same){ same.q = r3(Number(same.q) + q); items.splice(items.indexOf(same), 1); items.unshift(same); S.pos.flash = same.k; }
   else { const k = newId(); items.unshift({k, p:pid, n: p ? p.name : (opt.n||"Diğer"), q: r3(q), u: price, w}); S.pos.flash = k; }
   if (p && !(Number(p.salePrice) > 0) && u == null) S.posWarn = `${p.name} için satış fiyatı girilmemiş. Sepette fiyatına dokunup yaz; ürünü düzenleyip de kaydedebilirsin.`;
+  else if (p && !w && !S.pos.ret && !p.recipe){ const c = pCur(p), inCart = items.filter(x=>x.p===pid).reduce((a,x)=>a + Number(x.q||0), 0);
+    if (c!=null && inCart > c + 1e-9) S.posWarn = c > 0 ? `Rafta ${pQtyTxt(c)} ${unitOf(p)} ${p.name} görünüyordu, sepette ${pQtyTxt(inCart)} var. Satış yapılır; sonra Stok'ta sayıyı düzelt.` : `${p.name} stokta bitmiş görünüyordu. Satış yapılır; mal geldiyse Mal Geldi ile ekle.`; }
   cartSave();
 }
 function posFocus(){ setTimeout(()=>{ if (S.posEditK) return; const a = document.activeElement; if (a && a!==document.body && a.id!=="pos-scan" && /INPUT|SELECT|TEXTAREA/.test(a.tagName)) return; document.getElementById("pos-scan")?.focus(); }, 0); }
@@ -3842,7 +3873,12 @@ async function kasaSave(f){
   S.kasaErr = null;
   if (!(a >= 0) || (f!=="kapanis" && !(a > 0))){ S.kasaErr = "Tutarı yaz."; render(true); return; }
   if ((f==="cikis"||f==="giris") && !r && !supSel){ S.kasaErr = "Sebebini seç."; render(true); return; }
-  if ((f==="cikis"||f==="giris") && r==="Diğer" && !n){ S.kasaErr = "\"Diğer\" seçtiysen açıklamaya ne olduğunu yaz."; render(true); return; }
+  if ((f==="cikis"||f==="giris") && r==="Diğer" && !n){ S.kasaErr = "\"Diğer\" seçtiysen açıklamaya ne olduğunu yaz."; render(true); setTimeout(()=>{ const d = document.querySelector(".knote"); if (d) d.open = true; document.getElementById("kf-n")?.focus(); }, 0); return; }
+  if (f==="cikis"){ const kb = r2(kasaDay(today0()).beklenen);
+    if (r2(a) > Math.max(0, kb) + 0.005 && S.kasaOver!==r2(a)){ S.kasaOver = r2(a); S.kasaErr = `Kasada ${TLx(Math.max(0, kb))} olmalı, ${TLx(a)} çıkıyor. Para kasadan değil başka yerden ödendiyse buraya yazma. Yine de doğruysa tekrar Kaydet'e bas.`; render(true); return; } }
+  if (f==="kapanis"){ const kp = kasaDay(today0()).cash.filter(c=>c.t==="kapanis");
+    if (kp.length && !S.kapOk){ S.kapOk = true; S.kasaErr = `Gün bugün saat ${hhmm(tOf(kp[kp.length-1]))}'de zaten kapatıldı. Kasayı yeniden saydıysan tekrar Kaydet'e bas.`; render(true); return; } }
+  S.kasaOver = null; S.kapOk = false;
   const x = {id: newId(), d: nowIso(), t: f, a: r2(a), ...(r ? {r} : {}), ...(n ? {n} : {}), ...(supSel ? {sup:supSel, ...(r ? {} : {r:supCashReason(supName(supSel))}), ...(n ? {} : {n:supName(supSel)})} : {})};
   if (f==="kapanis"){ const k = kasaDay(today0()); x.say = r2(a); x.beklenen = k.beklenen; x.fark = r2(a - k.beklenen); if (b >= 0) x.birak = r2(b); }
   await posMarkStart();
@@ -3963,7 +3999,7 @@ async function posAct(a, t){
   if (a==="posDay"){ S.posDay = Math.max(0, Number(t.dataset.v)||0); S.posOpen = null; render(); return true; }
   if (a==="posOpen"){ S.posOpen = S.posOpen===t.dataset.id ? null : t.dataset.id; S.posXc = null; render(); return true; }
   if (a==="posCancel"){ const id = t.dataset.id; if (S.posXc!==id){ S.posXc = id; render(); return true; } S.posXc = null; await posCancel(id); return true; }
-  if (a==="kasaForm"){ S.kasaForm = t.dataset.f || null; S.kasaErr = null; S.msg = null; render(); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
+  if (a==="kasaForm"){ S.kasaForm = t.dataset.f || null; S.kasaErr = null; S.kasaOver = null; S.kapOk = false; S.msg = null; render(); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
   if (a==="kasaDel"){ const id = t.dataset.id; if (S.kasaDel!==id){ S.kasaDel = id; render(); return true; } S.kasaDel = null; for (const e of S.events.filter(e=>e.cashId===id)) await store.deleteEvent(e.id); await store.deleteCash(id); S.msg = {kind:"ok", text:"Kasa hareketi silindi."}; render(); return true; }
   if (a==="tanClose"){ S.tan = null; const back = S.tanBack; S.tanBack = false; if (back){ S.posView = "sat"; render(); posFocus(); } else { render(); setTimeout(()=>document.getElementById("tan-scan")?.focus(),0); } return true; }
   if (a==="tanMode"){ if (S.tan) S.tan.mode = t.dataset.v; render(); return true; }
@@ -4115,14 +4151,14 @@ function rpSum(d){
 }
 function viewReport(){
   const R = rpState(), d = S.rpData;
-  let h = `<section class="card stack"><h2>Satış Raporu</h2>
+  let h = `<section class="card stack rpctl"><h2>Satış Raporu</h2>
     <div class="fchips">${RP_PRE.map(([k,l])=>`<button class="tog ${R.pre===k?"on":""}" data-act="rpPre" data-k="${k}">${l}</button>`).join("")}</div>
     <div class="grid2"><label>Başlangıç<input id="rp-from" type="date" value="${esc(R.from)}"></label><label>Bitiş<input id="rp-to" type="date" value="${esc(R.to)}"></label></div>
     <div class="row" role="group" aria-label="Gruplama">${Object.entries(RG).map(([k,l])=>`<button class="tog ${R.g===k?"on":""}" data-act="rpG" data-g="${k}">${l}</button>`).join("")}</div>
     <button class="primary" data-act="rpGo" ${S.rpBusy?"disabled":""}>${S.rpBusy?'<span class="spin"></span> Hazırlanıyor':"Raporu Göster"}</button>
     ${S.rpErr ? `<p class="notice bad">${esc(S.rpErr)}</p>` : ""}</section>`;
   if (d && S.rpFromPush){ const T0 = rpSum(d); h = `<section class="card stack rpush"><div class="row" style="gap:12px"><span class="bi c6">${ic("chart",26)}</span><div><h2>${S.rpFromPush==="gun" ? "Günün Raporu" : S.rpFromPush==="hafta" ? "Haftanın Raporu" : "Ayın Raporu"}</h2><p class="small muted">${fmt(T0.fis)} satış · ${TLx(T0.ciro)} · kâr ${TLx(T0.kar)}</p></div></div><button class="primary big" data-act="rpXlsx">${ic("sheet",22)} Excel'i İndir</button><button class="link" data-act="rpPushClose">Kapat</button></section>` + h; }
-  if (!d) return h + `<p class="small muted">Tarih aralığını ve Günlük, Haftalık, Aylık ya da Yıllık gruplamayı seç; "Raporu Göster"e bas. Raporu Excel olarak da indirebilirsin.</p>`;
+  if (!d) return h + (window.KOLAY ? `<p class="small muted">Yukarıdan bir dönem seç; rapor hemen açılır. Excel'e de indirebilirsin.</p>` : `<p class="small muted">Tarih aralığını ve Günlük, Haftalık, Aylık ya da Yıllık gruplamayı seç; "Raporu Göster"e bas. Raporu Excel olarak da indirebilirsin.</p>`);
   const T = rpSum(d), eksik = (d.products||[]).filter(p=>p.eksik).length;
   h += `<section class="card stack"><div class="row between"><h2>${esc(new Date(ymdLocalT(d.from)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}))} – ${esc(new Date(ymdLocalT(d.to)).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"}))}</h2>
       <button class="primary" data-act="rpXlsx">${ic("sheet",18)} Excel'e İndir</button></div>
@@ -4735,6 +4771,43 @@ document.addEventListener("input", ev=>{ const id = ev.target.id; if (id!=="ku-n
 // İnternetsiz açılış: uygulama dosyalarını telefona kaydeden servis çalışanı her açılışta kaydedilir
 if ("serviceWorker" in navigator && !FILE_MODE && (location.protocol==="https:" || location.hostname==="localhost"))
   window.addEventListener("load", ()=>{ const [u, sc] = nSwUrl(); navigator.serviceWorker.register(u, {scope:sc}).catch(()=>{}); });
+
+
+/* ===== Türkçe sayı: data-num kutularının değeri her yerde "1.500" → 1500, "12,5" → 12.5 olarak okunur ===== */
+(function(){ const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  Object.defineProperty(HTMLInputElement.prototype, "value", {configurable:true, enumerable:d.enumerable,
+    get(){ const v = d.get.call(this); if (!this.hasAttribute("data-num")) return v; const t = String(v).trim(); if (t==="") return ""; const n = pnum(t); return isNaN(n) ? "" : String(n); },
+    set(x){ d.set.call(this, x); }}); })();
+// eksi sayı yazılamayan kutular (min="0"): formu göndermeden uyar
+document.addEventListener("submit", ev=>{
+  const bad = [...ev.target.querySelectorAll("input[data-num][min]")].find(i=>i.value!=="" && Number(i.value) < Number(i.min));
+  if (bad){ ev.preventDefault(); ev.stopImmediatePropagation(); bad.setCustomValidity(Number(bad.min)>0 ? `En az ${bad.min} olmalı.` : "Eksi sayı yazılamaz."); bad.reportValidity();
+    bad.addEventListener("input", ()=>bad.setCustomValidity(""), {once:true}); }
+}, true);
+
+/* ===== Geri tuşu: uygulamanın içinde bir önceki ekrana döner ===== */
+var H_TAB = null, H_POP = false, H_USER = 0;
+["pointerdown","keydown"].forEach(e=>document.addEventListener(e, ()=>{ H_USER = Date.now(); }, true));
+function histSync(){
+  if (H_POP){ H_POP = false; H_TAB = S.tab; return; }
+  if (S.tab===H_TAB || S.locked) return;
+  const st = {bdTab:S.tab};
+  try{ if (H_TAB===null || Date.now() - H_USER > 1500) history.replaceState(st, ""); else history.pushState(st, ""); }catch(_){}
+  H_TAB = S.tab;
+}
+window.addEventListener("popstate", ev=>{
+  let t = ev.state && ev.state.bdTab; if (!t || S.locked) return;
+  if (t==="k-urun") t = "k-stok";
+  H_POP = true; S.tab = t; S.msg = null; S.editId = null; S.kEdit = null; S.kasaForm = null; S.kasaErr = null; S.supForm = null; S.supOpen = null; S.supEdit = null; S.vCust = null; S.posView = "sat";
+  render(); window.scrollTo(0,0);
+});
+
+/* ===== Rehber: Tedarikçiler ===== */
+GUIDE.tedarik = {t:"Tedarikçiler: kime ne borcun var", s:[
+  "Veresiyenin tersi: toptancıya, fırına, süt bayisine ne kadar borçlu olduğunu gösterir.",
+  "<b>Mal Geldi</b>: kimden, kaç tane, kaça aldığını yaz. Stok artar, tedarikçiye borç yazılır (ya da peşin ödenir).",
+  "<b>Ödeme Yap</b>: borcun düşer. Kasadan \"Para Al\" yaparken tedarikçi seçersen de borçtan düşer.",
+  "Vade dolunca \"ödeme zamanı\" hatırlatması gelir. Sayım ve − / + sadece düzeltmedir, kimseye borç yazmaz."]};
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

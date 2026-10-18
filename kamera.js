@@ -102,21 +102,39 @@
     return null;
   }
   // d: RGBA piksel dizisi
-  function scanFrame(d, w, h) {
-    const order = [];
-    for (let q = 0; q < 23; q++) order.push(q);
-    order.sort((a, b) => Math.abs(a - 11) - Math.abs(b - 11));
+  function scanFrame(d, w, h, many) {
+    const NQ = many ? 47 : 23, order = [];
+    for (let q = 0; q < NQ; q++) order.push(q);
+    order.sort((a, b) => Math.abs(a - (NQ - 1) / 2) - Math.abs(b - (NQ - 1) / 2));
     const row = new Float32Array(w), col = new Float32Array(h);
     for (let k = 0; k < 2; k++) {                       // k=0: yatay, k=1: dikey tutulmuş barkod
       const N = k ? h : w, lines = k ? w : h, out = k ? col : row;
       for (const q of order) {
-        const pos = Math.min(lines - 1, Math.floor(lines * (0.1 + 0.8 * q / 22)));
+        const pos = Math.min(lines - 1, Math.floor(lines * (0.08 + 0.84 * q / (NQ - 1))));
         for (let i = 0; i < N; i++) {
           const x = k ? pos : i, y = k ? i : pos, o = (y * w + x) * 4;
           out[i] = (d[o] * 77 + d[o+1] * 150 + d[o+2] * 29) >> 8;
         }
         const c = decodeLine(out, N); if (c) return c;
       }
+    }
+    return null;
+  }
+
+  async function readPhoto(file) {
+    let bmp = null;
+    try { bmp = await createImageBitmap(file); } catch (_) {
+      bmp = await new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = URL.createObjectURL(file); });
+    }
+    if (!bmp) return null;
+    const W = bmp.width || bmp.naturalWidth, H = bmp.height || bmp.naturalHeight;
+    const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+    for (const target of [1400, 2000, 900]) {
+      const sc = Math.min(1, target / Math.max(W, H)), w = Math.round(W * sc), h = Math.round(H * sc);
+      cv.width = w; cv.height = h; cx.drawImage(bmp, 0, 0, w, h);
+      const c = scanFrame(cx.getImageData(0, 0, w, h).data, w, h, true);
+      if (c) return c;
+      await new Promise(r => setTimeout(r, 0));
     }
     return null;
   }
@@ -132,7 +150,7 @@
       "#kam-ov .kam-frame::after{content:'';position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}" +
       "#kam-ov .kam-bar{position:relative;z-index:2;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:#111;display:flex;flex-direction:column;gap:10px;text-align:center}" +
       "#kam-ov .kam-msg{font-size:18px;font-weight:600}" +
-      "#kam-ov button{font:inherit;font-size:20px;font-weight:700;padding:14px;border-radius:14px;border:0;background:#fff;color:#000;min-height:52px}";
+      "#kam-ov .kam-alt{background:#ffd60a}#kam-ov button{font:inherit;font-size:20px;font-weight:700;padding:14px;border-radius:14px;border:0;background:#fff;color:#000;min-height:52px}";
     document.head.appendChild(s);
   }
   function close() {
@@ -147,13 +165,23 @@
   async function open(cb) {
     close(); css(); alive = true;
     ov = document.createElement("div"); ov.id = "kam-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Kamerayla barkod oku");
-    ov.innerHTML = '<video playsinline muted autoplay></video><div class="kam-frame"></div><div class="kam-bar"><div class="kam-msg">Barkodu çerçeveye tut</div><button type="button" id="kam-x">Kapat</button></div>';
+    ov.innerHTML = '<video playsinline muted autoplay></video><div class="kam-frame"></div><div class="kam-bar"><div class="kam-msg">Barkodu çerçeveye tut</div><button type="button" id="kam-p" class="kam-alt">Fotoğraf Çek</button><button type="button" id="kam-x">Kapat</button><input type="file" id="kam-f" accept="image/*" capture="environment" hidden></div>';
     document.body.appendChild(ov);
     ov.querySelector("#kam-x").onclick = close;
+    const msg0 = ov.querySelector(".kam-msg"), fin = ov.querySelector("#kam-f");
+    ov.querySelector("#kam-p").onclick = () => { fin.value = ""; fin.click(); };
+    fin.onchange = async () => {
+      const file = fin.files && fin.files[0]; if (!file) return;
+      msg0.textContent = "Okunuyor…";
+      const code = await readPhoto(file);
+      if (!ov) return;
+      if (code) { try { navigator.vibrate && navigator.vibrate(60); } catch (_) {} close(); cb(code); }
+      else msg0.textContent = "Okuyamadım. Barkod net ve ışıklı olsun, tekrar çek.";
+    };
     window.addEventListener("popstate", close); document.addEventListener("visibilitychange", onVis);
     const msg = ov.querySelector(".kam-msg"), video = ov.querySelector("video");
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
     } catch (e) {
       if (!alive) return;
       msg.textContent = (e && (e.name === "NotAllowedError" || e.name === "SecurityError")) ? "Kamera izni verilmedi. Telefon ayarlarından bu uygulamaya kamera izni ver." : "Kamera açılamadı.";
@@ -188,5 +216,5 @@
     tick();
   }
 
-  window.Kamera = { open: open, close: close, _scan: scanFrame, _line: decodeLine, _runs: toRuns, _dr: decodeRuns };
+  window.Kamera = { _photo: readPhoto, open: open, close: close, _scan: scanFrame, _line: decodeLine, _runs: toRuns, _dr: decodeRuns };
 })();

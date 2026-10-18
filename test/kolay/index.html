@@ -336,7 +336,8 @@ nav.tabs{will-change:transform}
 @media (pointer:fine){.kbdhint{display:block}}
 .pinpad .pk{min-height:62px;font-size:26px;font-weight:600;border-radius:14px}
 body.gated nav.tabs, body.gated #guideBtn, body.gated #setBtn, body.gated #saveState{display:none}
-.login{max-width:420px;margin:12px auto}
+.login{max-width:560px;margin:0 auto;min-height:calc(100dvh - 150px);justify-content:center;gap:20px;border:0!important;box-shadow:none!important;background:transparent!important;padding:8px 2px}
+.login h2{font-size:28px}.login input{font-size:20px;min-height:60px}.login button.primary,.login .primary{min-height:64px;font-size:21px}.login button{min-height:56px;font-size:18px}
 .prow{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-top:1px solid var(--line)}
 .dangerLink{color:var(--bad)!important;font-weight:600}
 .who{color:var(--c4);font-weight:600}
@@ -5262,7 +5263,6 @@ function kDaha(){
     ${t("kGo", 'data-tab="duyuru"', "c6", ic("mega",28), "Duyuru", "Mahalleye haber ver")}
     ${t("nGo", "", "c8", ic("bell",28), "Bildirimler", "Telefona haber gelsin")}
     ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",28), "Ayarlar", "Şifre, yedek")}
-    <a class="ktile c4" href="../"><span class="bi c4">${ic("grid",28)}</span><b>Tam Sürüm</b><span>Sipariş, fatura, plan</span></a>
   </div>`;
 }
 function kUrun(){

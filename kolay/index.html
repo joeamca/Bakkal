@@ -5347,7 +5347,7 @@ async function kSave(next){
 // ---- Duyuru: hazır yazı + kart, WhatsApp'a vb. paylaş (duyuru.js ilk açılışta yüklenir) ----
 function dyLoad(){
   if (window.Duyuru || S._dyLoading) return; S._dyLoading = true;
-  const s = document.createElement("script"); s.src = "../duyuru.js";
+  const s = document.createElement("script"); s.src = "../duyuru.js"; s.charset = "utf-8";
   s.onload = () => { S._dyLoading = false; if (S.tab==="duyuru") render(true); };
   s.onerror = () => { S._dyLoading = false; S.dyErr = true; if (S.tab==="duyuru") render(true); };
   document.head.appendChild(s);

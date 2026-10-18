@@ -25,43 +25,75 @@
       ["{urun} geldi!", "Rafta yerini aldı. Koşun gelin, tükenmeden!", "🛒"],
       ["Müjde! {urun} bizde", "Mahalle rahat nefes alsın, sıra beklemeden gelin.", "🎉"],
       ["{urun} geldi, bayram erken geldi", "Kıyamet kopmadan bir uğrayın 😄", "📦"],
-      ["Alarm! {urun} stokta", "Şimdi gelen alır, sonra gelen 'keşke' der.", "🚨"]
+      ["Alarm! {urun} stokta", "Şimdi gelen alır, sonra gelen 'keşke' der.", "🚨"],
+      ["Bekleyenlere duyurulur", "{urun} geldi. Sabrınızın karşılığı raflarda.", "🙌"],
+      ["{urun} yeniden bizde", "Sormayanlar da gelsin, sorup durmayalım artık 😄", "😄"],
+      ["Rafı doldurduk: {urun}", "Taze taze geldi. Eksik kalmasın, bir uğrayın.", "🧺"],
+      ["{urun} geldi komşum", "Telefonu bırak, sepeti kap, bakkala gel!", "🏃"],
+      ["Haberim var: {urun}", "Geldi ve yerini aldı. Çay da demli, gelin.", "☕"],
+      ["{urun} için son durak biziz", "Kapıdan girenin sepetine hazır bekliyor.", "🚪"]
     ],
     cuma: [
       ["Hayırlı Cumalar", "Kapımız açık, çayımız demli. Bir uğrayın!", "☕"],
       ["Cuma geldi, hayırlar getirdi", "Mahallemize bereket, hepinize sağlık.", "🌷"],
       ["Hayırlı Cumalar komşum", "Bugün de buradayız, ekmeğiniz sıcak.", "🥖"],
-      ["Cumanız mübarek olsun", "Gönlünüz ve sofranız bereketli olsun.", "🌹"]
+      ["Cumanız mübarek olsun", "Gönlünüz ve sofranız bereketli olsun.", "🌹"],
+      ["Hayırlı Cumalar", "Sofranız bol, kalbiniz huzurlu, kapınız eksik olmasın.", "🤲"],
+      ["Mübarek Cuma", "Dualarınız kabul, işleriniz rast gitsin.", "🌙"],
+      ["Cuma sabahı, mahalle bereketli", "Hayırlı Cumalar. Hafta sonu eksiğini şimdiden tamamla.", "🧺"],
+      ["Hayırlı Cumalar, güzel komşularım", "Bugün de hizmetinizdeyiz. Kolay gelsin hepinize.", "😊"],
+      ["Cuma güzelliği", "Hayırlı Cumalar. Cuma sonrası çay bizden olsun!", "☕"],
+      ["Hayırlı Cumalar", "Allah gönderdiği her güne bereket versin.", "🌿"]
     ],
     bayram_acik: [
       ["{bayram} mübarek olsun", "Bayramda da buradayız: {saat}. Eksiğiniz olursa koşun gelin.", "🎉"],
       ["Bayramınız kutlu olsun", "Açığız: {saat}. Şekeriniz bizden, sohbetimiz bedava!", "🍬"],
-      ["Bayram sevinci kapımızda", "{saat} arası açığız. Hepinize iyi bayramlar.", "🌙"]
+      ["Bayram sevinci kapımızda", "{saat} arası açığız. Hepinize iyi bayramlar.", "🌙"],
+      ["{bayram} kutlu olsun", "Misafir geldi, eksik çıktı mı? {saat} arası buradayız.", "🏪"],
+      ["İyi bayramlar komşularım", "Bayram boyunca {saat} açığız. Mutlu, huzurlu günler.", "🤗"],
+      ["Bayramınız mübarek", "Tatlıya, çikolataya, sütüne kadar {saat} hazırız.", "🍫"]
     ],
     bayram_kapali: [
       ["{bayram} mübarek olsun", "Bayramda kapalıyız. Sonrasında yine buradayız!", "🎉"],
-      ["Bayramınız kutlu olsun", "Bu bayram biraz dinleniyoruz. Hepinize iyi bayramlar.", "🌙"]
+      ["Bayramınız kutlu olsun", "Bu bayram biraz dinleniyoruz. Hepinize iyi bayramlar.", "🌙"],
+      ["İyi bayramlar komşularım", "Ailemizle bayramlaşıyoruz, bayram sonrası görüşürüz.", "🤗"],
+      ["{bayram} kutlu olsun", "Kapalıyız. Eksiğiniz varsa bir gün önceden bekleriz.", "🛒"]
     ],
     acik_acik: [
       ["Bugün açığız", "{saat} arası buradayız. Gelin, çayımız demli.", "🏪"],
       ["Kapımız açık", "{saat}. Eksiğiniz neyse bizde.", "🚪"],
-      ["Bakkal açık!", "{saat}. Ekmek, süt, sohbet hep bizde.", "🥛"]
+      ["Bakkal açık!", "{saat}. Ekmek, süt, sohbet hep bizde.", "🥛"],
+      ["Bugün de buradayız", "{saat}. Ne lazımsa uğrayın.", "😊"],
+      ["Çalışıyoruz!", "{saat} arası açığız. Boşuna yürümeyin, kapı açık.", "🚶"],
+      ["Gelen memnun, giden eksiksiz", "{saat} arası hizmetinizdeyiz.", "🛍️"]
     ],
     acik_kapali: [
       ["Bugün kapalıyız", "Yarın yine buradayız. Anlayışınız için sağ olun.", "🙏"],
-      ["Kısa bir ara", "Bugün kapalıyız. Yarın görüşmek üzere!", "😴"]
+      ["Kısa bir ara", "Bugün kapalıyız. Yarın görüşmek üzere!", "😴"],
+      ["Bugün tatil", "Dükkân kapalı, yarın yeniden hizmetinizdeyiz.", "🔒"],
+      ["Kapalıyız", "İhtiyacınızı bugün için başka yerden halledin, yarın sizi bekleriz.", "🙂"]
     ],
     gunaydin: [
       ["Günaydın mahalle!", "Güne ekmek kokusuyla başlayın, biz hazırız.", "🌞"],
       ["Günaydın komşum", "Çayı demle, gel; bakkal açık.", "☕"],
       ["Güne merhaba!", "Eksiğiniz varsa bizde. Kolay gelsin herkese.", "🌅"],
-      ["Günaydın!", "Bugün herkes güzel, siz de öylesiniz 😄", "😄"]
+      ["Günaydın!", "Bugün herkes güzel, siz de öylesiniz 😄", "😄"],
+      ["Günaydın, güzel insanlar", "Kahvaltılık eksik mi? Bir uğrayın.", "🍳"],
+      ["Uyanın, ekmek sıcak!", "Günaydın. Kapımız açık, çayımız demli.", "🥖"],
+      ["Günün hayırlı olsun", "Kolay gelsin, bol kazançlar, güzel bir gün dilerim.", "🌤️"],
+      ["Sabah sabah şunu söyleyeyim", "Günaydın! Ne lazımsa buradayız.", "🌻"],
+      ["Güne gülümseyerek başla", "Günaydın komşular. Süt, yumurta, peynir hep bizde.", "🥛"],
+      ["Günaydın!", "Mahalle uyanıyor, bakkal çoktan hazır.", "🐓"]
     ],
     kampanya: [
       ["{urun} {fiyat} TL", "Bugüne özel fiyat! Tükenmeden gelin.", "🏷️"],
       ["Fırsat! {urun}", "Sadece {fiyat} TL. Cüzdanınız teşekkür eder.", "💸"],
       ["{urun} {fiyat} TL'ye düştü", "Kaçıran kendine küssün 😄", "🔥"],
-      ["Bugün {urun} günü", "{fiyat} TL. Gelen alır, gelmeyen sorar.", "🎯"]
+      ["Bugün {urun} günü", "{fiyat} TL. Gelen alır, gelmeyen sorar.", "🎯"],
+      ["İndirim var: {urun}", "{fiyat} TL. Mahalleye özel, kimseye söylemeyin 🤫", "🤫"],
+      ["{urun} bu fiyata bulunmaz", "Sadece {fiyat} TL. Stoklar sınırlı.", "⏰"],
+      ["Cebinize dost: {urun}", "{fiyat} TL. Şimdi alın, sonra sevinin.", "😊"],
+      ["{urun} {fiyat} TL!", "Kampanya bugünlük. Sepeti kapan gelsin.", "🛒"]
     ]
   };
 
@@ -92,6 +124,50 @@
     }
     x.font = weight + " " + to + "px " + FONT; return { sz: to, lines: wrap(x, s, maxW).slice(0, maxLines) };
   }
+
+  /* ---------- Mert Amca: özgün bakkal karakteri (kodla çizilir) ---------- */
+  function mascot(x, cx, cy, sc, pose) {
+    x.save(); x.translate(cx - 150 * sc, cy - 150 * sc); x.scale(sc, sc);
+    x.lineJoin = x.lineCap = "round"; const OUT = "#1f2937", SKIN = "#f6c9a0";
+    const line = (c, w) => { x.strokeStyle = c; x.lineWidth = w; };
+    const arm = (x1, y1, x2, y2) => { x.beginPath(); x.moveTo(x1, y1); x.lineTo(x2, y2); line(OUT, 36); x.stroke(); line("#ef4444", 26); x.stroke(); };
+    const hand = (hx, hy, r) => { x.beginPath(); x.arc(hx, hy, r || 15, 0, 7); x.fillStyle = SKIN; x.fill(); line(OUT, 5); x.stroke(); };
+    const fillStroke = (f, w) => { x.fillStyle = f; x.fill(); line(OUT, w || 5); x.stroke(); };
+    // gövde
+    x.beginPath(); x.moveTo(70, 300); x.lineTo(70, 235); x.quadraticCurveTo(70, 180, 150, 180); x.quadraticCurveTo(230, 180, 230, 235); x.lineTo(230, 300); x.closePath(); fillStroke("#ef4444");
+    // önlük
+    x.beginPath(); x.moveTo(104, 300); x.lineTo(104, 214); x.lineTo(196, 214); x.lineTo(196, 300); x.closePath(); fillStroke("#ffffff", 4);
+    x.beginPath(); x.rect(128, 238, 44, 30); line("#93c5fd", 4); x.stroke();
+    // kollar
+    const down = (sx) => { arm(sx > 150 ? 220 : 80, 220, sx > 150 ? 236 : 64, 280); hand(sx > 150 ? 237 : 63, 286); };
+    if (pose === 0) { down(0); arm(220, 215, 254, 150); hand(256, 138, 17); }
+    else if (pose === 1) { down(0); arm(220, 222, 240, 198); hand(240, 190, 14);
+      x.beginPath(); x.moveTo(226, 150); x.lineTo(256, 150); x.lineTo(251, 196); x.lineTo(231, 196); x.closePath(); x.fillStyle = "#b45309"; x.fill(); line("#dbeafe", 5); x.stroke();
+      line("rgba(255,255,255,.8)", 5); for (const dx of [-8, 4]) { x.beginPath(); x.moveTo(241 + dx, 140); x.quadraticCurveTo(235 + dx, 128, 241 + dx, 116); x.stroke(); } hand(240, 192, 12); }
+    else if (pose === 2) { down(1); arm(80, 220, 62, 262); hand(62, 270, 14);
+      x.beginPath(); x.moveTo(34, 262); x.lineTo(94, 262); x.lineTo(88, 308); x.lineTo(40, 308); x.closePath(); fillStroke("#d6a461");
+      x.beginPath(); x.moveTo(50, 262); x.quadraticCurveTo(64, 236, 78, 262); line(OUT, 5); x.stroke(); hand(64, 258, 12); }
+    else if (pose === 3) { arm(80, 218, 48, 150); hand(46, 138, 16); arm(220, 218, 252, 150); hand(254, 138, 16); }
+    else { down(0); arm(220, 215, 244, 178); hand(246, 170, 16); x.beginPath(); x.ellipse(246, 150, 8, 15, 0, 0, 7); fillStroke(SKIN, 4); }
+    // kulak, kafa
+    for (const ex of [93, 207]) { x.beginPath(); x.arc(ex, 128, 11, 0, 7); fillStroke(SKIN, 5); }
+    x.beginPath(); x.ellipse(150, 122, 58, 56, 0, 0, 7); fillStroke(SKIN, 5);
+    // kasket
+    x.beginPath(); x.moveTo(90, 104); x.quadraticCurveTo(92, 52, 150, 50); x.quadraticCurveTo(208, 52, 210, 104); x.closePath(); fillStroke("#374151");
+    x.beginPath(); x.moveTo(94, 98); x.lineTo(206, 98); line("#111827", 8); x.stroke();
+    x.beginPath(); x.moveTo(104, 98); x.quadraticCurveTo(150, 124, 196, 98); x.lineTo(196, 90); x.lineTo(104, 90); x.closePath(); fillStroke("#4b5563", 4);
+    // yanak, göz, kaş
+    for (const cxx of [112, 188]) { x.beginPath(); x.arc(cxx, 142, 11, 0, 7); x.fillStyle = "rgba(244,114,114,.55)"; x.fill(); }
+    const brow = pose === 3 ? -6 : 0; line(OUT, 6);
+    for (const [bx, d] of [[128, 1], [172, -1]]) { x.beginPath(); x.moveTo(bx - 12, 106 + brow + d * 2); x.lineTo(bx + 12, 106 + brow - d * 2); x.stroke(); }
+    for (const ex of [128, 172]) { x.beginPath(); x.arc(ex, 120, pose === 3 ? 8 : 6.5, 0, 7); x.fillStyle = OUT; x.fill(); x.beginPath(); x.arc(ex + 2, 117, 2.3, 0, 7); x.fillStyle = "#fff"; x.fill(); }
+    // burun, bıyık, ağız
+    x.beginPath(); x.ellipse(150, 135, 10, 8, 0, 0, 7); fillStroke("#e8a87c", 4);
+    for (const sgn of [-1, 1]) { x.save(); x.translate(150 + sgn * 22, 152); x.rotate(sgn * -0.25); x.beginPath(); x.ellipse(0, 0, 25, 11, 0, 0, 7); x.restore(); fillStroke("#6b7280", 4); }
+    if (pose === 3) { x.beginPath(); x.ellipse(150, 172, 12, 13, 0, 0, 7); fillStroke("#7f1d1d", 4); }
+    else { x.beginPath(); x.moveTo(132, 166); x.quadraticCurveTo(150, 186, 168, 166); line(OUT, 5); x.stroke(); }
+    x.restore();
+  }
   function draw(type, v, themeIdx, c) {
     const S = 1080, cv = document.createElement("canvas"); cv.width = S; cv.height = S;
     const x = cv.getContext("2d"), th = THEMES[((themeIdx % THEMES.length) + THEMES.length) % THEMES.length], t = text(type, v, c);
@@ -104,7 +180,8 @@
     const name = c.dukkan || "Mahalle Bakkalı", nf = fit(x, name, S - 160, 1, 64, 36, "800");
     x.font = "800 " + nf.sz + "px " + FONT; x.shadowColor = "rgba(0,0,0,.25)"; x.shadowBlur = 8; x.fillText(nf.lines[0], 64, 110); x.shadowBlur = 0;
     // emoji
-    x.textAlign = "center"; x.textBaseline = "middle"; x.font = "300px " + EMOJI; x.fillText(t.emoji, S / 2, 330);
+    mascot(x, 400, 330, 1.18, v % 5);
+    x.textAlign = "center"; x.textBaseline = "middle"; x.font = "170px " + EMOJI; x.fillText(t.emoji, 860, 290);
     // beyaz kart
     const cx0 = 60, cy0 = 520, cw = S - 120, ch = 440;
     x.fillStyle = "rgba(0,0,0,.15)"; rr(x, cx0, cy0 + 10, cw, ch, 44); x.fill();

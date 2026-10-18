@@ -236,6 +236,13 @@ html,body{overscroll-behavior-y:contain}
 .scanbar input{flex:1;min-width:0;border:0;background:transparent;font-size:19px;padding:9px 2px;outline:none;box-shadow:none}
 .scanbar .primary{min-width:48px;min-height:46px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:10px}
 .scanico{color:var(--accent);display:flex}
+.scanbar{flex-wrap:wrap}
+.scanbar .camBtn{min-height:46px;border-radius:10px}
+@media (max-width:440px){
+  .scanbar{padding-right:8px;padding-bottom:8px}
+  .scanbar input{flex:1 1 calc(100% - 44px);font-size:17px}
+  .scanbar .camBtn,.scanbar .primary{flex:1 1 0;min-width:0}
+}
 .pcard{display:flex;flex-direction:column;gap:8px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px}
 .pcard.warnc{border-left-color:var(--warn,#c98a1b)}
 .pcard input{min-width:0;flex:1}
@@ -3694,7 +3701,7 @@ function cartAdd(p, q, u, opt){
 }
 // ---- Kamerayla barkod okuma (sadece telefon/tablet; kamera.js ilk basışta yüklenir) ----
 const CAM_OK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && !!(window.matchMedia && matchMedia("(pointer:coarse)").matches);
-const camBtn = id => CAM_OK ? `<button type="button" class="camBtn" data-act="camScan" data-for="${id}" aria-label="Kamerayla barkod oku" title="Kamerayla oku">${ic("scan",22)}</button>` : "";
+const camBtn = (id, label) => CAM_OK ? `<button type="button" class="camBtn" data-act="camScan" data-for="${id}" aria-label="Kamerayla barkod oku" title="Kamerayla oku">${ic("scan",22)}${label ? `<span style="margin-left:8px;font-weight:700">${label}</span>` : ""}</button>` : "";
 function camGot(target, code){
   if (target==="pos"){ posScan(code); render(); posFocus(); return; }
   const el = document.getElementById(target); if (!el) return;
@@ -3785,8 +3792,8 @@ function viewSell(){
   const kd = kasaDay(today0()), n = items.length;
   // ---- sol: okutma + sepet ----
   let L = `<form id="posform" class="scanbar" autocomplete="off"><span class="scanico">${BARCODE_SVG}</span>
-      <input id="pos-scan" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="enter" placeholder="Barkodu okut ya da ürün adı yaz" aria-label="Barkod ya da ürün adı" value="${esc(S.posQ||"")}">
-      ${camBtn("pos")}<button class="primary" type="submit" aria-label="Ekle">${ic("plus",20)}</button></form>
+      <input id="pos-scan" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="enter" placeholder="Barkod ya da ürün adı" aria-label="Barkod ya da ürün adı" value="${esc(S.posQ||"")}">
+      ${camBtn("pos","Kamera")}<button class="primary" type="submit" aria-label="Ekle">${ic("plus",20)}</button></form>
     <div id="pos-res">${S.posQ ? posResults(S.posQ) : ""}</div>`;
   if (S.posErr) L += `<div class="notice bad">${esc(S.posErr)}</div>`;
   if (S.posWarn) L += `<div class="notice warn">${esc(S.posWarn)}</div>`;

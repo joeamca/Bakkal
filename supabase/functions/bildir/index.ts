@@ -14,7 +14,7 @@ const ecdh = createECDH("prime256v1"); ecdh.setPrivateKey(priv);
 const PUB = ecdh.getPublicKey().toString("base64url");
 webpush.setVapidDetails("mailto:bildirim@bakkaldefteri.app", PUB, priv.toString("base64url"));
 
-const ICON: Record<string, string> = { stok: "n-stok", bitti: "n-bitti", kasa: "n-kasa", cikis: "n-cikis", veresiye: "n-veresiye", basvuru: "n-basvuru", deneme: "n-genel", rapor: "n-gun", tedarik: "n-tedarik" };
+const ICON: Record<string, string> = { stok: "n-stok", bitti: "n-bitti", kasa: "n-kasa", cikis: "n-cikis", veresiye: "n-veresiye", basvuru: "n-basvuru", deneme: "n-genel", rapor: "n-gun", tedarik: "n-tedarik", calisan: "n-genel" };
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const j = (x: unknown, status = 200) => new Response(JSON.stringify(x), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[\u0000-\u001f]/g, " ").slice(0, n);

@@ -81,6 +81,7 @@ html.kolay body.staff nav.tabs{grid-template-columns:repeat(3,1fr)}
 .hr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .hr>div:first-child{min-width:0;flex:1}.hr b{display:block;overflow-wrap:anywhere}.hr .d{text-align:right;font-weight:800;white-space:nowrap}.hr .d small{display:block;font-weight:700}
 body.staff .pstep [data-d="-1"]{visibility:hidden}
+.gq-hide{display:none!important}.gsw{margin:0 0 12px}.gsw input{width:100%;box-sizing:border-box;font-size:18px;padding:12px 14px;border-radius:12px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav.tabs button{border:0;border-radius:0;background:none;color:var(--muted);font-size:13px;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px}
 nav.tabs button .ic{font-family:var(--mono);font-size:19px}
@@ -1276,6 +1277,7 @@ function render(keep){
   const pre = ["fire","kar","urunler","ayarlar","yonetim","rapor"].includes(S.tab) && !S.editId ? backLink() : "";
   document.body.classList.toggle("wide", S.tab==="satis");
   v.innerHTML = (S.guide ? guideCard() : "") + pre + ((window.KOLAY && KV[S.tab]) || VIEWS[S.tab] || viewHome)();
+  attachSearch();
   queueMicrotask(histSync);
   if (S.tab==="satis" && (S.posView||"sat")==="sat") posFocus();
   if (keep){
@@ -3036,6 +3038,7 @@ const strip = o => { const {showCount, ...x} = o||{}; return x; };
 function put(kind, id, data, deleted){
   if (!C.shop){ S.msg = {kind:"bad", text:"Önce bir dükkân seç."}; return; }
   C.queue = C.queue.filter(q=>!(q.kind===kind && q.id===id && q.shop===C.shop.id));
+  if (isStaff()) staffNote(kind, id, data, deleted);
   C.queue.push({shop:C.shop.id, kind, id:String(id), data: deleted ? {} : strip(data), deleted:!!deleted});
   cloudSave(); saving(); clearTimeout(flushTimer); flushTimer = setTimeout(flush, 250);
 }
@@ -3120,6 +3123,53 @@ function isStaff(){
   if (S.mode!=="cloud" || !C.shop) return false; const x = C.ctx || {}; if (x.is_admin) return false;
   const me = (x.shops||[]).find(s=>s.id===C.shop.id); return !!me && me.role==="staff";
 }
+
+/* ---------- Ürün listelerinde arama kutusu ---------- */
+const SEARCH_SEL = {stok:".srow", urunler:".item", fire:".fireRow", siparis:".pcard", plan:"details.mrpc", maliyet:".sugg", kar:".prow", "k-kar":".kline", hareket:".hr"};
+function gFilter(){
+  const sel = SEARCH_SEL[S.tab], v = document.getElementById("view"); if (!sel || !v) return;
+  const q = norm(S.gq || "");
+  v.querySelectorAll(sel).forEach(el=>{ el.classList.toggle("gq-hide", !!q && !norm(el.textContent).includes(q)); });
+}
+function attachSearch(){
+  const sel = SEARCH_SEL[S.tab], v = document.getElementById("view"); if (!sel || !v) return;
+  if (S._gqTab !== S.tab){ S.gq = ""; S._gqTab = S.tab; }
+  const first = v.querySelector(sel); if (!first) return;
+  const anchor = first.closest(".card, section, details, article") || first;
+  anchor.insertAdjacentHTML("beforebegin", `<div class="gsw"><input id="gsearch" type="search" placeholder="Ürün ara" value="${esc(S.gq||"")}" autocomplete="off" aria-label="Ürün ara"></div>`);
+  gFilter();
+}
+document.addEventListener("input", ev=>{ if (ev.target.id==="gsearch"){ S.gq = ev.target.value; gFilter(); } });
+
+/* ---------- Çırağın hareketleri ustaya bildirim olarak gider ---------- */
+function staffWho(){ return (C.user && whoName(C.user.id)) || C.ctx?.username || "Çalışan"; }
+function staffNote(kind, id, data, deleted){
+  try{
+    let s = null; const d = data || {};
+    const pn = pid => (S.products.find(x=>x.id===pid)||{}).name || "ürün";
+    if (deleted) s = "Kayıt sildi (" + kind + ")";
+    else if (kind==="sale") s = d.x ? "Satışı iptal etti" : "Satış " + TLx(d.tot) + (d.pay && d.pay!=="nakit" ? " (" + d.pay + ")" : "");
+    else if (kind==="event"){
+      if (d.type==="sayim") s = "Stok: " + pn(d.productId) + (d.was!=null ? " " + d.was + " → " + d.qty : " " + d.qty);
+      else if (d.type==="gelen") s = "Mal geldi: " + pn(d.productId) + " +" + d.qty;
+      else if (d.type==="borc") s = "Veresiye yazdı " + TLx(d.amount);
+      else if (d.type==="odeme") s = "Veresiye ödemesi aldı " + TLx(d.amount);
+      else if (d.type==="tborc" || d.type==="todeme") s = "Tedarikçi kaydı " + TLx(d.amount);
+      else s = "Stok kaydı (" + d.type + ")";
+    }
+    else if (kind==="product") s = "Ürün kaydı: " + (d.name || "");
+    else if (kind==="customer") s = "Müşteri kaydı: " + (d.name || "");
+    else if (kind==="supplier") s = "Tedarikçi bilgisi: " + (d.name || "");
+    if (!s) return;
+    (S.sn = S.sn || []).push(s);
+    clearTimeout(staffNote.t); staffNote.t = setTimeout(staffFlush, 20000);
+  }catch(_){}
+}
+function staffFlush(){
+  const L = S.sn || []; S.sn = []; if (!L.length) return;
+  nSend("calisan", staffWho() + ": " + L.length + " işlem", L.slice(0,4).join(" · ") + (L.length>4 ? " · +" + (L.length-4) + " daha" : ""), "calisan");
+}
+window.addEventListener("pagehide", ()=>{ try{ staffFlush(); }catch(_){} });
 async function flushDenied(batch){
   let dropped = 0;
   for (const q of batch){
@@ -3131,7 +3181,8 @@ async function flushDenied(batch){
     }catch(e){ if (isNetErr(e)){ C.online = false; flushTimer = setTimeout(flush, 15000); return; } C.queue = C.queue.filter(x=>x!==q); dropped++; }
   }
   C.err = null; cloudSave();
-  if (dropped){ S.msg = {kind:"bad", text:"Bu işlem için yetkin yok, kaydedilmedi. Gerekirse dükkân sahibine söyle."}; C.lastSync = null; try{ await pull(); }catch(_){} render(); }
+  if (dropped){ try{ nSend("calisan", staffWho() + ": yetkisiz işlem denedi", dropped + " işlem reddedildi, kaydedilmedi.", "calisan-yetki"); }catch(_){}
+    S.msg = {kind:"bad", text:"Bu işlem için yetkin yok, kaydedilmedi. Gerekirse dükkân sahibine söyle."}; C.lastSync = null; try{ await pull(); }catch(_){} render(); }
 }
 const whoName = uid => { const p = C.people.find(x=>x.user_id===uid); return p ? (p.full_name || p.username) : null; };
 // "kim girdi" etiketi: dükkânda birden fazla kişi varsa gösterilir
@@ -4626,9 +4677,9 @@ const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","a
   ["cikis","Kasadan büyük para çıkışı","minus","c3"],["veresiye","Veresiye borç sınırı aşıldı","book","c8"],
   ["tedarik","Tedarikçiye ödeme zamanı","truck","c2"],
   ["rgun","Günün raporu (gün kapanınca, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar günü kapanınca)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
-  ["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
+  ["calisan","Çırağın yaptığı işlemler","user","c6"],["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
 // Kolay: bildirim türü seçtirmez; dükkânda olan her şey için bildirim gelir
-const nAll = () => N_TYPES.map(x=>x[0]).filter(t=>(t!=="basvuru" || S.cloud?.ctx?.is_admin) && !(t==="kasa" && isStaff()));
+const nAll = () => N_TYPES.map(x=>x[0]).filter(t=>(t!=="basvuru" || S.cloud?.ctx?.is_admin) && !(t==="kasa" && isStaff()) && !(t==="calisan" && isStaff()));
 const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
 const nSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 const nIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);

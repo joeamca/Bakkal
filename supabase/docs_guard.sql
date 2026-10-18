@@ -137,8 +137,8 @@ begin
   insert into push_subs (endpoint, user_id, shop_id, p256dh, auth, app, types, ua)
   values (p_endpoint, auth.uid(), p_shop, p_p256dh, p_auth, case when p_app = 'kolay' then 'kolay' else 'tam' end,
           coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t
-                    where t in ('stok','bitti','kasa','cikis','veresiye','basvuru','rgun','rhafta','ray','tedarik')
-                      and not (staff and t in ('kasa','cikis','rgun','rhafta','ray','basvuru'))), '{}'),
+                    where t in ('stok','bitti','kasa','cikis','veresiye','basvuru','rgun','rhafta','ray','tedarik','calisan')
+                      and not (staff and t in ('kasa','cikis','rgun','rhafta','ray','basvuru','calisan'))), '{}'),
           left(p_ua, 200))
   on conflict (endpoint) do update set user_id = excluded.user_id, shop_id = excluded.shop_id, p256dh = excluded.p256dh, auth = excluded.auth,
     app = excluded.app, types = excluded.types, ua = excluded.ua, updated_at = now();
@@ -147,5 +147,5 @@ begin
 end $$;
 
 -- mevcut çalışan abonelikleri temizle
-update push_subs ps set types = array(select t from unnest(ps.types) t where t not in ('kasa','cikis','rgun','rhafta','ray','basvuru'))
+update push_subs ps set types = array(select t from unnest(ps.types) t where t not in ('kasa','cikis','rgun','rhafta','ray','basvuru','calisan'))
 where exists (select 1 from members m where m.user_id = ps.user_id and m.shop_id = ps.shop_id and m.role = 'staff');

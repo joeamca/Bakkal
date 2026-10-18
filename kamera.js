@@ -145,7 +145,12 @@
     if (document.getElementById("kam-css")) return;
     const s = document.createElement("style"); s.id = "kam-css";
     s.textContent = "#kam-ov{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:system-ui,sans-serif;color:#fff}" +
-      "#kam-ov video{flex:1;min-height:0;width:100%;object-fit:cover}" +
+      "#kam-ov .kam-view{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;background:#000}" +
+      "#kam-ov video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 50%}" +
+      "#kam-ov .kam-zoom{position:absolute;right:12px;bottom:12px;display:flex;align-items:center;gap:8px;z-index:3}" +
+      "#kam-ov .kam-zoom button{min-height:0;width:52px;height:52px;padding:0;border-radius:50%;font-size:30px;line-height:1;background:rgba(255,255,255,.9)}" +
+      "#kam-ov .kam-zv{min-width:44px;text-align:center;font-weight:700;font-size:16px;text-shadow:0 1px 3px #000}" +
+      "#kam-ov .kam-ring{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border:3px solid #ffd60a;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .25s;z-index:3}" +
       "#kam-ov .kam-frame{position:absolute;left:8%;right:8%;top:30%;height:26%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);pointer-events:none}" +
       "#kam-ov .kam-frame::after{content:'';position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}" +
       "#kam-ov .kam-bar{position:relative;z-index:2;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:#111;display:flex;flex-direction:column;gap:10px;text-align:center}" +
@@ -165,7 +170,7 @@
   async function open(cb) {
     close(); css(); alive = true;
     ov = document.createElement("div"); ov.id = "kam-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Kamerayla barkod oku");
-    ov.innerHTML = '<video playsinline muted autoplay></video><div class="kam-frame"></div><div class="kam-bar"><div class="kam-msg">Barkodu çerçeveye tut</div><button type="button" id="kam-p" class="kam-alt">Fotoğraf Çek</button><button type="button" id="kam-x">Kapat</button><input type="file" id="kam-f" accept="image/*" capture="environment" hidden></div>';
+    ov.innerHTML = '<div class="kam-view"><video playsinline muted autoplay></video><div class="kam-frame"></div><div class="kam-ring"></div><div class="kam-zoom"><button type="button" id="kam-zm" aria-label="Uzaklaştır">−</button><span class="kam-zv" id="kam-zl">1×</span><button type="button" id="kam-zp" aria-label="Yakınlaştır">+</button></div></div><div class="kam-bar"><div class="kam-msg">Barkodu çerçeveye tut</div><button type="button" id="kam-p" class="kam-alt">Fotoğraf Çek</button><button type="button" id="kam-x">Kapat</button><input type="file" id="kam-f" accept="image/*" capture="environment" hidden></div>';
     document.body.appendChild(ov);
     ov.querySelector("#kam-x").onclick = close;
     const msg0 = ov.querySelector(".kam-msg"), fin = ov.querySelector("#kam-f");
@@ -190,7 +195,38 @@
     if (!alive) { stream.getTracks().forEach(t => t.stop()); stream = null; return; }
     video.srcObject = stream;
     try { await video.play(); } catch (_) {}
-    try { const tr = stream.getVideoTracks()[0]; await tr.applyConstraints({ advanced: [{ focusMode: "continuous" }] }); } catch (_) {}
+    const track = stream.getVideoTracks()[0];
+    let caps = {}; try { caps = (track.getCapabilities && track.getCapabilities()) || {}; } catch (_) {}
+    try { await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }); } catch (_) {}
+    // yakınlaştırma: telefon destekliyorsa gerçek (optik/sensör) zoom, yoksa görüntüyü büyüt ve ortasını oku
+    const hw = caps.zoom && caps.zoom.max > caps.zoom.min ? caps.zoom : null;
+    const zmin = hw ? caps.zoom.min : 1, zmax = hw ? Math.min(caps.zoom.max, zmin * 6) : 4;
+    let zoom = zmin;
+    const zl = ov.querySelector("#kam-zl"), view = ov.querySelector(".kam-view"), ring = ov.querySelector(".kam-ring");
+    const setZoom = z => {
+      zoom = Math.max(zmin, Math.min(zmax, z));
+      if (hw) track.applyConstraints({ advanced: [{ zoom: zoom }] }).catch(() => {});
+      else video.style.transform = "scale(" + zoom + ")";
+      zl.textContent = (Math.round(zoom / zmin * 10) / 10) + "×";
+    };
+    const zstep = hw ? (zmax - zmin) / 5 : 0.5;
+    ov.querySelector("#kam-zp").onclick = () => setZoom(zoom + zstep);
+    ov.querySelector("#kam-zm").onclick = () => setZoom(zoom - zstep);
+    // iki parmakla büyütme + dokunduğu yere odaklama
+    const ptr = new Map(); let pd = 0, z0 = zoom, moved = false, t0 = 0;
+    const dist = () => { const p = [...ptr.values()]; return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); };
+    view.addEventListener("pointerdown", e => { if (e.target.closest(".kam-zoom")) return; ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false; t0 = Date.now(); if (ptr.size === 2) { pd = dist(); z0 = zoom; } });
+    view.addEventListener("pointermove", e => { if (!ptr.has(e.pointerId)) return; ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptr.size === 2 && pd > 0) { moved = true; setZoom(z0 * dist() / pd); } else if (Math.hypot(e.movementX || 0, e.movementY || 0) > 3) moved = true; });
+    const focusAt = e => {
+      const r = view.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      const canFocus = (caps.focusMode && caps.focusMode.some(m => m === "single-shot" || m === "manual")) || ("pointsOfInterest" in (track.getSettings ? track.getSettings() : {}));
+      if (!canFocus) { msg.textContent = "Bu telefonda dokunarak odaklanmıyor. Netleşmezse Fotoğraf Çek'i dene."; setTimeout(() => { if (ov) msg.textContent = "Barkodu çerçeveye tut"; }, 2600); return; }
+      ring.style.left = (x * 100) + "%"; ring.style.top = (y * 100) + "%"; ring.style.opacity = 1; setTimeout(() => { ring.style.opacity = 0; }, 900);
+      const adv = { focusMode: "single-shot", pointsOfInterest: [{ x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) }] };
+      track.applyConstraints({ advanced: [adv] }).then(() => setTimeout(() => { if (alive) track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {}); }, 2500)).catch(() => {});
+    };
+    const up = e => { const had = ptr.has(e.pointerId); ptr.delete(e.pointerId); if (had && ptr.size === 0 && !moved && Date.now() - t0 < 600 && !e.target.closest(".kam-zoom")) focusAt(e); if (ptr.size < 2) pd = 0; };
+    view.addEventListener("pointerup", up); view.addEventListener("pointercancel", e => { ptr.delete(e.pointerId); pd = 0; });
 
     let det = null;
     if ("BarcodeDetector" in window) { try { det = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39"] }); } catch (_) { det = null; } }
@@ -202,11 +238,13 @@
       let code = null;
       if (video.videoWidth) {
         try {
-          if (det) { const r = await det.detect(video); if (r && r[0] && r[0].rawValue) { done(r[0].rawValue); return; } }
+          const dz = hw ? 1 : zoom, vw = video.videoWidth, vh = video.videoHeight;
+          if (det && dz <= 1.01) { const r = await det.detect(video); if (r && r[0] && r[0].rawValue) { done(r[0].rawValue); return; } }
           else {
-            const sc = Math.min(1, 960 / video.videoWidth), w = Math.round(video.videoWidth * sc), h = Math.round(video.videoHeight * sc);
-            cv.width = w; cv.height = h; cx.drawImage(video, 0, 0, w, h);
-            code = scanFrame(cx.getImageData(0, 0, w, h).data, w, h);
+            const sw = vw / dz, sh = vh / dz, sc = Math.min(1, 960 / sw), w = Math.round(sw * sc), h = Math.round(sh * sc);
+            cv.width = w; cv.height = h; cx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
+            if (det) { const r = await det.detect(cv); if (r && r[0] && r[0].rawValue) { done(r[0].rawValue); return; } }
+            else code = scanFrame(cx.getImageData(0, 0, w, h).data, w, h);
           }
         } catch (_) {}
       }

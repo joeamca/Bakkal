@@ -92,4 +92,5 @@ Uygulamada açılışta bir kez "Yenilikler" kutusu çıkar; **Tamam**'a basınc
 - **Kâr ekranı:** "−0 TL" yazılmaz.
 - **Kasa uyarıları:** Kasada olandan fazla çıkış yazılırsa ya da gün ikinci kez kapatılırsa önce uyarır.
 - **Rapor bildirimi:** Günün raporu artık "Gün Kapanışı"na basınca gelir (eskiden her akşam sabit saatteydi). Kapanışı yapmayan dükkâna 23:30'da yedek olarak gider.
+- **Sadeleştirme:** Uzun cümleler kısaltıldı. Veresiye listesi tek kutuya (toplam alacak) indi, Ayarlar'dan sipariş planlama bölümleri kalktı, Kâr ekranında "Malın Alış Fiyatı" ve "Cebinde Kalan" gibi günlük sözler kullanıldı.
 - **Kolay:** Kasa'da "Diğer" seçilince açıklama kutusu kendiliğinden açılır; rapor ekranı sadeleştirildi; ürün eklerken rafa eksi sayı yazılırsa uyarır.

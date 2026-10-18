@@ -1196,16 +1196,13 @@ function renderToast(){
 function offerUndo(text, run){ S.undo = {text, run, until: Date.now()+9000}; renderToast(); clearTimeout(offerUndo.t); offerUndo.t = setTimeout(()=>{ S.undo=null; renderToast(); }, 9100); }
 // Yenilikler kutusu: her güncellemede bir kez gösterilir, "Tamam" denince bu cihazda bir daha çıkmaz.
 // Yeni güncellemede YENI_VER'i değiştir ve YENI_NOT listesini yenile.
-const YENI_VER = "2026-10-18b";
-const YENI_BASLIK = "Yenilikler · 18 Ekim 2026";
+const YENI_VER = "2026-10-18c";
+const YENI_BASLIK = "Yenilikler";
 const YENI_NOT = [
-  "Günün raporu bildirimi artık \"Gün kapanışı\"na basınca gelir. Kapatmayı unutursan saat 23:30'da yine gelir.",
-  "Telefonun geri tuşu artık önce açık formu ya da ayrıntı ekranını kapatır; seni uygulamadan hemen çıkarmaz.",
-  "Küçük telefonlarda Menü ve Satış sekmeleri taşmaz, hepsi görünür.",
-  "Tutarlar doğru okunur: 1.500 yazarsan 1.500 TL, 12,5 yazarsan 12,5 TL olur.",
-  "Çok büyük sayılar (1 milyar üstü) kabul edilmez. Çok yüksek tutarlarda \"doğruysa tekrar bas\" uyarısı çıkar.",
-  "Kâr ekranında \"−0 TL\" yazmaz.",
-  "Kasada olandan fazla para çıkarırsan ya da günü ikinci kez kapatırsan önce uyarır."
+  "Günü Kapat'a basınca günün raporu telefona gelir.",
+  "Geri tuşu artık bir önceki ekrana döner.",
+  "Veresiye, Kâr ve Ayarlar ekranları sadeleşti.",
+  "Tutarı 1.500 ya da 12,5 diye yazabilirsin."
 ];
 function yenilikHtml(){
   if (S.locked || !(S.products && S.products.length || S.events && S.events.length)) return "";   // yeni kullanıcıya gösterme
@@ -1715,32 +1712,8 @@ function viewSettings(){
   <section class="card stack"><h2>Görünüm</h2>
     <div class="stack" style="gap:6px"><span class="small"><b>Ekran rengi</b></span>
       <div class="row" role="radiogroup" aria-label="Ekran rengi">${[["auto","Otomatik"],["light","Gündüz"],["dark","Gece"]].map(([v,l])=>`<button class="tog ${themePref()===v?"on":""}" role="radio" aria-checked="${themePref()===v}" data-act="themeSet" data-v="${v}">${l}</button>`).join("")}</div>
-      <span class="small muted">${themePref()==="auto" ? "Telefonun ayarına göre gündüz açık, gece koyu olur." : themePref()==="dark" ? "Koyu ekran: gece ve loş dükkânda göz yormaz, pili de az harcar." : "Açık ekran: gün ışığında daha iyi okunur."}</span></div>
+      <span class="small muted">${themePref()==="auto" ? "Telefona göre kendiliğinden değişir." : themePref()==="dark" ? "Koyu ekran: gece ve loş dükkânda göz yormaz, pili de az harcar." : "Açık ekran: gün ışığında daha iyi okunur."}</span></div>
     <label class="check"><input id="set-big" type="checkbox" data-set="bigText" ${S.settings?.bigText?"checked":""}> Yazıları büyüt</label>
-    <label class="check"><input id="set-det" type="checkbox" data-set="showDetails" ${S.settings?.showDetails?"checked":""}> Sipariş kartlarında ayrıntıları hep açık göster</label>
-  </section>
-  <section class="card stack"><h2>Araçların Geliş Günleri</h2>
-    <p class="small muted">Her tedarikçinin aracı hangi günler geliyorsa işaretle. Sipariş, bir sonraki gelişe kadar yetecek kadar hesaplanır.</p>
-    ${sups.length ? sups.map(sp=>{ const d = S.suppliers[supKey(sp)]?.days || [];
-      const ld = Number(S.suppliers[supKey(sp)]?.lead)||0;
-      return `<div class="stack" style="gap:6px">${S.renSup===sp
-        ? `<div class="row" style="flex-wrap:nowrap"><input id="ren-sup" value="${esc(sp)}" maxlength="60" aria-label="Tedarikçinin yeni adı" style="flex:1;min-width:0"><button class="primary" data-act="renSupSave" data-sup="${esc(sp)}">Kaydet</button><button data-act="renSupCancel">Vazgeç</button></div>`
-        : `<div class="row between"><b>${esc(sp)}</b><span class="row"><span class="small muted">${d.length?`haftada ${d.length} kez`:"gün seçilmedi"}</span><button class="link" data-act="renSup" data-sup="${esc(sp)}">Adını Değiştir</button></span></div>`}${supDays(sp)}
-        <label class="row" style="flex-direction:row;gap:8px;align-items:center;flex-wrap:nowrap"><span class="small" style="flex:none">Siparişi ne zaman veriyorsun?</span><select id="lead-${supKey(sp)}" data-lead="${esc(sp)}">${[[0,"Araç gelince"],[1,"1 gün önce"],[2,"2 gün önce"]].map(([v,l])=>`<option value="${v}" ${ld===v?"selected":""}>${l}</option>`).join("")}</select></label></div>`; }).join('<hr class="sep">')
-      : `<p class="small muted">Ürünlere tedarikçi adı girince burada listelenir.</p>`}
-  </section>
-  <section class="card stack"><h2>Dükkânın Yoğun Günleri</h2>
-    <p class="small muted">Güne basarak Sakin, Normal ve Yoğun arasında değiştir. Yoğun günlere denk gelen siparişler biraz artar.</p>
-    <div class="days">${WEEK.map(x=>{ const v = dayW()[x], k = v>1?"busy":v<1?"calm":"";
-      return `<button class="dchip w ${k}" data-act="wday" data-d="${x}"><span>${DS[x]}</span><small>${v>1?"Yoğun":v<1?"Sakin":"Normal"}</small></button>`; }).join("")}</div>
-  </section>
-  <section class="card stack"><h2>Özel Günler</h2>
-    <p class="small muted">Bayram, arife, maç günü, dükkânın kapalı olacağı gün... Siparişin yetmesi gereken günlere denk gelirse miktar ona göre ayarlanır.</p>
-    ${specials().filter(x=>x.d>=ymd(today0())).map(x=>`<div class="row between"><span><b class="num">${new Date(x.d+"T12:00:00").toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"short"})}</b> · ${esc(x.name)} <span class="pill ${x.k==="kapali"||x.k==="sakin"?"info":"warn"}">${SPECIAL[x.k]?.t||""}</span></span><button class="link" data-act="delSpecial" data-d="${x.d}">Sil</button></div>`).join("") || `<p class="small muted">Yaklaşan özel gün yok.</p>`}
-    <div class="grid2"><label>Tarih<input id="sp-date" type="date" min="${ymd(today0())}"></label>
-      <label>Ne günü?<input id="sp-name" maxlength="40" placeholder="Örn. Bayram arifesi"></label>
-      <label>Satış nasıl olur?<select id="sp-k">${Object.entries(SPECIAL).map(([k,v])=>`<option value="${k}" ${k==="cokyogun"?"selected":""}>${v.t}</option>`).join("")}</select></label></div>
-    <button data-act="addSpecial">Özel Gün Ekle</button>
   </section>
   ${S.mode==="cloud" ? "" : `<section class="card stack"><h2>Dükkânda Birden Fazla Kişi</h2>
     ${S.shared ? `<p class="small"><b>Ortak defteri kullanıyorsun.</b> Uygulamanın paylaşıldığı herkes aynı ürünleri, faturaları ve fireleri görüp girebilir.</p>
@@ -1748,8 +1721,8 @@ function viewSettings(){
     : `<p class="small muted">Sen ve çırağın gibi aynı dükkânda çalışanlar tek defter kullanabilir. Dikkat: ortak defteri, bu uygulamayı paylaştığın <b>herkes</b> görür ve değiştirebilir. Uygulamayı başka bakkallara da gönderiyorsan her dükkâna ayrı bir kopya ver.</p>
       ${S.mode==="db" ? `<button data-act="shareOn">Ortak Deftere Geç</button>` : `<p class="small muted">Bu açılışta ortak defter yok. İki telefonda çalışacaksanız birinde <b>Excel'e aktar</b>, öbüründe <b>Excel'den yükle</b>.</p>`}`}
   </section>`}
-  <section class="card stack" id="excel"><h2>Excel ile Taşı ve Yedekle</h2>
-    <p class="small muted">Bütün kayıtlar (ürünler, faturalar, fireler, sayımlar, veresiye defteri, ayarlar) tek bir Excel dosyasına alınır. Bu dosyayı başka bir telefonda ya da tarayıcıda "Excel'den yükle" ile açarsan her şey aynen gelir. Excel'de satır ekleyip düzeltip geri de yükleyebilirsin.</p>
+  <section class="card stack" id="excel"><h2>Yedek (Excel)</h2>
+    <p class="small muted">Bütün kayıtlarını Excel dosyasına al. Telefonu değiştirirsen bu dosyayla hepsini geri getirirsin.</p>
     ${importCard()}
     <div class="row"><button class="primary" data-act="export">Excel'e Aktar</button>
       <label class="btn" style="flex-direction:row;align-items:center;color:var(--ink);cursor:pointer">Excel'den yükle<input id="xlsFile" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label></div>
@@ -2123,25 +2096,19 @@ function viewVeresiye(){
   if (S.vEditCust) return html + custForm(S.vEditCust==="__new" ? null : S.customers[S.vEditCust]);
   if (S.vCust && S.customers[S.vCust]) return html + custDetail(S.customers[S.vCust]);
   if (!custs.length) return html + `<div class="card empty stack"><div class="big">${ic("book",44)}</div><h2>Veresiye Defteri</h2>
-    <p class="muted">Müşterilerin borçlarını burada tut: kim ne kadar aldı, ne kadar ödedi, kimin borcu ne zamandan beri bekliyor.</p>
+    <p class="muted">Veresiye verdiğin müşterileri buraya yaz.</p>
     <div class="choices"><button class="primary" data-act="vNew">${ic("plus",18)} İlk müşteriyi ekle</button></div></div>`;
   const rows = custs.map(c=>({c, s:custStats(c)}));
   const debtors = rows.filter(x=>x.s.bal>0.005), total = debtors.reduce((a,x)=>a+x.s.bal,0);
   const buckets = [0,0,0,0]; for (const x of debtors) x.s.buckets.forEach((v,i)=>buckets[i]+=v);
   const late = debtors.filter(x=>x.s.ageDays>30);
-  html += `<div class="tiles"><div class="tile"><span class="tn num">${TL(total)}</span><span>toplam alacak</span></div>
-    <div class="tile"><span class="tn num">${debtors.length}</span><span>borçlu müşteri</span></div>
-    <div class="tile ${late.length?"bad":""}"><span class="tn num">${late.length}</span><span>30 günü geçen</span></div></div>`;
-  if (total>0) html += `<section class="card stack"><h2>Borçlar Ne Zamandır Bekliyor?</h2>
-    ${donut(AGE.map(([l,c],i)=>({l, v:Math.round(buckets[i]), c})), {center:fmt(total), sub:"TL alacak", fmtv:v=>TL(v), label:"Borç yaşlandırma"})}
-    ${debtors.length>1?`<div class="stack" style="gap:8px"><h3>En çok borcu olanlar</h3>${debtors.slice().sort((a,b)=>b.s.bal-a.s.bal).slice(0,5).map(x=>`<div class="tb" data-act="vOpen" data-id="${x.c.id}" role="button" tabindex="0"><span class="row between"><span>${esc(x.c.name)}</span><b class="num">${TL(x.s.bal)}</b></span>${hbar(100*x.s.bal/debtors.reduce((m,y)=>Math.max(m,y.s.bal),0), x.s.ageDays>60?"var(--c3)":x.s.ageDays>30?"var(--c2)":"var(--c1)")}</div>`).join("")}</div>`:""}
-  </section>`;
+  html += `<div class="balbox ${total>0.005?"debt":"clear"}"><span class="small">Alacağın</span><b class="num">${TL(total)}</b>${debtors.length?`<span class="small">${debtors.length} kişi borçlu${late.length?` · ${late.length} kişinin borcu 30 günü geçti`:""}</span>`:""}</div>`;
   html += `<div class="row search"><label class="sbox">${ic("search",18)}<input id="v-search" type="search" placeholder="Müşteri ara" aria-label="Müşteri ara" autocomplete="off"></label><button class="primary" data-act="vNew">${ic("plus",18)} Yeni müşteri</button></div>`;
   rows.sort((a,b)=>(b.s.bal>0.005)-(a.s.bal>0.005) || b.s.bal-a.s.bal || a.c.name.localeCompare(b.c.name,"tr"));
   html += `<section class="stack" id="clist" style="gap:8px">${rows.map(({c,s})=>{
     const ag = s.bal>0.005 ? (s.ageDays>60?"bad":s.ageDays>30?"warn":"ok") : "info";
     return `<button class="ccard" data-act="vOpen" data-id="${c.id}" data-name="${esc(norm(c.name))}">${avatar(c)}
-      <span class="cmid"><b>${esc(c.name)}</b><span class="small muted">son işlem ${agoTxt(s.lastT)}${s.bal>0.005&&s.oldest?` · en eski borç ${Math.floor(s.ageDays)} gün`:""}</span>
+      <span class="cmid"><b>${esc(c.name)}</b><span class="small muted">${s.bal>0.005&&s.oldest?`${Math.floor(s.ageDays)} gündür bekliyor`:`son işlem ${agoTxt(s.lastT)}`}</span>
       ${c.limit>0 && s.bal>0?hbar(100*s.bal/c.limit, s.bal>c.limit?"var(--c3)":"var(--c4)"):""}</span>
       <span class="cbal ${ag}"><b class="num">${s.bal>0.005?TL(s.bal):s.bal<-0.005?"+"+TL(-s.bal):"0 TL"}</b><small>${s.bal>0.005?"borç":s.bal<-0.005?"fazla ödedi":"borcu yok"}</small></span></button>`; }).join("")}</section>
     <p class="small muted" id="cnone" hidden>Aramaya uyan müşteri yok.</p>`;
@@ -4027,7 +3994,7 @@ function viewSell(){
           : `<button data-act="posQ" data-k="${x.k}" data-d="-1" aria-label="Bir azalt">−</button><input class="num" data-cq="${x.k}" inputmode="numeric" value="${fmt(x.q,3)}" aria-label="Adet"><button data-act="posQ" data-k="${x.k}" data-d="1" aria-label="Bir artır">+</button>`}</div>
         <b class="num ctot">${TLx(lt)}</b>
         <button class="cdel" data-act="posDel" data-k="${x.k}" aria-label="${esc(x.n)} sepetten çıkar">×</button></div>`; }).join("")
-      : `<div class="cempty"><span class="scanbig">${BARCODE_SVG}</span><b>Barkodu okut</b><span class="small muted">Okuttukça ürünler buraya eklenir. Barkodsuz ürün için yukarıdaki düğmeleri kullan.</span></div>`}</section>`;
+      : `<div class="cempty"><span class="scanbig">${BARCODE_SVG}</span><b>Barkodu okut</b></div>`}</section>`;
   // ---- sağ: müşteri, toplam, ödeme ----
   let R = `<aside class="posR">`;
   if (S.posLast && !n){ const s = S.posLast;
@@ -4144,9 +4111,9 @@ async function kasaSave(f){
   if ((f==="cikis"||f==="giris") && r==="Diğer" && !n){ S.kasaErr = "\"Diğer\" seçtiysen açıklamaya ne olduğunu yaz."; render(true); setTimeout(()=>{ const d = document.querySelector(".knote"); if (d) d.open = true; document.getElementById("kf-n")?.focus(); }, 0); return; }
   if (a >= 1000000 && S.kasaBigOk!==r2(a)){ S.kasaBigOk = r2(a); S.kasaErr = `${TLx(a)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`; render(true); return; }
   if (f==="cikis"){ const kb = r2(kasaDay(today0()).beklenen);
-    if (r2(a) > Math.max(0, kb) + 0.005 && S.kasaOver!==r2(a)){ S.kasaOver = r2(a); S.kasaErr = `Kasada ${TLx(Math.max(0, kb))} olmalı, ${TLx(a)} çıkıyor. Para kasadan değil başka yerden ödendiyse buraya yazma. Yine de doğruysa tekrar Kaydet'e bas.`; render(true); return; } }
+    if (r2(a) > Math.max(0, kb) + 0.005 && S.kasaOver!==r2(a)){ S.kasaOver = r2(a); S.kasaErr = `Kasada ${TLx(Math.max(0, kb))} var, sen ${TLx(a)} yazdın. Doğruysa tekrar Kaydet'e bas.`; render(true); return; } }
   if (f==="kapanis"){ const kp = kasaDay(today0()).cash.filter(c=>c.t==="kapanis");
-    if (kp.length && !S.kapOk){ S.kapOk = true; S.kasaErr = `Gün bugün saat ${hhmm(tOf(kp[kp.length-1]))}'de zaten kapatıldı. Kasayı yeniden saydıysan tekrar Kaydet'e bas.`; render(true); return; } }
+    if (kp.length && !S.kapOk){ S.kapOk = true; S.kasaErr = `Bugün saat ${hhmm(tOf(kp[kp.length-1]))}'de zaten kapattın. Yeniden kapatmak için tekrar Kaydet'e bas.`; render(true); return; } }
   S.kasaOver = null; S.kapOk = false; S.kasaBigOk = null;
   const x = {id: newId(), d: nowIso(), t: f, a: r2(a), ...(r ? {r} : {}), ...(n ? {n} : {}), ...(supSel ? {sup:supSel, ...(r ? {} : {r:supCashReason(supName(supSel))}), ...(n ? {} : {n:supName(supSel)})} : {})};
   if (f==="kapanis"){ const k = kasaDay(today0()); x.say = r2(a); x.beklenen = k.beklenen; x.fark = r2(a - k.beklenen); if (b >= 0) x.birak = r2(b); }
@@ -4816,7 +4783,7 @@ function viewSup(){
       <div class="tile"><span class="tn num">${TLx(month)}</span><span>bu ay alınan mal</span></div>
       <div class="tile"><span class="tn num">${rows.length}</span><span>tedarikçi</span></div></div>
     <button class="big" data-act="supMal">${ic("box",20)} Mal Geldi</button>
-    <p class="small muted">Mal gelince stok artar ve tedarikçiye borç yazılır. Kasadan ödeme yapınca borç düşer. Sayım ise sadece düzeltmedir, kimseye borç yazmaz.</p></section>`;
+    <p class="small muted">Mal gelince stok artar, borç yazılır. Ödeme yapınca borç düşer.</p></section>`;
   if (!rows.length) return h + `<p class="muted">Henüz tedarikçi yok. "Yeni Tedarikçi" ya da "Mal Geldi" ile başla.</p>`;
   rows.sort((a,b)=>(b.st.due-a.st.due) || (b.st.bal-a.st.bal) || a.s.name.localeCompare(b.s.name,"tr"));
   h += `<section class="card">${rows.map(({s,st})=>`<button class="suprow" data-act="supOpen" data-id="${esc(s.id)}"><span class="bi ${st.due?"c3":st.bal>0.005?"c2":"c1"}">${ic("truck",20)}</span>
@@ -5203,9 +5170,9 @@ function kStok(){
     <button class="big" data-act="supMal" data-back="k-stok">${ic("truck",22)} Mal Geldi</button></div>
   <input id="k-q" class="ksearch" type="search" placeholder="Ürün ara" value="${esc(q)}" autocomplete="off">
   <div class="fchips">${[["all","Hepsi"],["az","Azalan"],["bitti","Biten"]].map(([k,l])=>`<button class="tog ${f===k?"on":""}" data-act="kStokF" data-f="${k}">${l} <span class="num">${n[k]}</span></button>`).join("")}</div>
-  <p class="khelp">${ic("help",18)}<span>Sayı yanlışsa <b>−</b> / <b>+</b> ile düzelt. Toptancıdan mal geldiyse <b>Mal Geldi</b>'ye bas, borç da yazılsın.</span></p>
+  <p class="khelp">${ic("help",18)}<span>Yanlışsa <b>−</b> / <b>+</b> ile düzelt.</span></p>
   <section class="card" id="k-list">${kStokList(rows)}</section>
-  <p class="small muted kval">Raftaki mal: alışla ${kTL(val)} · satınca ${kTL(valS)}</p>`;
+  <p class="small muted kval">Raftaki malın değeri: ${kTL(val)}</p>`;
 }
 function kStokList(rows){
   const f = S.kStokF || "all", q = norm(S.kq||"");
@@ -5232,11 +5199,11 @@ function kKar(){
   const bar = (v, c) => `<span class="kbar2"><i style="width:${Math.min(100, 100*Math.abs(v)/max).toFixed(1)}%;background:${c}"></i></span>`;
   h += `<section class="card stack kpl">
     <div class="kline"><span>${ic("coin",20)} Satış</span><b class="num">${kTL(T.ciro)}</b></div>${bar(T.ciro, "var(--c7)")}
-    <div class="kline"><span>${ic("box",20)} Satılan Malın Maliyeti</span><b class="num ${T.maliyet>0.005?"neg":""}">${kNeg(T.maliyet)}</b></div>${bar(T.maliyet, "var(--c5)")}
-    <div class="kline strong"><span>Brüt Kâr</span><b class="num">${kTL(brut)}</b></div>
+    <div class="kline"><span>${ic("box",20)} Malın Alış Fiyatı</span><b class="num ${T.maliyet>0.005?"neg":""}">${kNeg(T.maliyet)}</b></div>${bar(T.maliyet, "var(--c5)")}
+    <div class="kline strong"><span>Kâr</span><b class="num">${kTL(brut)}</b></div>
     <div class="kline"><span>${ic("receipt",20)} Giderler</span><b class="num ${gider>0.005?"neg":""}">${kNeg(gider)}</b></div>${bar(gider, "var(--c3)")}
     ${gid.length ? `<div class="ksub">${gid.map(r=>`<div class="row between small"><span>${esc(r.r)} · ${r.adet} kez</span><span class="num">${kTL(r.a)}</span></div>`).join("")}</div>` : ""}
-    <div class="knet ${net<0?"bad":"good"}"><span>${net<0?"Zarar":"Net Kâr"}</span><b class="num">${kTL(Math.abs(net))}</b></div>
+    <div class="knet ${net<0?"bad":"good"}"><span>${net<0?"Zarar":"Cebinde Kalan"}</span><b class="num">${kTL(Math.abs(net))}</b></div>
   </section>
   <section class="card stack small">
     ${mal ? `<div class="row between"><span>Toptancıya / ekmekçiye ödenen</span><b class="num">${kTL(mal)}</b></div><p class="muted">Bu para mal alımı; satılınca maliyet olarak düşülüyor, gider sayılmadı.</p>` : ""}
@@ -5254,7 +5221,7 @@ function kDaha(){
     ${t("kGo", 'data-tab="veresiye"', "c3", ic("book",28), "Veresiye", "Kim ne kadar borçlu")}
     ${t("kGo", 'data-tab="tedarik"', "c2", ic("truck",28), "Tedarikçiler", (()=>{ const v = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return v>0.005 ? `Borcum: ${kTL(v)}` : "Borç, mal geldi, ödeme"; })())}
     ${t("nGo", "", "c8", ic("bell",28), "Bildirimler", "Telefona haber gelsin")}
-    ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",28), "Ayarlar", "Hesap, PIN, yedek")}
+    ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",28), "Ayarlar", "Şifre, yedek")}
     <a class="ktile c4" href="../"><span class="bi c4">${ic("grid",28)}</span><b>Tam Sürüm</b><span>Sipariş, fatura, plan</span></a>
   </div>`;
 }
@@ -5265,17 +5232,17 @@ function kUrun(){
   const back = S.kBack==="satis" ? `<button class="link back" type="button" data-act="kGo" data-tab="satis">${ic("back",18)} Satışa Dön</button>` : `<button class="link back" type="button" data-act="kGo" data-tab="k-stok">${ic("back",18)} Stok</button>`;
   const num = x => x==null||x==="" ? "" : String(x).replace(".",",");
   return noticeHtml() + back + `<form id="kuform" class="kuform" autocomplete="off">
-    <div class="kuhead"><span class="bi ${p?"c4":"c1"}">${ic(p?"tag":"plus",26)}</span><div><h2>${p ? "Ürünü Düzenle" : "Yeni Ürün"}</h2><p class="muted small">${p ? esc(v.name) : "Barkodu varsa okut, yoksa doğrudan adını yaz."}</p></div></div>
+    <div class="kuhead"><span class="bi ${p?"c4":"c1"}">${ic(p?"tag":"plus",26)}</span><div><h2>${p ? "Ürünü Düzenle" : "Yeni Ürün"}</h2><p class="muted small">${p ? esc(v.name) : "Barkodu okut ya da adını yaz."}</p></div></div>
     <section class="kustep"><span class="kun">1</span><div class="kubody">
       <label for="ku-bc">Barkod <span class="muted">(varsa)</span></label>
       <div class="kuscan">${ic("scan",26)}<input id="ku-bc" inputmode="numeric" value="${esc(bc)}" placeholder="Okut ya da yaz"></div>
-      <div id="ku-bcinfo" class="small muted">${bc ? "" : "Barkodu yoksa bu adımı geç."}</div></div></section>
+      <div id="ku-bcinfo" class="small muted">${bc ? "" : "Yoksa boş bırak."}</div></div></section>
     <section class="kustep"><span class="kun">2</span><div class="kubody">
       <label for="ku-name">Ürün Adı</label><input id="ku-name" class="kubig" required maxlength="80" value="${esc(v.name)}" placeholder="Örn. Eti Browni">${p ? "" : `<div id="pdup-box"></div>`}</div></section>
     <section class="kustep"><span class="kun">3</span><div class="kubody">
       <div class="kuprices"><label>Satış Fiyatı<span class="kutl"><input id="ku-sale" inputmode="decimal" value="${esc(num(v.salePrice))}" placeholder="25"><b>TL</b></span></label>
         <label>Alış Fiyatı<span class="kutl"><input id="ku-buy" inputmode="decimal" value="${esc(num(v.buyPrice))}" placeholder="18"><b>TL</b></span></label></div>
-      <p class="small muted kuhint">Alış fiyatı bilinmiyorsa boş bırak.</p><div id="ku-kar" class="kukar">${kKarTxt(v.salePrice, v.buyPrice)}</div></div></section>
+      <p class="small muted kuhint">Bilmiyorsan boş bırak.</p><div id="ku-kar" class="kukar">${kKarTxt(v.salePrice, v.buyPrice)}</div></div></section>
     <section class="kustep"><span class="kun">4</span><div class="kubody">
       <label for="ku-cnt">Rafta Kaç ${v.byWeight ? "Kilo" : "Tane"} Var?</label>
       <div class="kustepper"><button type="button" data-act="kStep" data-d="-1" aria-label="Bir azalt">${ic("minus",26)}</button><input id="ku-cnt" inputmode="decimal" placeholder="${p ? "Aynı" : "0"}"><button type="button" data-act="kStep" data-d="1" aria-label="Bir artır">${ic("plus",26)}</button></div>
@@ -5300,7 +5267,7 @@ function kBcCheck(){
   const hit = codes.map(c=>barcodeOwner(c, old)).find(Boolean);
   if (hit){ info.innerHTML = `<span class="neg">${ic("alert",16)} Bu barkod <b>${esc(hit.name)}</b> ürününde kayıtlı.</span> <button type="button" class="link" data-act="kEdit" data-id="${hit.id}">Onu Düzenle</button>`; return false; }
   const sc = codes.length ? scaleParse(codes[0]) : null;
-  info.innerHTML = codes.length ? `${ic("check",16)} Barkod alındı.` : "Barkodu yoksa bu adımı geç.";
+  info.innerHTML = codes.length ? `${ic("check",16)} Barkod alındı.` : "Yoksa boş bırak.";
   return true;
 }
 async function kSave(next){

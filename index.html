@@ -540,6 +540,7 @@ html.kolay .rpctl .grid2,html.kolay .rpctl [aria-label="Gruplama"],html.kolay .r
 .mtile,.btile,.grid2>*,.smline>*,.vbtns>*,.btiles>*,.mgrid>*{min-width:0;overflow-wrap:anywhere}
 @media (max-width:380px){.mtile{padding:12px}.btile{padding:12px}.mtile b,.btile b{font-size:16px}}
 @media (max-width:380px){ nav.seg{flex-wrap:wrap;overflow-x:visible} nav.seg button{flex:1 1 auto;padding-left:10px;padding-right:10px} }
+.camBtn{display:inline-flex;align-items:center;justify-content:center;min-width:48px;min-height:44px;padding:0 10px}
 </style>
 </head>
 <body>
@@ -962,9 +963,10 @@ function renderToast(){
 function offerUndo(text, run){ S.undo = {text, run, until: Date.now()+9000}; renderToast(); clearTimeout(offerUndo.t); offerUndo.t = setTimeout(()=>{ S.undo=null; renderToast(); }, 9100); }
 // Yenilikler kutusu: her güncellemede bir kez gösterilir, "Tamam" denince bu cihazda bir daha çıkmaz.
 // Yeni güncellemede YENI_VER'i değiştir ve YENI_NOT listesini yenile.
-const YENI_VER = "2026-10-18b";
+const YENI_VER = "2026-10-18d";
 const YENI_BASLIK = "Yenilikler · 18 Ekim 2026";
 const YENI_NOT = [
+  "Telefonda barkodu kamerayla okutabilirsin: Satış ekranındaki kamera düğmesine bas.",
   "Günün raporu bildirimi artık \"Gün kapanışı\"na basınca gelir. Kapatmayı unutursan saat 23:30'da yine gelir.",
   "Telefonun geri tuşu artık önce açık formu ya da ayrıntı ekranını kapatır; seni uygulamadan hemen çıkarmaz.",
   "Küçük telefonlarda Menü ve Satış sekmeleri taşmaz, hepsi görünür.",
@@ -1439,7 +1441,7 @@ function viewProducts(){
       <p class="small muted">Araç günlerini Ayarlar'dan girdiysen "kaç günde bir" yerine o günler kullanılır. İlk tahmin sadece başlangıç için; faturalar geldikçe uygulama gerçek satışı öğrenir.</p>`}
 
       <details class="how" ${(v.barcodes||[]).length||v.plu||v.byWeight||v.quick?"open":""}><summary>Kasada Satış: Barkod, Terazi, Hızlı Düğme</summary><div class="stack" style="gap:8px;margin-top:8px">
-        <label>Barkod(lar)<input id="f-bc" inputmode="numeric" value="${esc((v.barcodes||[]).filter(b=>!(b.q>1)).map(b=>b.c).join(", "))}" placeholder="Okut ya da yaz; birden fazlaysa virgülle ayır"></label>
+        <label>Barkod(lar)<input id="f-bc" inputmode="numeric" value="${esc((v.barcodes||[]).filter(b=>!(b.q>1)).map(b=>b.c).join(", "))}" placeholder="Okut ya da yaz; birden fazlaysa virgülle ayır"></label>${camBtn("f-bc")}
         <div class="grid2"><label>Koli barkodu<input id="f-bck" inputmode="numeric" value="${esc((v.barcodes||[]).filter(b=>b.q>1).map(b=>b.c).join(", "))}" placeholder="Varsa"></label>
           <label>Kolide kaç tane?<input id="f-bckq" inputmode="numeric" value="${esc(((v.barcodes||[]).find(b=>b.q>1)||{}).q || "")}" placeholder="Örn. 24"></label></div>
         <label class="check"><input id="f-w" type="checkbox" ${v.byWeight?"checked":""}> Kilo ile satılır (fiyat kilo fiyatı; kasada kilo sorulur)</label>
@@ -2526,6 +2528,7 @@ document.addEventListener("click", async ev=>{
     else if (a==="delEv"){ if (S.confirmEv!==id){ S.confirmEv=id; render(); return; } S.confirmEv=null; const old={...S.events.find(x=>x.id===id)}; await store.deleteEvent(id); offerUndo("Fire kaydı silindi.", ()=>store.addEvent(old)); render(); }
     else if (a==="migrate"){ t.disabled=true; await migrateLocal(); }
     else if (a==="dropLocal"){ try{ localStorage.removeItem(LKEY); }catch(_){} S.localPending=null; render(); }
+    else if (a==="camScan"){ camScan(t.dataset.for); }
     else if (a==="guide"){ S.guide=!S.guide; if (S.guide) S.editId=null; render(); window.scrollTo(0,0); }
     else if (a==="guideClose"){ S.guide=false; render(); }
     else if (a==="guideGo"){ syncInv(); S.tab=t.dataset.tab; S.editId=null; S.msg=null; render(); window.scrollTo(0,0); }
@@ -3689,6 +3692,22 @@ function cartAdd(p, q, u, opt){
     if (c!=null && inCart > c + 1e-9) S.posWarn = c > 0 ? `Rafta ${pQtyTxt(c)} ${unitOf(p)} ${p.name} görünüyordu, sepette ${pQtyTxt(inCart)} var. Satış yapılır; sonra Stok'ta sayıyı düzelt.` : `${p.name} stokta bitmiş görünüyordu. Satış yapılır; mal geldiyse Mal Geldi ile ekle.`; }
   cartSave();
 }
+// ---- Kamerayla barkod okuma (sadece telefon/tablet; kamera.js ilk basışta yüklenir) ----
+const CAM_OK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && !!(window.matchMedia && matchMedia("(pointer:coarse)").matches);
+const camBtn = id => CAM_OK ? `<button type="button" class="camBtn" data-act="camScan" data-for="${id}" aria-label="Kamerayla barkod oku" title="Kamerayla oku">${ic("scan",22)}</button>` : "";
+function camGot(target, code){
+  if (target==="pos"){ posScan(code); render(); posFocus(); return; }
+  const el = document.getElementById(target); if (!el) return;
+  el.value = (target==="f-bc" && el.value.trim()) ? el.value.trim().replace(/,\s*$/,"") + ", " + code : code;
+  el.dispatchEvent(new Event("input", {bubbles:true}));
+}
+function camScan(target){
+  const go = () => window.Kamera.open(code => camGot(target, code));
+  if (window.Kamera) return go();
+  const s = document.createElement("script"); s.src = (window.KOLAY ? "../" : "") + "kamera.js";
+  s.onload = go; s.onerror = () => alert("Kamera ilk kullanımda internet ister. Bağlanınca tekrar dene.");
+  document.head.appendChild(s);
+}
 function posFocus(){ setTimeout(()=>{ if (S.posEditK) return; const a = document.activeElement; if (a && a!==document.body && a.id!=="pos-scan" && /INPUT|SELECT|TEXTAREA/.test(a.tagName)) return; document.getElementById("pos-scan")?.focus(); }, 0); }
 function posScan(raw){
   const txt = String(raw||"").trim(); if (!txt) return;
@@ -3767,7 +3786,7 @@ function viewSell(){
   // ---- sol: okutma + sepet ----
   let L = `<form id="posform" class="scanbar" autocomplete="off"><span class="scanico">${BARCODE_SVG}</span>
       <input id="pos-scan" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="enter" placeholder="Barkodu okut ya da ürün adı yaz" aria-label="Barkod ya da ürün adı" value="${esc(S.posQ||"")}">
-      <button class="primary" type="submit" aria-label="Ekle">${ic("plus",20)}</button></form>
+      ${camBtn("pos")}<button class="primary" type="submit" aria-label="Ekle">${ic("plus",20)}</button></form>
     <div id="pos-res">${S.posQ ? posResults(S.posQ) : ""}</div>`;
   if (S.posErr) L += `<div class="notice bad">${esc(S.posErr)}</div>`;
   if (S.posWarn) L += `<div class="notice warn">${esc(S.posWarn)}</div>`;

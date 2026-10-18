@@ -1,0 +1,192 @@
+/* Bakkal Defteri / Bakkal Kolay: kamerayla barkod okuma (sadece telefon).
+   Telefonun kendi okuyucusu (BarcodeDetector) varsa onu kullanır; yoksa (iPhone) aşağıdaki EAN/UPC çözücü çalışır.
+   Uygulama bu dosyayı ilk "kamera" düğmesine basılınca yükler. */
+(function () {
+  "use strict";
+  if (window.Kamera) return;
+
+  /* ---------- EAN-13 / EAN-8 / UPC-A çözücü ---------- */
+  // rakam başına 4 çizgi/boşluk genişliği (7 birim toplam)
+  const L = [[3,2,1,1],[2,2,2,1],[2,1,2,2],[1,4,1,1],[1,1,3,2],[1,2,3,1],[1,1,1,4],[1,3,1,2],[1,2,1,3],[3,1,1,2]];
+  const G = L.map(p => p.slice().reverse());
+  const PAR = ["LLLLLL","LLGLGG","LLGGLG","LLGGGL","LGLLGG","LGGLLG","LGGGLL","LGLGLG","LGLGGL","LGGLGL"];
+
+  function digit(r, i, both) {
+    const tot = r[i] + r[i+1] + r[i+2] + r[i+3];
+    if (!(tot > 0)) return null;
+    const q = [r[i] * 7 / tot, r[i+1] * 7 / tot, r[i+2] * 7 / tot, r[i+3] * 7 / tot];
+    let best = null, bd = 99, sd = 99;
+    for (let d = 0; d < 10; d++) {
+      for (let k = 0; k < (both ? 2 : 1); k++) {
+        const p = k ? G[d] : L[d];
+        let s = 0;
+        for (let j = 0; j < 4; j++) s += Math.abs(q[j] - p[j]);
+        if (s < bd) { sd = bd; bd = s; best = { d: d, k: k ? "G" : "L" }; }
+        else if (s < sd) sd = s;
+      }
+    }
+    // yeterince benzemeli ve ikinci en yakın şıktan belirgin biçimde ayrılmalı (düzgün çizgili desenleri elemek için)
+    return (bd <= 1.3 && sd - bd >= 0.35) ? best : null;
+  }
+  function sumOk(s) {
+    const n = s.length; let t = 0;
+    for (let k = n - 2; k >= 0; k--) t += Number(s[k]) * (((n - 2 - k) % 2 === 0) ? 3 : 1);
+    return Number(s[n-1]) === (10 - t % 10) % 10;
+  }
+  function guardOk(r, i, m) { for (let j = 0; j < 3; j++) if (Math.abs(r[i+j] - m) > m * 0.7) return false; return true; }
+  function centerOk(r, i, m) { for (let j = 0; j < 5; j++) if (r[i+j] < m * 0.35 || r[i+j] > m * 1.9) return false; return true; }
+
+  function ean(r, i, m, half) {          // half=6 → EAN-13, half=4 → EAN-8
+    if (i + 3 + half * 8 + 5 + 3 > r.length) return null;
+    let pos = i + 3, left = "", par = "";
+    for (let k = 0; k < half; k++) {
+      const x = digit(r, pos, half === 6); if (!x) return null;
+      left += x.d; par += x.k; pos += 4;
+    }
+    if (!centerOk(r, pos, m)) return null; pos += 5;
+    let right = "";
+    for (let k = 0; k < half; k++) { const x = digit(r, pos, false); if (!x) return null; right += x.d; pos += 4; }
+    if (!guardOk(r, pos, m)) return null;
+    let code;
+    if (half === 6) { const f = PAR.indexOf(par); if (f < 0) return null; code = f + left + right; }
+    else { if (par !== "LLLL") return null; code = left + right; }
+    return sumOk(code) ? code : null;
+  }
+  function decodeRuns(r, startBar) {
+    const n = r.length;
+    for (let i = 0; i + 3 < n; i++) {
+      if (startBar ? (i % 2) : !(i % 2)) continue;      // koruma çizgisi bir "çizgi" olmalı
+      const m = (r[i] + r[i+1] + r[i+2]) / 3;
+      if (m < 1 || !guardOk(r, i, m)) continue;
+      if (i > 0 && r[i-1] < m * 2.5) continue;           // önünde boşluk olmalı
+      const c = ean(r, i, m, 6) || ean(r, i, m, 4);
+      if (c) return c;
+    }
+    return null;
+  }
+  function toRuns(g, N, off) {
+    const w = Math.max(12, (N / 7) | 0), ps = new Float64Array(N + 1);
+    for (let i = 0; i < N; i++) ps[i+1] = ps[i] + g[i];
+    const thr = new Float32Array(N), bits = new Uint8Array(N);
+    for (let i = 0; i < N; i++) {
+      const a = Math.max(0, i - w), b = Math.min(N, i + w + 1), mean = (ps[b] - ps[a]) / (b - a);
+      thr[i] = mean - Math.max(off, mean * 0.06);
+      bits[i] = g[i] < thr[i] ? 1 : 0;
+    }
+    // çizgi kenarları: eşiğin geçildiği yer, piksel altı hassasiyetle
+    const edges = [0];
+    for (let i = 0; i + 1 < N; i++) {
+      if (bits[i] !== bits[i+1]) {
+        const d = g[i+1] - g[i], t = d ? (thr[i] - g[i]) / d : 0.5;
+        edges.push(i + 0.5 + Math.max(-0.5, Math.min(0.5, t - 0.5)));
+      }
+    }
+    edges.push(N);
+    const r = [];
+    for (let i = 0; i + 1 < edges.length; i++) r.push(edges[i+1] - edges[i]);
+    return { r: r, startBar: bits[0] === 1 };
+  }
+  function decodeLine(g, N) {
+    // hafif yumuşatma
+    const s = new Float32Array(N);
+    for (let i = 0; i < N; i++) s[i] = ((g[Math.max(0, i-1)] + 2 * g[i] + g[Math.min(N-1, i+1)]) / 4);
+    for (const off of [10, 4]) {
+      const t = toRuns(s, N, off), n = t.r.length;
+      if (n < 43) continue;
+      let c = decodeRuns(t.r, t.startBar);
+      if (c) return c;
+      const lastBar = t.startBar ? (n - 1) % 2 === 0 : (n - 1) % 2 === 1;   // ters (baş aşağı) okuma
+      c = decodeRuns(t.r.slice().reverse(), lastBar);
+      if (c) return c;
+    }
+    return null;
+  }
+  // d: RGBA piksel dizisi
+  function scanFrame(d, w, h) {
+    const order = [];
+    for (let q = 0; q < 23; q++) order.push(q);
+    order.sort((a, b) => Math.abs(a - 11) - Math.abs(b - 11));
+    const row = new Float32Array(w), col = new Float32Array(h);
+    for (let k = 0; k < 2; k++) {                       // k=0: yatay, k=1: dikey tutulmuş barkod
+      const N = k ? h : w, lines = k ? w : h, out = k ? col : row;
+      for (const q of order) {
+        const pos = Math.min(lines - 1, Math.floor(lines * (0.1 + 0.8 * q / 22)));
+        for (let i = 0; i < N; i++) {
+          const x = k ? pos : i, y = k ? i : pos, o = (y * w + x) * 4;
+          out[i] = (d[o] * 77 + d[o+1] * 150 + d[o+2] * 29) >> 8;
+        }
+        const c = decodeLine(out, N); if (c) return c;
+      }
+    }
+    return null;
+  }
+
+  /* ---------- kamera ekranı ---------- */
+  let ov = null, stream = null, timer = 0, alive = false;
+  function css() {
+    if (document.getElementById("kam-css")) return;
+    const s = document.createElement("style"); s.id = "kam-css";
+    s.textContent = "#kam-ov{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;font-family:system-ui,sans-serif;color:#fff}" +
+      "#kam-ov video{flex:1;min-height:0;width:100%;object-fit:cover}" +
+      "#kam-ov .kam-frame{position:absolute;left:8%;right:8%;top:30%;height:26%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);pointer-events:none}" +
+      "#kam-ov .kam-frame::after{content:'';position:absolute;left:6%;right:6%;top:50%;height:2px;background:#ff3b30}" +
+      "#kam-ov .kam-bar{position:relative;z-index:2;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:#111;display:flex;flex-direction:column;gap:10px;text-align:center}" +
+      "#kam-ov .kam-msg{font-size:18px;font-weight:600}" +
+      "#kam-ov button{font:inherit;font-size:20px;font-weight:700;padding:14px;border-radius:14px;border:0;background:#fff;color:#000;min-height:52px}";
+    document.head.appendChild(s);
+  }
+  function close() {
+    alive = false; clearTimeout(timer);
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    if (ov) { ov.remove(); ov = null; }
+    window.removeEventListener("popstate", close);
+    document.removeEventListener("visibilitychange", onVis);
+  }
+  function onVis() { if (document.hidden) close(); }
+
+  async function open(cb) {
+    close(); css(); alive = true;
+    ov = document.createElement("div"); ov.id = "kam-ov"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Kamerayla barkod oku");
+    ov.innerHTML = '<video playsinline muted autoplay></video><div class="kam-frame"></div><div class="kam-bar"><div class="kam-msg">Barkodu çerçeveye tut</div><button type="button" id="kam-x">Kapat</button></div>';
+    document.body.appendChild(ov);
+    ov.querySelector("#kam-x").onclick = close;
+    window.addEventListener("popstate", close); document.addEventListener("visibilitychange", onVis);
+    const msg = ov.querySelector(".kam-msg"), video = ov.querySelector("video");
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    } catch (e) {
+      if (!alive) return;
+      msg.textContent = (e && (e.name === "NotAllowedError" || e.name === "SecurityError")) ? "Kamera izni verilmedi. Telefon ayarlarından bu uygulamaya kamera izni ver." : "Kamera açılamadı.";
+      return;
+    }
+    if (!alive) { stream.getTracks().forEach(t => t.stop()); stream = null; return; }
+    video.srcObject = stream;
+    try { await video.play(); } catch (_) {}
+    try { const tr = stream.getVideoTracks()[0]; await tr.applyConstraints({ advanced: [{ focusMode: "continuous" }] }); } catch (_) {}
+
+    let det = null;
+    if ("BarcodeDetector" in window) { try { det = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39"] }); } catch (_) { det = null; } }
+    const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+    let last = "", hits = 0;
+    const done = code => { try { navigator.vibrate && navigator.vibrate(60); } catch (_) {} close(); cb(code); };
+    const tick = async () => {
+      if (!alive) return;
+      let code = null;
+      if (video.videoWidth) {
+        try {
+          if (det) { const r = await det.detect(video); if (r && r[0] && r[0].rawValue) { done(r[0].rawValue); return; } }
+          else {
+            const sc = Math.min(1, 960 / video.videoWidth), w = Math.round(video.videoWidth * sc), h = Math.round(video.videoHeight * sc);
+            cv.width = w; cv.height = h; cx.drawImage(video, 0, 0, w, h);
+            code = scanFrame(cx.getImageData(0, 0, w, h).data, w, h);
+          }
+        } catch (_) {}
+      }
+      if (code) { if (code === last) hits++; else { last = code; hits = 1; } if (hits >= 2) { done(code); return; } }
+      timer = setTimeout(tick, 90);
+    };
+    tick();
+  }
+
+  window.Kamera = { open: open, close: close, _scan: scanFrame, _line: decodeLine, _runs: toRuns, _dr: decodeRuns };
+})();

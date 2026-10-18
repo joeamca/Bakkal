@@ -80,6 +80,7 @@ body.staff [data-act="goKasa"],body.staff [data-act="kKasa"],body.staff [data-ac
 html.kolay body.staff nav.tabs{grid-template-columns:repeat(3,1fr)}
 .hr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .hr>div:first-child{min-width:0;flex:1}.hr b{display:block;overflow-wrap:anywhere}.hr .d{text-align:right;font-weight:800;white-space:nowrap}.hr .d small{display:block;font-weight:700}
+body.staff .pstep [data-d="-1"]{visibility:hidden}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav.tabs button{border:0;border-radius:0;background:none;color:var(--muted);font-size:13px;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px}
 nav.tabs button .ic{font-family:var(--mono);font-size:19px}
@@ -2771,7 +2772,8 @@ document.addEventListener("click", async ev=>{
     else if (a==="count"){ const v=document.getElementById((t.dataset.src||"cnt-")+id).value; if (v==="") return; const cq=Number(String(v).replace(",",".")), cp=S.products.find(x=>x.id===id);
       if (isNaN(cq) || cq<0){ S.msg={kind:"bad",text:"Raf sayısı eksi olamaz. Rafta hiç yoksa 0 yaz."}; render(true); return; }
       if (unitOf(cp)==="tane" && !Number.isInteger(cq)){ S.msg={kind:"bad",text:"Adet küsuratlı olamaz; tam sayı yaz."}; render(true); return; }
-      const cid = newId(); await store.addEvent({id:cid, type:"sayim",productId:id,qty:cq,date:nowIso()}); offerUndo("Raf sayısı kaydedildi.", ()=>store.deleteEvent(cid)); const p=S.products.find(x=>x.id===id); if(p) p.showCount=false; S.msg={kind:"ok",text:"Raf sayısı kaydedildi; öneri buna göre güncellendi."}; render(); }
+      if (isStaff()){ const cur0 = pCur(cp); if (cur0!=null && cq < cur0){ S.msg={kind:"bad",text:"Stoğu azaltmayı sadece dükkân sahibi yapar. Sayım yanlışsa dükkân sahibine söyle."}; render(true); return; } }
+      const cid = newId(); await store.addEvent({id:cid, type:"sayim",productId:id,qty:cq,was:pCur(cp),date:nowIso()}); offerUndo("Raf sayısı kaydedildi.", ()=>store.deleteEvent(cid)); const p=S.products.find(x=>x.id===id); if(p) p.showCount=false; S.msg={kind:"ok",text:"Raf sayısı kaydedildi; öneri buna göre güncellendi."}; render(); }
     else if (a==="copy"){ const txt=orderText(t.dataset.sup); try{ await navigator.clipboard.writeText(txt); S.msg={kind:"ok",text:"Sipariş listesi kopyalandı. WhatsApp'tan plasiyere yapıştırabilirsin."}; }catch(_){ S.msg={kind:"warn",text:txt}; } render(); }
     else if (a==="closeInvSum2"){ S.invSummary=null; render(); }
     else if (a==="manualInv"){ S.invErr=null; S.inv={supplier:"",no:"",date:nowIso().slice(0,10),lines:[{productId:"",qty:null,price:null,iade:false}],force:false}; S.msg=null; render(); }
@@ -4303,6 +4305,7 @@ function viewHareket(){
 }
 async function addCount(p, cnt){
   if (!(cnt >= 0)) return;
+  if (isStaff()){ const cur = pCur(p); if (cur!=null && cnt < cur){ S.msg = {kind:"bad", text:"Stoğu azaltmayı sadece dükkân sahibi yapar. Sayım yanlışsa dükkân sahibine söyle."}; render(); return; } }
   await posMarkStart();
   await store.addEvent({id:newId(), type:"sayim", productId:p.id, qty:cnt, was:pCur(p), date:nowIso()});
   if (p.outSince && cnt > 0) await store.saveProduct({...S.products.find(x=>x.id===p.id), outSince:null});
@@ -5034,6 +5037,7 @@ function pStepper(p, cls){
   return `<span class="pstep ${cls||""}"><button type="button" data-act="pStep" data-id="${p.id}" data-d="-1" aria-label="${esc(p.name)} bir azalt" ${v===0?"disabled":""}>${ic("minus",22)}</button><b class="num" data-pq="${p.id}">${pQtyTxt(v)}</b><button type="button" data-act="pStep" data-id="${p.id}" data-d="1" aria-label="${esc(p.name)} bir artır">${ic("plus",22)}</button></span>`;
 }
 function pStep(id, d){
+  if (d < 0 && isStaff()) return;
   const p = S.products.find(x=>x.id===id); if (!p) return;
   const base = S.pPend[id] ?? pCur(p) ?? 0, v = Math.max(0, r2(base + d));
   S.pPend[id] = v;
@@ -5332,7 +5336,7 @@ function kUrun(){
   const v = p || {name:"", salePrice:"", buyPrice:"", barcodes:[], byWeight:false};
   const bc = p ? (v.barcodes||[]).map(b=>b.c).join(", ") : (S.kBc || "");
   const back = S.kBack==="satis" ? `<button class="link back" type="button" data-act="kGo" data-tab="satis">${ic("back",18)} Satışa Dön</button>` : `<button class="link back" type="button" data-act="kGo" data-tab="k-stok">${ic("back",18)} Stok</button>`;
-  const num = x => x==null||x==="" ? "" : String(x).replace(".",",");
+  const num = x => x==null||x==="" ? "" : String(x).replace(".",","), lockP = isStaff() && !!p;
   return noticeHtml() + back + `<form id="kuform" class="kuform" autocomplete="off">
     <div class="kuhead"><span class="bi ${p?"c4":"c1"}">${ic(p?"tag":"plus",26)}</span><div><h2>${p ? "Ürünü Düzenle" : "Yeni Ürün"}</h2><p class="muted small">${p ? esc(v.name) : "Barkodu okut ya da adını yaz."}</p></div></div>
     <section class="kustep"><span class="kun">1</span><div class="kubody">
@@ -5342,9 +5346,9 @@ function kUrun(){
     <section class="kustep"><span class="kun">2</span><div class="kubody">
       <label for="ku-name">Ürün Adı</label><input id="ku-name" class="kubig" required maxlength="80" value="${esc(v.name)}" placeholder="Örn. Eti Browni">${p ? "" : `<div id="pdup-box"></div>`}</div></section>
     <section class="kustep"><span class="kun">3</span><div class="kubody">
-      <div class="kuprices"><label>Satış Fiyatı<span class="kutl"><input id="ku-sale" inputmode="decimal" value="${esc(num(v.salePrice))}" placeholder="25"><b>TL</b></span></label>
-        <label>Alış Fiyatı<span class="kutl"><input id="ku-buy" inputmode="decimal" value="${esc(num(v.buyPrice))}" placeholder="18"><b>TL</b></span></label></div>
-      <p class="small muted kuhint">Bilmiyorsan boş bırak.</p><div id="ku-kar" class="kukar">${kKarTxt(v.salePrice, v.buyPrice)}</div></div></section>
+      <div class="kuprices"><label>Satış Fiyatı<span class="kutl"><input id="ku-sale" inputmode="decimal" value="${esc(num(v.salePrice))}" placeholder="25" ${lockP && Number(v.salePrice)>0 ? "readonly" : ""}><b>TL</b></span></label>
+        <label>Alış Fiyatı<span class="kutl"><input id="ku-buy" inputmode="decimal" value="${esc(num(v.buyPrice))}" placeholder="18" ${lockP && Number(v.buyPrice)>0 ? "readonly" : ""}><b>TL</b></span></label></div>
+      <p class="small muted kuhint">${lockP ? "Var olan fiyatı sadece dükkân sahibi değiştirir." : "Bilmiyorsan boş bırak."}</p><div id="ku-kar" class="kukar">${kKarTxt(v.salePrice, v.buyPrice)}</div></div></section>
     <section class="kustep"><span class="kun">4</span><div class="kubody">
       <label for="ku-cnt">Rafta Kaç ${v.byWeight ? "Kilo" : "Tane"} Var?</label>
       <div class="kustepper"><button type="button" data-act="kStep" data-d="-1" aria-label="Bir azalt">${ic("minus",26)}</button><input id="ku-cnt" inputmode="decimal" placeholder="${p ? "Aynı" : "0"}"><button type="button" data-act="kStep" data-d="1" aria-label="Bir artır">${ic("plus",26)}</button></div>

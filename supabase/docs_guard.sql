@@ -35,17 +35,20 @@ end $$;
 drop trigger if exists docs_zlog on public.docs;
 create trigger docs_zlog after update on public.docs for each row execute function public.docs_log_fn();
 
--- 2) Çalışan sınırı
+-- 2) Çalışan sınırı (güncel sürüm; tekrar çalıştırmak güvenlidir)
 --  * kasa kaydı yazamaz
---  * yeni satış/stok/ürün kaydı ekleyebilir
---  * başkasının kaydını değiştiremez/silemez; kendi kaydını 15 dk içinde geri alabilir
---  * ürün, müşteri, tedarikçi, ayar bilgisini düzenleyebilir ama silemez
+--  * yeni satış / stok / ürün / müşteri kaydı ekleyebilir
+--  * başkasının kaydını değiştiremez ya da silemez; kendi kaydını 2 dk içinde geri alabilir
+--  * var olan ürünün satış/alış fiyatını değiştiremez (fiyatı boşsa yazabilir)
+--  * var olan müşteriyi (limit, ad) değiştiremez
+--  * ürün adı, barkod, tedarikçi ve ayar bilgisini düzenleyebilir ama silemez
 create or replace function public.docs_guard() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   me uuid := auth.uid();
   o public.docs;
-  win interval := interval '15 minutes';
+  win interval := interval '2 minutes';
+  osale numeric; nsale numeric; obuy numeric; nbuy numeric;
 begin
   if me is null then return new; end if;                      -- servis / cron
   if is_owner(new.shop_id) or is_admin() then return new; end if;
@@ -55,7 +58,15 @@ begin
   select * into o from docs where shop_id = new.shop_id and kind = new.kind and id = new.id;
   if not found then return new; end if;                       -- yeni kayıt serbest
   if o.updated_by = me and o.updated_at > now() - win then return new; end if;
-  if new.kind in ('product','customer','supplier','settings') and new.deleted = false then return new; end if;
+  if new.kind = 'product' and new.deleted = false then
+    osale := coalesce(nullif(o.data->>'salePrice','')::numeric, 0);
+    nsale := coalesce(nullif(new.data->>'salePrice','')::numeric, 0);
+    obuy  := coalesce(nullif(o.data->>'buyPrice','')::numeric, 0);
+    nbuy  := coalesce(nullif(new.data->>'buyPrice','')::numeric, 0);
+    if (osale = 0 or osale = nsale) and (obuy = 0 or obuy = nbuy) then return new; end if;
+    raise exception 'YETKI: fiyatı sadece dükkân sahibi değiştirebilir' using errcode = 'P0001';
+  end if;
+  if new.kind in ('supplier','settings') and new.deleted = false then return new; end if;
   raise exception 'YETKI: bu kaydı değiştirme ya da silme yetkin yok' using errcode = 'P0001';
 end $$;
 drop trigger if exists docs_guard on public.docs;

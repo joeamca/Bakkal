@@ -1201,7 +1201,7 @@ const YENI_BASLIK = "Yenilikler";
 const YENI_NOT = [
   "Günü Kapat'a basınca günün raporu telefona gelir.",
   "Geri tuşu artık bir önceki ekrana döner.",
-  "Veresiye, Kâr ve Ayarlar ekranları sadeleşti.",
+  "Yazılar kısaldı; Veresiye, Kâr, Ayarlar ve Mal Geldi sadeleşti.",
   "Tutarı 1.500 ya da 12,5 diye yazabilirsin."
 ];
 function yenilikHtml(){
@@ -2134,12 +2134,12 @@ function custDetail(c){
   </section>`;
   if (s.series.length>=2){
     const pts = s.series.slice(-20).map((x,i,a)=>({v:x.bal, l: i===0||i===a.length-1 ? new Date(x.t).toLocaleDateString("tr-TR",{day:"numeric",month:"short"}) : ""}));
-    html += `<section class="card stack"><h3>Borç nasıl değişti?</h3>${lineChart(pts, {c:"var(--c3)", label:"Borç bakiyesi"})}</section>`;
+    html += `<section class="card stack"><h3>Borç</h3>${lineChart(pts, {c:"var(--c3)", label:"Borç bakiyesi"})}</section>`;
   }
-  if (s.bal>0.005) html += `<section class="card stack"><h3>Hatırlatma mesajı</h3><p class="small sel msgbox">${esc(reminderText(c, s))}</p>
-    <div class="row"><button data-act="vCopyMsg" data-id="${c.id}">${ic("copy",18)} Mesajı kopyala</button>${c.phone?`<span class="small muted">WhatsApp'ta ${esc(c.phone)} numarasına yapıştır</span>`:""}</div></section>`;
+  if (s.bal>0.005) html += `<section class="card stack"><h3>Hatırlat</h3><p class="small sel msgbox">${esc(reminderText(c, s))}</p>
+    <div class="row"><button data-act="vCopyMsg" data-id="${c.id}">${ic("copy",18)} Kopyala</button>${c.phone?`<span class="small muted">WhatsApp'a yapıştır</span>`:""}</div></section>`;
   let run = 0; const hist = s.ev.map(e=>{ run += e.type==="borc" ? Number(e.amount) : -Number(e.amount); return {e, run}; }).reverse();
-  html += `<section class="card"><h3 style="margin-bottom:6px">Hesap dökümü</h3>${hist.length ? hist.map(({e,run})=>`<div class="lrow">
+  html += `<section class="card"><h3 style="margin-bottom:6px">Hareketler</h3>${hist.length ? hist.map(({e,run})=>`<div class="lrow">
       <span class="lic ${e.type}">${ic(e.type==="borc"?"plus":"minus",16)}</span>
       <span class="lmid"><b>${e.type==="borc"?"Veresiye":"Ödeme"}</b>${e.note?` · ${esc(e.note)}`:""}${whoTag("event", e.id)}<br><span class="small muted">${new Date(e.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"short"})} ${new Date(e.date).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})}</span></span>
       <span class="lamt"><b class="num ${e.type==="borc"?"neg":"pos"}">${e.type==="borc"?"+":"−"}${TLx(Number(e.amount))}</b><span class="small muted num">kalan ${TLx(run)}</span>
@@ -2239,7 +2239,7 @@ function viewMenu(){
     <button class="mtile" data-act="goto" data-tab="tedarik" data-plain="1"><span class="bi c2">${ic("truck",26)}</span><b>Tedarikçiler</b><span class="small muted">${(()=>{ const t = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return t>0.005 ? `Borcum: ${TLx(r2(t))}` : "Borç, mal geldi, ödeme"; })()}</span></button>
     <button class="mtile" data-act="goKasa"><span class="bi c1">${ic("box",26)}</span><b>Kasa</b><span class="small muted">Açılış, giriş/çıkış, gün kapanışı</span></button>
     <a class="mtile" href="kolay/" style="text-decoration:none"><span class="bi c7">${ic("home",26)}</span><b>Kolay Sürüm</b><span class="small muted">Büyük düğmeler, sade ekran</span></a>
-    <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
+    <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Nasıl kullanılır</span></button>
     ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="toAdmin"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici Ekranı</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
     ${S.mode==="cloud" ? `<button class="mtile" data-act="goto" data-tab="ayarlar" data-plain="1"><span class="bi c5">${ic("user",26)}</span><b>Hesabım</b><span class="small muted">${esc(S.cloud.ctx?.username||"")} · şifre, kişiler, çıkış</span></button>` : ""}</div>`;
 }
@@ -2788,7 +2788,7 @@ document.addEventListener("submit", async ev=>{
   const chk = id => !!document.getElementById(id)?.checked;
   const old = S.products.find(x=>x.id===S.editId);
   if (!old && !S.formMade && pTwin(g("f-name")) && S.pDupOk!==norm(g("f-name"))){ S.pDupOk = norm(g("f-name")); const bx = document.getElementById("pdup-box");
-    if (bx){ bx.innerHTML = pDupHint(g("f-name"), null, "f-stock") + `<p class="small muted">Gerçekten ayrı bir ürünse tekrar Kaydet'e bas.</p>`; bx.scrollIntoView({block:"center"}); } return; }
+    if (bx){ bx.innerHTML = pDupHint(g("f-name"), null, "f-stock") + `<p class="small muted">Ayrıysa tekrar Kaydet.</p>`; bx.scrollIntoView({block:"center"}); } return; }
   const base = {...(old||{id:newId(),createdAt:nowIso(),aliases:[],outSince:null})};
   let p;
   if (S.formMade){
@@ -3550,7 +3550,7 @@ function createdCard(){
   return `<div class="notice ok stack"><b>${x.p ? `Hesap hazır. ${esc(x.name||x.u)} için giriş bilgileri; kopyalayıp gönder:` : `${esc(x.name||x.u)} onaylandı. Haber vermek için gönder:`}</b>
     <pre class="small" style="white-space:pre-wrap;margin:0;font-family:var(--mono)">${esc(shareText(x.shop, x.u, x.p, x.email))}</pre>
     ${x.p ? `<span class="small"><b>Şifre 5 dakika geçerli.</b> Kişi hemen girmeli; süre dolarsa "Şifre yenile"ye bas.</span>` : ""}
-    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Mesajı kopyala</button>${x.email ? `<a class="btn" href="mailto:${esc(x.email)}?subject=${encodeURIComponent("Bakkal Defteri hesabın")}&body=${encodeURIComponent(shareText(x.shop, x.u, x.p, x.email))}">E-postayla gönder</a>` : ""}
+    <div class="row"><button class="primary" data-act="copyCreated">${ic("copy",18)} Kopyala</button>${x.email ? `<a class="btn" href="mailto:${esc(x.email)}?subject=${encodeURIComponent("Bakkal Defteri hesabın")}&body=${encodeURIComponent(shareText(x.shop, x.u, x.p, x.email))}">E-postayla gönder</a>` : ""}
       ${x.phone || !x.email ? `<a class="btn" href="https://wa.me/${x.phone ? waNum(x.phone) : ""}?text=${encodeURIComponent(shareText(x.shop, x.u, x.p, x.email))}" target="_blank" rel="noopener">${x.phone ? "WhatsApp'tan gönder" : "WhatsApp'ta aç"}</a>` : ""}<button class="link" data-act="closeCreated">Kapat</button></div></div>`;
 }
 function viewAdmin(){
@@ -4836,17 +4836,17 @@ function supMalForm(){
   const sup = S.supMalSup || "";
   const tot = r2(lines.reduce((a,l)=>a + (Number(l.qty)||0)*(Number(l.price)||0), 0));
   return `<button class="link back" data-act="${S.supMalBack==="k-stok" ? "kGo" : "supBack"}" ${S.supMalBack==="k-stok" ? 'data-tab="k-stok"' : ""}>${ic("back",18)} Geri</button>
-  <form id="supmform" class="card stack supm" autocomplete="off"><div class="row" style="gap:12px"><span class="bi c2">${ic("box",24)}</span><div><h2>Mal Geldi</h2><p class="small muted">Stok artar, tedarikçiye borç yazılır.</p></div></div>
+  <form id="supmform" class="card stack supm" autocomplete="off"><div class="row" style="gap:12px"><span class="bi c2">${ic("box",24)}</span><div><h2>Mal Geldi</h2><p class="small muted">Gelen malı yaz.</p></div></div>
     <label>Kimden aldın?<input id="sm-sup" list="sm-sups" required value="${esc(sup)}" placeholder="Örn. Ekmekçi Hasan"><datalist id="sm-sups">${supList().map(s=>`<option value="${esc(s.name)}">`).join("")}</datalist></label>
-    <div class="kuscan">${ic("scan",24)}<input id="sm-scan" inputmode="numeric" placeholder="Barkod okut ya da aşağıdan ürün seç"></div>
+    <div class="kuscan">${ic("scan",24)}<input id="sm-scan" inputmode="numeric" placeholder="Barkod okut"></div>
     <label>Ürün ekle<select id="sm-add"><option value="">Ürün seç</option>${P.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></label>
     ${lines.length ? `<div class="smlines">${lines.map((l,i)=>{ const p = S.products.find(x=>x.id===l.p)||{}; return `<div class="smline"><b>${esc(p.name||"?")}</b>
         <label>Kaç ${esc(unitOf(p))}<input data-sml="${i}" data-k="qty" inputmode="decimal" value="${esc(String(l.qty??""))}"></label>
         <label>Tanesi (TL)<input data-sml="${i}" data-k="price" inputmode="decimal" value="${esc(String(l.price??""))}"></label>
         <button type="button" class="link dangerLink" data-act="supLineDel" data-i="${i}">Çıkar</button></div>`; }).join("")}</div>
-      <div class="supbal warn"><span>Toplam</span><b class="num" id="sm-tot">${TLx(tot)}</b></div>` : `<p class="small muted">Gelen ürünleri barkodla okut ya da listeden seç.</p>`}
+      <div class="supbal warn"><span>Toplam</span><b class="num" id="sm-tot">${TLx(tot)}</b></div>` : `<p class="small muted">Barkod okut ya da listeden seç.</p>`}
     <div class="stack" style="gap:6px"><span class="small"><b>Ödeme</b></span>
-      <div class="supbtns">${[["borc","Borç yaz (sonra öderim)"],["kasa","Peşin ödedim (kasadan)"],["disari","Peşin ödedim (kasa dışı)"]].map(([v,l])=>`<label class="check"><input type="radio" name="sm-pay" value="${v}" ${(S.supMalPay||"borc")===v?"checked":""}> ${l}</label>`).join("")}</div></div>
+      <div class="supbtns">${[["borc","Borç yaz"],["kasa","Peşin (kasadan)"],["disari","Peşin (cepten)"]].map(([v,l])=>`<label class="check"><input type="radio" name="sm-pay" value="${v}" ${(S.supMalPay||"borc")===v?"checked":""}> ${l}</label>`).join("")}</div></div>
     ${S.supErr ? `<p class="notice bad">${esc(S.supErr)}</p>` : ""}
     <div class="row"><button class="primary big" type="submit">${ic("check",20)} Kaydet</button></div></form>`;
 }
@@ -5101,10 +5101,10 @@ function kAna(){
   if (!rows.length) return x + `<section class="kwelcome">
     <div class="kwart"><span>${ic("box",44)}</span></div>
     <h2>Hoş Geldin!</h2>
-    <p>Dükkânın üç adımda hazır:</p>
+    <p>3 adımda hazır:</p>
     <ol class="ksteps"><li><span>1</span>Ürünlerini ekle</li><li><span>2</span>Barkodu okut, sat</li><li><span>3</span>Kârını gör</li></ol>
-    <button class="kcta" data-act="kEdit" data-id="__new"><span class="kctai">${ic("plus",30)}</span><span><b>İlk Ürünü Ekle</b><small>Barkodu varsa okut, yoksa adını yaz</small></span></button>
-    <button class="link" data-act="seed">Önce örnek ürünlerle dene</button></section>`;
+    <button class="kcta" data-act="kEdit" data-id="__new"><span class="kctai">${ic("plus",30)}</span><span><b>İlk Ürünü Ekle</b><small>Barkodu okut ya da adını yaz</small></span></button>
+    <button class="link" data-act="seed">Örnek ürünlerle dene</button></section>`;
   x += `<button class="ksell" data-act="kGo" data-tab="satis"><span class="kse">${ic("scan",34)}</span><span><b>Satış Yap</b><small>Barkodu okut, sat</small></span><span class="kgo">${ic("back",22)}</span></button>
   <div class="ktoday">
     <button data-act="kGo" data-tab="k-kar"><span>Bugün Satış</span><b class="num">${kTL(k.ciro)}</b></button>
@@ -5146,10 +5146,10 @@ function kKasa(){
     const reasons = f==="cikis" ? OUT_REASONS : f==="giris" ? IN_REASONS : null, left = prevLeft(today0());
     const T = {giris:"Kasaya Para Koy", cikis:"Kasadan Para Al", kapanis:"Günü Kapat", acilis:"Açılış Parası"}[f];
     h += `<form id="kasaform" class="card stack kform2" data-f="${f}"><h2>${T}</h2>
-      ${f==="kapanis" ? `<p>Kasadaki parayı say ve yaz. Uygulama, olması gerekenle karşılaştırır.</p>` : ""}
+      ${f==="kapanis" ? `<p>Kasadaki parayı say, yaz.</p>` : ""}
       <label>${f==="kapanis" ? "Kasada Saydığın Para (TL)" : "Kaç TL?"}<input id="kf-a" inputmode="decimal" required placeholder="${f==="acilis" && left!=null ? fmt(left,2) : "Örn. 500"}" value="${f==="acilis" && left!=null ? String(left).replace(".",",") : ""}"></label>
       ${reasons ? `<input type="hidden" id="kf-r" value="${esc(S.kReason||"")}"><div class="kreasons"><span class="klab">Neden?</span>${reasons.map(r=>`<button type="button" class="tog ${S.kReason===r?"on":""}" data-act="kReason" data-v="${esc(r)}">${esc(r)}</button>`).join("")}</div>` : ""}
-      ${f==="cikis" && supList().length ? `<label id="k-supw" ${K_MAL.includes(S.kReason)?"":"hidden"}>Kime ödedin? <span class="muted">(borcundan düşsün)</span><select id="kf-sup"><option value="">Seçmeden geç</option>${supList().map(x=>{ const b = supStats(x.id).bal; return `<option value="${esc(x.id)}">${esc(x.name)}${b>0.005?` · borç ${kTL(b)}`:""}</option>`; }).join("")}</select></label>` : ""}
+      ${f==="cikis" && supList().length ? `<label id="k-supw" ${K_MAL.includes(S.kReason)?"":"hidden"}>Kime ödedin?<select id="kf-sup"><option value="">Seçmeden geç</option>${supList().map(x=>{ const b = supStats(x.id).bal; return `<option value="${esc(x.id)}">${esc(x.name)}${b>0.005?` · borç ${kTL(b)}`:""}</option>`; }).join("")}</select></label>` : ""}
       ${f==="kapanis" ? `<label>Yarına Kasada Bırakılan (isteğe bağlı)<input id="kf-b" inputmode="decimal" placeholder="Örn. 500"></label>` : ""}
       <details class="knote" ${S.kReason==="Diğer"?"open":""}><summary>${S.kReason==="Diğer" ? "Ne için? (yaz)" : "Not ekle"}</summary><input id="kf-n" maxlength="120" aria-label="Not" placeholder="${f==="cikis" ? "Örn. Ekmekçi Hasan" : ""}"></details>
       ${S.kasaErr ? `<p class="notice bad">${esc(S.kasaErr)}</p>` : ""}
@@ -5161,7 +5161,7 @@ function kKasa(){
 }
 function kStok(){
   const rows = kStockRows(), f = S.kStokF || "all", q = (S.kq||"").trim();
-  if (!rows.length) return `<section class="kwelcome"><div class="kwart"><span>${ic("box",44)}</span></div><h2>Henüz Ürün Yok</h2><button class="kcta" data-act="kEdit" data-id="__new"><span class="kctai">${ic("plus",30)}</span><span><b>Ürün Ekle</b><small>Barkodu varsa okut, yoksa adını yaz</small></span></button></section>`;
+  if (!rows.length) return `<section class="kwelcome"><div class="kwart"><span>${ic("box",44)}</span></div><h2>Henüz Ürün Yok</h2><button class="kcta" data-act="kEdit" data-id="__new"><span class="kctai">${ic("plus",30)}</span><span><b>Ürün Ekle</b><small>Barkodu okut ya da adını yaz</small></span></button></section>`;
   let val = 0, valS = 0;
   for (const r of rows){ if (!r.s.cur.known) continue; const b = r.st.money.buy ?? Number(r.p.buyPrice); if (b>0) val += r.s.cur.v*b; if (Number(r.p.salePrice)>0) valS += r.s.cur.v*Number(r.p.salePrice); }
   const n = {all: rows.length, az: rows.filter(r=>r.s.k==="low"||r.s.k==="out").length, bitti: rows.filter(r=>r.s.k==="out").length};
@@ -5246,7 +5246,7 @@ function kUrun(){
     <section class="kustep"><span class="kun">4</span><div class="kubody">
       <label for="ku-cnt">Rafta Kaç ${v.byWeight ? "Kilo" : "Tane"} Var?</label>
       <div class="kustepper"><button type="button" data-act="kStep" data-d="-1" aria-label="Bir azalt">${ic("minus",26)}</button><input id="ku-cnt" inputmode="decimal" placeholder="${p ? "Aynı" : "0"}"><button type="button" data-act="kStep" data-d="1" aria-label="Bir artır">${ic("plus",26)}</button></div>
-      ${p ? `<p class="small muted">Değişmediyse boş bırak.</p>` : ""}
+      ${p ? `<p class="small muted">Aynıysa boş bırak.</p>` : ""}
       <label class="kuswitch"><input id="ku-w" type="checkbox" ${v.byWeight?"checked":""}><span></span> Tartıyla satılıyor (kilo)</label></div></section>
     ${S.kErr ? `<p class="notice bad">${esc(S.kErr)}</p>` : ""}
     ${p ? `<button type="button" class="big kumal" data-act="supMal" data-p="${p.id}" data-back="k-stok">${ic("truck",20)} Bu Üründen Mal Geldi</button>` : ""}
@@ -5282,7 +5282,7 @@ async function kSave(next){
   const old = S.kEdit!=="__new" ? S.products.find(x=>x.id===S.kEdit) : null;
   const twin = S.products.find(x=>x.id!==old?.id && norm(x.name)===norm(name));
   if (twin && S.kDupOk!==norm(name)){ S.kDupOk = norm(name); const bx = !old && document.getElementById("pdup-box");
-    if (bx){ bx.innerHTML = pDupHint(name, null, "ku-cnt") + `<p class="small muted">Gerçekten ayrı bir ürünse tekrar Kaydet'e bas.</p>`; bx.scrollIntoView({block:"center"}); return; }
+    if (bx){ bx.innerHTML = pDupHint(name, null, "ku-cnt") + `<p class="small muted">Ayrıysa tekrar Kaydet.</p>`; bx.scrollIntoView({block:"center"}); return; }
     S.kErr = `"${twin.name}" adında bir ürün zaten var. Farklı bir ürünse tekrar Kaydet'e bas.`; render(true); return; }
   for (const c of codes){ const own = barcodeOwner(c, old?.id); if (own){ S.kErr = `${c} barkodu zaten ${own.name} ürününde kayıtlı.`; render(true); return; } }
   await posMarkStart();

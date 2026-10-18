@@ -20,13 +20,15 @@ Alt menüde sadece 5 bölüm var:
 
 | Bölüm | Ne yapılır |
 |---|---|
-| **Ana Sayfa** | Kocaman "Satış Yap" düğmesi; bugünkü satış, bugünkü kâr ve kasadaki para; Para Koy, Para Al, Stok, Kâr kutuları; azalan ürünler |
+| **Ana Sayfa** | Kocaman "Satış Yap" düğmesi; bugünkü satış ve kâr; Para Koy, Para Al, Mal Geldi, Ürün Ekle kutuları; biten ürünler ve ödeme zamanı (varsa) |
 | **Satış** | Barkodu okut, sepete eklensin; nakit, kart ya da veresiye |
-| **Kasa** | Kasada olması gereken para; Para Koy, Para Al, Günü Kapat; sebep tek dokunuşla seçilir |
-| **Stok** | Rafta kaç tane var, fiyatı, tanesinden kalan kâr; sayım, ürün ekleme ve düzenleme |
+| **Kasa** | Kasada olması gereken para; Para Koy, Para Al, Günü Kapat; sebep tek dokunuşla seçilir, toptancı ya da ekmekçi seçilince "Kime ödedin?" sorulur |
+| **Stok** | Her ürünün yanında − / + ile raftaki sayı; Ürün Ekle ve Mal Geldi; ürüne dokununca düzenleme |
 | **Kâr** | Satış − malın maliyeti − giderler = net kâr; bugün, bu hafta, bu ay, bu yıl; Excel'e indirme |
 
-Sağ üstteki ayar düğmesinde: ürün ekleme, satış raporları, veresiye, bildirimler, ayarlar ve **tam sürüme geçiş**.
+Ana Sayfa'nın altındaki **Diğer İşler** (ya da sağ üstteki ayar düğmesi): satış raporları, veresiye, tedarikçiler, bildirimler, ayarlar ve **tam sürüme geçiş**.
+
+Kolay sürüm yaşlılar ve teknolojiyle arası iyi olmayanlar düşünülerek sade tutuldu: büyük yazı, büyük düğmeler, her ekranda az iş.
 
 ## Ürün eklemek
 
@@ -37,12 +39,14 @@ Tek bir **Ürün Ekle** düğmesi var; barkodlu ya da barkodsuz fark etmez. Form
 3. **Satış ve alış fiyatı:** Tanesinden kaç TL ve yüzde kaç kâr kaldığını anında gösterir; zararına satışta uyarır.
 4. **Rafta kaç tane var:** − / + düğmeleriyle. Tartılı ürünler için tek dokunuşla "kilo" seçilir.
 
+**Aynı isimde ürün varsa** yeni ürün açılmaz: "Ekmek zaten var, rafta 2 tane" der ve **Üstüne Ekle** ile geleni mevcut ürüne ekler (2 + 2 = 4). Eskiden iki kez eklenmiş ürünler Stok ekranının üstünde gösterilir; **Birleştir** ile stokları toplanıp tek ürün olur.
+
 Çok ürün girerken **Kaydet + Yeni** ile kaydedip hemen sıradakini okutursun. Satışta tanınmayan bir barkod okutulursa aynı form açılır; kaydedince ürün doğrudan sepete eklenir.
 
 ## Tedarikçiler, mal geldi, sayım
 
-- **Mal Geldi** (Stok'ta her ürünün yanında): kimden aldın, kaç tane, kaça. Stok artar; borç yazılır ya da peşin ödenir (kasadan / kasa dışı).
-- **Sayım:** Rafa bakıp şu an kaç tane olduğunu yazarsın. Eklenmez, rafın yeni durumu olur; kimseye borç yazılmaz.
+- **Mal Geldi** (Ana Sayfa'da, Stok'ta ve ürün sayfasında): kimden aldın, kaç tane, kaça. Stok artar; borç yazılır ya da peşin ödenir (kasadan / kasa dışı).
+- **− / +** (Stok'ta her ürünün yanında): raftaki sayıyı düzeltir. Kimseye borç yazılmaz; sayım gibidir.
 - **Tedarikçiler** (Ana Sayfa'daki kısayol ya da ayar düğmesi): kime ne kadar borcun var, ne aldın, ne ödedin. Kasadan "Para Al" yaparken tedarikçi seçersen borcundan düşer. Vade dolunca Ana Sayfa'da "Ödeme Zamanı" çıkar ve bildirim gelir.
 
 ## Rapor bildirimi
@@ -55,6 +59,10 @@ Her akşam 21:45'te "Günün raporu hazır" bildirimi gelir; pazar akşamı haft
 - **Net kâr** = brüt kâr − giderler (kira, fatura, personel, çay-yemek…)
 - Toptancıya ve ekmekçiye ödenen para gider sayılmaz: o mal parasıdır, mal satılınca maliyet olarak düşülür.
 - Bankaya yatırılan ve kendine aldığın para da gider değildir; ayrıca gösterilir.
+
+## İnternetsiz
+
+Uygulama bir kez internetle açıldıktan sonra telefona kaydedilir; internet yokken de açılır. İnternetsiz yapılan satışlar telefonda bekler, bağlantı gelince kendiliğinden gönderilir. (İlk giriş için internet gerekir.)
 
 ## Telefona kurmak
 

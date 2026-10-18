@@ -488,6 +488,27 @@ nav.tabs button[aria-current="page"] svg .f{fill-opacity:.28}
 header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(--accent) 60%,var(--ink)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .chip{font-weight:600}
 
+/* boş ekran: büyük rakam stili düğmelere bulaşmasın */
+.empty button.big{font-family:inherit;font-size:19px;color:inherit}
+.empty button.primary.big{color:var(--accent-ink)}
+/* − / + */
+.pstep{display:inline-flex;align-items:center;gap:4px;flex:none;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--card)}
+.pstep button{width:44px;height:44px;min-height:0;padding:0;border-radius:50%;border:0;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent) 10%,var(--card));color:var(--accent)}
+.pstep button:disabled{opacity:.35}
+.pstep button:active{transform:scale(.92)}
+.pstep b{min-width:44px;text-align:center;font-size:22px;font-family:var(--display);font-weight:700;transition:color .2s}
+.pstep b.pend{color:var(--accent)}
+.srhead{flex-wrap:nowrap;gap:10px}
+.sname{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.pdup{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--c2) 12%,var(--card));border:1px solid color-mix(in srgb,var(--c2) 35%,var(--line));color:var(--ink);font-size:16px;line-height:1.4}
+.pdup > span{color:var(--c2);flex:none;margin-top:1px}
+.pdup .row{margin-top:8px}
+.pdup .pq{margin-top:6px;font-weight:600;color:var(--c3)}
+.pask{border-color:var(--c3)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--c3) 16%,transparent)!important}
+.pmerge{border-color:color-mix(in srgb,var(--c2) 40%,var(--line))}
+.pmrow{gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.pmrow:first-of-type{border-top:0}
+
 /* ===== Bakkal Kolay ===== */
 html.kolay{--accent:#2f6fcf;--accent-soft:#e1ebfa}
 @media (prefers-color-scheme:dark){html.kolay:not([data-theme="light"]){--accent:#7aa7f0;--accent-soft:#16253d;--accent-ink:#08111f}}
@@ -649,6 +670,77 @@ body.kb .kusave{bottom:0}
 .kmore{grid-template-columns:repeat(5,minmax(0,1fr))}
 .kmore.two{grid-template-columns:1fr 1fr}
 @media (max-width:420px){.kmore{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* ===== Sade sürüm (yaşlılar için): daha az şey, daha büyük ===== */
+html.kolay body{font-size:20px}
+html.kolay nav.tabs button{font-size:15px;min-height:68px}
+html.kolay nav.tabs button span{font-weight:700}
+html.kolay .wrap > #view > * + *{margin-top:14px}
+.khello h2{font-size:26px}
+/* karşılama */
+.kwelcome{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:28px 20px 22px;border-radius:26px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.kwart{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 25%,color-mix(in srgb,var(--accent) 22%,var(--card)),color-mix(in srgb,var(--accent) 8%,var(--card)))}
+.kwart span{display:flex;width:64px;height:64px;border-radius:20px;align-items:center;justify-content:center;color:#fff;background:linear-gradient(140deg,color-mix(in srgb,var(--accent) 70%,#fff),var(--accent));box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 35%,transparent)}
+.kwart .icon .f{fill-opacity:.35}
+.kwelcome h2{font-size:28px;margin:4px 0 0}
+.kwelcome > p{margin:0;color:var(--muted);font-size:18px}
+.ksteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;width:100%;max-width:360px;text-align:left}
+.ksteps li{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:600;padding:10px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 6%,var(--card))}
+.ksteps li span{flex:none;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--accent-soft);color:var(--accent);font-weight:700}
+.kcta{display:flex;align-items:center;gap:16px;width:100%;max-width:480px;margin-top:6px;padding:16px 18px;border:0;border-radius:20px;text-align:left;font:inherit;color:#fff;min-height:88px;cursor:pointer;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 88%,#fff),color-mix(in srgb,var(--accent) 88%,#012));box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 32%,transparent)}
+.kcta b{display:block;font-size:24px;line-height:1.15}
+.kcta small{font-size:15px;opacity:.92}
+.kctai{flex:none;display:inline-flex;width:56px;height:56px;border-radius:16px;align-items:center;justify-content:center;background:rgba(255,255,255,.22)}
+.kcta:active,.ksell:active,.kother:active{transform:scale(.985)}
+:root[data-theme="dark"] .kcta{color:#08111f}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kcta{color:#08111f}}
+.kwelcome .link{font-size:17px}
+/* bugün */
+.ktoday{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ktoday button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px 16px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);font:inherit;color:inherit;text-align:left;min-width:0;min-height:0}
+.ktoday span{font-size:16px;font-weight:600;color:var(--muted)}
+.ktoday b{font-size:clamp(22px,7vw,30px);font-family:var(--display);font-weight:700;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.ktoday b.pos{color:var(--c1)}
+.kgrid.k4 .ktile{min-height:118px;justify-content:center;align-items:center;text-align:center}
+.kgrid.k4 .ktile b{font-size:21px}
+.kother{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);font:inherit;color:inherit;text-align:left;min-height:0}
+.kother b{display:block;font-size:19px}
+.kother small{font-size:14px;color:var(--muted)}
+.kother .kgo{margin-left:auto;transform:rotate(180deg);color:var(--muted)}
+.kother .bi{width:46px;height:46px;flex:none}
+/* stok */
+.ktwo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ktwo .big{width:100%;min-height:60px;font-size:19px}
+.ksearch{width:100%;font-size:19px;padding:14px 16px;border-radius:14px}
+.khelp{display:flex;gap:8px;align-items:flex-start;font-size:16px;color:var(--muted);margin:0;line-height:1.4}
+.khelp .icon{flex:none;margin-top:2px;color:var(--accent)}
+.kitem{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.kitem:first-child{border-top:0}
+.kitem .kn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;flex:1;border:0;background:none;padding:4px 0;font:inherit;color:inherit;text-align:left;min-height:0;cursor:pointer}
+.kitem .kn b{font-size:19px;overflow-wrap:anywhere}
+.kitem .kn .small{font-size:15px;color:var(--muted)}
+.kitem .pstep button{width:48px;height:48px}
+.kitem .pstep b{font-size:24px;min-width:48px}
+.kval{text-align:center}
+/* kasa */
+.klab{font-size:17px;font-weight:600;width:100%}
+.kreasons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kreasons .tog{min-height:52px;font-size:16px;border-radius:14px;white-space:normal;line-height:1.2;padding:8px 10px}
+.kreasons .klab{grid-column:1/-1}
+.knote summary{cursor:pointer;color:var(--accent);font-size:17px;padding:6px 0}
+.knote input{width:100%;margin-top:6px}
+.kumal{width:100%}
+html.kolay nav.tabs button{font-size:14px}
+html.kolay nav.tabs button span{white-space:nowrap}
+.kcta b{font-size:22px}
+.kcta small,.ksell small,.kother small{display:block;line-height:1.3;margin-top:2px}
+.kctai .icon{color:#fff}
+.ktwo .big{white-space:nowrap;padding-inline:8px;font-size:18px}
+.kitem .pstep{gap:2px;padding:2px}
+.kitem .pstep button{width:44px;height:44px}
+.kitem .pstep b{font-size:22px;min-width:38px}
+@media (max-width:360px){.kitem .pstep button{width:40px;height:40px}}
 </style>
 
 <noscript><style>.wrap,nav.tabs,#toast{display:none!important}</style><div style="max-width:560px;margin:24px auto;padding:20px;font:18px/1.5 system-ui,sans-serif;background:#fff;border:2px solid #0f6b55;border-radius:14px;color:#1d2421"><b style="font-size:22px">Bakkal Defteri</b><p>Bu dosya burada çalışmıyor. Aşağıdaki düğmeye bas, uygulama tarayıcıda açılsın.</p><a href="https://joeamca.github.io/Bakkal/kolay/" style="display:block;text-align:center;background:#0f6b55;color:#fff;padding:16px;border-radius:12px;text-decoration:none;font-weight:700;font-size:20px">Uygulamayı aç</a><p style="font-size:15px;color:#5f6b66;overflow-wrap:anywhere">Açılmazsa bu adresi Chrome ya da Safari'ye yaz:<br>https://joeamca.github.io/Bakkal/kolay/</p></div></noscript>
@@ -1497,6 +1589,7 @@ function viewProducts(){
     html += `<form id="pform" class="card stack">
       <h2>${p?"Ürünü düzenle":"Yeni ürün"}</h2>
       <label>Ürün adı<input id="f-name" required value="${esc(v.name)}" placeholder="${S.formMade?"Örn. Kaşarlı tost":"Örn. Pınar süt 1 L"}"></label>
+      ${p ? "" : `<div id="pdup-box"></div>`}
       <label class="check"><input id="f-made" type="checkbox" ${S.formMade?"checked":""}> Dükkânda hazırladığım ürün (tost, sandviç gibi: reçetesi var)</label>
       ${S.formMade ? `
       <div class="grid2"><label>Günde kaç tane hazırlıyorsun?<input id="f-daily" type="number" min="0" step="1" inputmode="numeric" value="${esc(v.dailyEst??"")}"></label>
@@ -1539,7 +1632,7 @@ function viewProducts(){
     </form>`;
     return html;
   }
-  html += `<button class="primary" data-act="newProduct">Ürün Ekle</button>`;
+  html += `<button class="primary" data-act="newProduct">Ürün Ekle</button>` + pDupBanner();
   if (!S.products.length) return html + emptyProducts();
   html += `<div class="card">` + S.products.slice().sort((a,b)=>a.name.localeCompare(b.name,"tr")).map(p=>{
     if (isMade(p)) return `<div class="item"><div class="name">${esc(p.name)} <span class="pill info">reçeteli</span><div class="small muted">günde ${fmt(p.dailyEst||0)} tane · ${p.recipe.map(r=>{ const c=S.products.find(x=>x.id===r.id); return c?`${esc(c.name)} ×${fmt(r.qty,3)}`:""; }).filter(Boolean).join(", ")}</div></div>
@@ -1838,6 +1931,7 @@ function viewStock(){
   let value = 0; for (const r of rows) if (r.s.cur.known){ const b = r.st.money.buy ?? Number(r.p.buyPrice); if (b>0) value += r.s.cur.v*b; }
   const f = S.stockF || "all";
   let html = backLink() + noticeHtml();
+  html += pDupBanner();
   html += `<section class="card stack"><h2>Raf Durumu</h2>
     ${donut(SKIND.map(([k,l,c])=>({l, v:cnt[k], c, act:"stockF", f:k})), {center:fmt(rows.length), sub:"ürün", label:"Stok durumu"})}
     <div class="tiles t2"><div class="tile"><span class="tn num">${TL(value)}</span><span>raftaki malın değeri (tahmini)</span></div>
@@ -1850,7 +1944,7 @@ function viewStock(){
     const u = unitOf(p), scale = Math.max(14, s.need*2.2);
     const cov = s.cover==null ? null : Math.min(s.cover, scale);
     const nextTxt = st.sch ? (st.sch.a===0 ? "araç bugün" : `araç ${st.sch.a} gün sonra`) : "";
-    return `<div class="srow"><div class="row between"><b>${esc(p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.t}</span></div>
+    return `<div class="srow"><div class="row between srhead"><span class="sname"><b>${esc(p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.t}</span></span>${s.k==="unk" ? "" : pStepper(p)}</div>
       ${s.k==="unk" ? `<p class="small muted">Rafta kaç ${esc(u)} olduğu bilinmiyor.</p>
         <label class="row cnt" style="color:inherit"><input id="scnt-${p.id}" type="number" min="0" step="any" inputmode="decimal" placeholder="Rafta kaç var?"><button data-act="count" data-id="${p.id}" data-src="scnt-">Kaydet</button></label>`
       : `<div class="cover"><div class="hb tall"><span style="width:${(100*(cov||0)/scale).toFixed(1)}%;background:${s.c}"></span></div><i class="need" style="left:${Math.min(100,100*s.need/scale).toFixed(1)}%" title="sonraki araç"></i></div>
@@ -2535,6 +2629,7 @@ document.addEventListener("click", async ev=>{
   const a = t.dataset.act, id = t.dataset.id;
   try{
     if (await nAct(a)) return;
+    if (await pAct(a, t)) return;
     if (await supAct(a, t)) return;
     if (window.KOLAY && await kolayAct(a, t, id)) return;
     if (await posAct(a, t)) return;
@@ -2666,6 +2761,8 @@ document.addEventListener("submit", async ev=>{
   const g = id => (document.getElementById(id)?.value ?? "").trim();
   const chk = id => !!document.getElementById(id)?.checked;
   const old = S.products.find(x=>x.id===S.editId);
+  if (!old && !S.formMade && pTwin(g("f-name")) && S.pDupOk!==norm(g("f-name"))){ S.pDupOk = norm(g("f-name")); const bx = document.getElementById("pdup-box");
+    if (bx){ bx.innerHTML = pDupHint(g("f-name"), null, "f-stock") + `<p class="small muted">Gerçekten ayrı bir ürünse tekrar Kaydet'e bas.</p>`; bx.scrollIntoView({block:"center"}); } return; }
   const base = {...(old||{id:newId(),createdAt:nowIso(),aliases:[],outSince:null})};
   let p;
   if (S.formMade){
@@ -4778,6 +4875,101 @@ document.addEventListener("keydown", ev=>{
   ev.preventDefault(); const b = document.querySelector(`.pinpad .pk[data-k="${k}"]`); if (b && !b.disabled) b.click();
 });
 
+/* ===== Ürün yardımcıları (iki uygulamada ortak): − / + düğmesi, aynı isimli ürüne ekleme, çift ürünleri birleştirme ===== */
+function pCur(p){ const s = stockStatus(p, stats(p)); return s.cur.known ? Number(s.cur.v)||0 : null; }
+const pQtyTxt = v => v==null ? "?" : fmt(v, v<10 && v%1 ? 1 : 0);
+function pTwin(name, exceptId){ const n = norm(String(name||"").trim()); if (!n) return null; return stockP().find(x=>x.id!==exceptId && norm(x.name)===n) || null; }
+// − / + : ekranda hemen değişir, 1 sn dokunulmazsa tek sayım olarak kaydedilir
+S.pPend = S.pPend || {};
+function pStepper(p, cls){
+  const v = S.pPend[p.id] ?? pCur(p);
+  return `<span class="pstep ${cls||""}"><button type="button" data-act="pStep" data-id="${p.id}" data-d="-1" aria-label="${esc(p.name)} bir azalt" ${v===0?"disabled":""}>${ic("minus",22)}</button><b class="num" data-pq="${p.id}">${pQtyTxt(v)}</b><button type="button" data-act="pStep" data-id="${p.id}" data-d="1" aria-label="${esc(p.name)} bir artır">${ic("plus",22)}</button></span>`;
+}
+function pStep(id, d){
+  const p = S.products.find(x=>x.id===id); if (!p) return;
+  const base = S.pPend[id] ?? pCur(p) ?? 0, v = Math.max(0, r2(base + d));
+  S.pPend[id] = v;
+  document.querySelectorAll(`[data-pq="${id}"]`).forEach(el=>{ el.textContent = pQtyTxt(v); el.classList.add("pend"); const m = el.parentElement.querySelector('[data-d="-1"]'); if (m) m.disabled = v===0; });
+  clearTimeout(pStep.t[id]); pStep.t[id] = setTimeout(()=>pCommit(id), 1000);
+}
+pStep.t = {};
+async function pCommit(id){
+  const v = S.pPend[id]; if (v==null) return; const p = S.products.find(x=>x.id===id);
+  if (p && v !== pCur(p)) await addCount(p, v);
+  delete S.pPend[id];
+  document.querySelectorAll(`[data-pq="${id}"]`).forEach(el=>el.classList.remove("pend"));
+}
+window.addEventListener("pagehide", ()=>{ for (const id of Object.keys(S.pPend)) pCommit(id); });
+// Aynı isimde ürün varsa: yeni ürün açmak yerine onun üstüne ekle
+async function pAddTo(id, qty, o){
+  const p = S.products.find(x=>x.id===id); if (!p) return null;
+  o = o || {}; const before = pCur(p), add = qty > 0 ? qty : 0;
+  const codes = (o.codes||[]).filter(c=>!(p.barcodes||[]).some(b=>b.c===c) && !barcodeOwner(c, p.id));
+  const sale = o.sale > 0 ? r2(o.sale) : null, buy = o.buy > 0 ? r2(o.buy) : null;
+  if (codes.length || sale || buy) await store.saveProduct({...p, barcodes:(p.barcodes||[]).concat(codes.map(c=>({c, q:1}))),
+    ...(sale ? {salePrice:sale, salePriceAt: Number(p.salePrice)===sale ? (p.salePriceAt||null) : nowIso()} : {}), ...(buy ? {buyPrice:buy} : {})});
+  if (add) await addCount(S.products.find(x=>x.id===id), r2((before||0) + add));
+  const u = unitOf(p);
+  return add ? (before==null ? `${p.name}: rafta ${pQtyTxt(add)} ${u} oldu.` : `${p.name}: ${pQtyTxt(before)} + ${pQtyTxt(add)} = ${pQtyTxt(r2(before+add))} ${u} oldu.`) : `${p.name} güncellendi.`;
+}
+function pDupHint(name, exceptId, qtyId){
+  const t = pTwin(name, exceptId); if (!t) return "";
+  const c = pCur(t);
+  return `<div class="pdup"><span>${ic("alert",20)}</span><div><b>${esc(t.name)} zaten var</b>${c!=null?` · rafta ${pQtyTxt(c)} ${esc(unitOf(t))}`:""}<br><span class="small">Yeni ürün açma, rafa geleni bunun üstüne ekle.</span>
+    <div class="row"><button type="button" class="primary" data-act="pAddTo" data-id="${t.id}" data-q="${qtyId}">${ic("plus",18)} Üstüne Ekle</button></div></div></div>`;
+}
+// Aynı isimli ürünler (eskiden iki kez eklenmiş): birleştir
+function pDupGroups(){
+  const m = new Map(); for (const p of stockP()){ const k = norm(p.name); if (!m.has(k)) m.set(k, []); m.get(k).push(p); }
+  return [...m.values()].filter(g=>g.length>1);
+}
+function pDupBanner(){
+  const G = pDupGroups(); if (!G.length) return "";
+  return `<section class="card stack pmerge"><h2 class="kh">${ic("alert",22)} Aynı İsimde Ürünler</h2>
+    <p class="small muted">Aynı ürün iki kez eklenmiş. Birleştirince stokları toplanır, tek ürün kalır.</p>
+    ${G.map(g=>{ const tot = g.reduce((a,p)=>a+(pCur(p)||0),0), k = g.map(p=>p.id).join(",");
+      return `<div class="row between pmrow"><span><b>${esc(g[0].name)}</b> <span class="small muted">${g.length} kayıt: ${g.map(p=>pQtyTxt(pCur(p))).join(" + ")} = ${pQtyTxt(r2(tot))} ${esc(unitOf(g[0]))}</span></span>
+        <button class="primary" data-act="pMerge" data-ids="${k}">${S.pMergeC===k ? "Emin misin? Birleştir" : "Birleştir"}</button></div>`; }).join("")}</section>`;
+}
+async function pMerge(ids){
+  const g = ids.map(id=>S.products.find(x=>x.id===id)).filter(Boolean); if (g.length<2) return;
+  // en çok bilgisi olanı (barkod, fiyat) bırak
+  const score = p => (p.barcodes||[]).length*2 + (p.salePrice>0?1:0) + (p.buyPrice>0?1:0);
+  g.sort((a,b)=>score(b)-score(a) || String(a.createdAt||"").localeCompare(String(b.createdAt||"")));
+  const keep = g[0], rest = g.slice(1);
+  const known = g.map(pCur), tot = r2(known.reduce((a,v)=>a+(v||0),0)), anyKnown = known.some(v=>v!=null);
+  const bc = [...(keep.barcodes||[])]; for (const p of rest) for (const b of (p.barcodes||[])) if (!bc.some(x=>x.c===b.c)) bc.push(b);
+  const pick = k => keep[k] ?? rest.map(p=>p[k]).find(v=>v!=null && v!=="");
+  await store.saveProduct({...keep, barcodes:bc, salePrice:pick("salePrice") ?? null, buyPrice:pick("buyPrice") ?? null, supplier: keep.supplier || pick("supplier") || ""});
+  for (const p of rest) await store.deleteProduct(p.id);
+  if (anyKnown) await addCount(S.products.find(x=>x.id===keep.id), tot);
+  return `${keep.name} birleştirildi${anyKnown ? `: rafta ${pQtyTxt(tot)} ${unitOf(keep)}` : ""}.`;
+}
+async function pAct(a, t){
+  const id = t.dataset.id;
+  if (a==="pStep"){ pStep(id, Number(t.dataset.d)); return true; }
+  if (a==="pMerge"){ const k = t.dataset.ids; if (S.pMergeC!==k){ S.pMergeC = k; render(true); return true; } S.pMergeC = null;
+    const m = await pMerge(k.split(",")); S.msg = {kind:"ok", text:m}; render(true); return true; }
+  if (a==="pAddTo"){
+    const g = x => (document.getElementById(x)?.value ?? "").trim();
+    const kol = !!document.getElementById("ku-name"), q = pnum(g(t.dataset.q));
+    if (!(q > 0)){ const el = document.getElementById(t.dataset.q); S.pAddErr = true; if (el){ el.focus(); el.closest(kol ? ".kustep" : "label")?.classList.add("pask"); }
+      const h = t.closest(".pdup"); if (h && !h.querySelector(".pq")) h.querySelector("div").insertAdjacentHTML("beforeend", `<p class="pq">Kaç ${kol ? "tane geldi? 4. adımdaki" : "tane geldi? \"Şu an rafta\" kutusundaki"} sayıya yaz, sonra tekrar bas.</p>`); return true; }
+    const codes = g(kol ? "ku-bc" : "f-bc").split(/[,;\s]+/).map(c=>c.replace(/[^\dA-Za-z\-]/g,"")).filter(Boolean);
+    const m = await pAddTo(id, q, {codes, sale: pnum(g(kol ? "ku-sale" : "f-sale")), buy: pnum(g(kol ? "ku-buy" : "f-buy"))});
+    S.msg = {kind:"ok", text:m}; S.pAddErr = false;
+    if (kol){ S.kEdit = null; S.kBc = null; S.tab = S.kBack==="satis" ? "satis" : "k-stok"; } else { S.editId = null; S.rcFor = null; }
+    render(); window.scrollTo(0,0); return true; }
+  return false;
+}
+document.addEventListener("input", ev=>{ const id = ev.target.id; if (id!=="ku-name" && id!=="f-name") return;
+  const box = document.getElementById("pdup-box"); if (!box) return;
+  box.innerHTML = pDupHint(ev.target.value, null, id==="ku-name" ? "ku-cnt" : "f-stock"); });
+
+// İnternetsiz açılış: uygulama dosyalarını telefona kaydeden servis çalışanı her açılışta kaydedilir
+if ("serviceWorker" in navigator && !FILE_MODE && (location.protocol==="https:" || location.hostname==="localhost"))
+  window.addEventListener("load", ()=>{ const [u, sc] = nSwUrl(); navigator.serviceWorker.register(u, {scope:sc}).catch(()=>{}); });
+
 /* ================= Bakkal Kolay: sade arayüz, aynı veri ve aynı hesaplar ================= */
 window.KOLAY = true;
 const K_MAP = {ana:"k-ana", menu:"k-daha", stok:"k-stok", kar:"k-kar"};
@@ -4803,31 +4995,29 @@ function kAna(){
   const h = new Date().getHours(), hi = h<11 ? "Günaydın" : h<17 ? "İyi Günler" : "İyi Akşamlar";
   const rows = kStockRows(), az = rows.filter(r=>r.s.k==="out"||r.s.k==="low").sort((a,b)=>(a.s.k==="out"?0:1)-(b.s.k==="out"?0:1));
   let x = noticeHtml() + `<div class="khello"><h2>${hi}${shopTitle()?", "+esc(shopTitle()):""}</h2><p class="muted">${new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"})}</p></div>`;
-  if (!rows.length) return x + `<section class="card empty stack kwelcome"><span class="bi c7 kbig">${ic("scan",34)}</span><h2>Hoş Geldin!</h2><p class="muted">Önce ürünlerini ekle. Barkodu varsa okut, yoksa adını yaz.</p>
-    <button class="primary big" data-act="kEdit" data-id="__new">${ic("plus",22)} Ürün Ekle</button>
+  if (!rows.length) return x + `<section class="kwelcome">
+    <div class="kwart"><span>${ic("box",44)}</span></div>
+    <h2>Hoş Geldin!</h2>
+    <p>Dükkânın üç adımda hazır:</p>
+    <ol class="ksteps"><li><span>1</span>Ürünlerini ekle</li><li><span>2</span>Barkodu okut, sat</li><li><span>3</span>Kârını gör</li></ol>
+    <button class="kcta" data-act="kEdit" data-id="__new"><span class="kctai">${ic("plus",30)}</span><span><b>İlk Ürünü Ekle</b><small>Barkodu varsa okut, yoksa adını yaz</small></span></button>
     <button class="link" data-act="seed">Önce örnek ürünlerle dene</button></section>`;
-  x += `<button class="ksell" data-act="kGo" data-tab="satis"><span class="kse">${ic("scan",34)}</span><span><b>Satış Yap</b><small>Barkodu okut, parayı al</small></span><span class="kgo">${ic("back",22)}</span></button>
-  <div class="ksum">
-    <button data-act="kGo" data-tab="k-kar"><span class="muted">Bugün Satış</span><b class="num">${kTL(k.ciro)}</b><small>${k.fis} satış</small></button>
-    <button data-act="kGo" data-tab="k-kar"><span class="muted">Bugün Kâr</span><b class="num pos">${kTL(kar)}</b><small>${bil ? "satılan maldan" : "fiyatı bilinenlerden"}</small></button>
-    <button data-act="kGo" data-tab="k-kasa"><span class="muted">Kasada</span><b class="num">${kTL(k.beklenen)}</b><small>nakit olmalı</small></button>
+  x += `<button class="ksell" data-act="kGo" data-tab="satis"><span class="kse">${ic("scan",34)}</span><span><b>Satış Yap</b><small>Barkodu okut, sat</small></span><span class="kgo">${ic("back",22)}</span></button>
+  <div class="ktoday">
+    <button data-act="kGo" data-tab="k-kar"><span>Bugün Satış</span><b class="num">${kTL(k.ciro)}</b></button>
+    <button data-act="kGo" data-tab="k-kar"><span>Bugün Kâr${bil?"":"*"}</span><b class="num pos">${kTL(kar)}</b></button>
   </div>
   <div class="kgrid k4">
-    <button class="ktile c1" data-act="kKasa" data-f="giris"><span class="bi c1">${ic("plus",28)}</span><b>Para Koy</b><span>Kasaya giriş</span></button>
-    <button class="ktile c3" data-act="kKasa" data-f="cikis"><span class="bi c3">${ic("minus",28)}</span><b>Para Al</b><span>Kasadan çıkış</span></button>
-    <button class="ktile c4" data-act="kGo" data-tab="k-stok"><span class="bi c4">${ic("box",28)}</span><b>Stok</b><span>Rafta ne var</span></button>
-    <button class="ktile c6" data-act="kGo" data-tab="k-kar"><span class="bi c6">${ic("chart",28)}</span><b>Kâr ve Zarar</b><span>Ne kazandım</span></button>
+    <button class="ktile c1" data-act="kKasa" data-f="giris"><span class="bi c1">${ic("plus",30)}</span><b>Para Koy</b></button>
+    <button class="ktile c3" data-act="kKasa" data-f="cikis"><span class="bi c3">${ic("minus",30)}</span><b>Para Al</b></button>
+    <button class="ktile c2" data-act="supMal" data-back="k-stok"><span class="bi c2">${ic("truck",30)}</span><b>Mal Geldi</b></button>
+    <button class="ktile c4" data-act="kEdit" data-id="__new"><span class="bi c4">${ic("tag",30)}</span><b>Ürün Ekle</b></button>
   </div>`;
   const sd = supDue();
-  if (sd.length) x += `<section class="card stack kdue"><h2 class="kh">${ic("truck",22)} Ödeme Zamanı</h2>${sd.slice(0,4).map(({s,st})=>`<button class="krow3 kduerow" data-act="kSupOpen" data-id="${esc(s.id)}"><span><b>${esc(s.name)}</b><br><span class="small muted">${fmt(st.ageDays)} gündür bekliyor</span></span><b class="num neg">${kTL(st.bal)}</b></button>`).join("")}</section>`;
-  if (az.length) x += `<section class="card stack"><div class="row between"><h2 class="kh">${ic("alert",22)} Azalan Ürünler</h2><button class="link" data-act="kGo" data-tab="k-stok" data-f="az">Hepsi</button></div>
-    ${az.slice(0,5).map(r=>`<div class="krow3"><b>${esc(r.p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${r.s.c} 16%, transparent);color:${r.s.c}">${r.s.k==="out" ? "Bitti" : `${fmt(r.s.cur.v, r.s.cur.v<10?1:0)} ${esc(unitOf(r.p))} kaldı`}</span></div>`).join("")}</section>`;
-  else x += `<p class="notice ok">${ic("check",18)} Biten ya da azalan ürün yok.</p>`;
-  x += `<div class="kmore">
-    <button data-act="kEdit" data-id="__new">${ic("plus",20)}<span>Ürün Ekle</span></button>
-    <button data-act="goRapor">${ic("sheet",20)}<span>Excel Rapor</span></button>
-    <button data-act="kGo" data-tab="tedarik">${ic("truck",20)}<span>Tedarikçi</span></button>
-    <button data-act="kGo" data-tab="k-daha">${ic("grid",20)}<span>Diğer</span></button></div>`;
+  if (sd.length) x += `<section class="card stack kdue"><h2 class="kh">${ic("truck",22)} Ödeme Zamanı</h2>${sd.slice(0,3).map(({s,st})=>`<button class="krow3 kduerow" data-act="kSupOpen" data-id="${esc(s.id)}"><span><b>${esc(s.name)}</b><br><span class="small muted">${fmt(st.ageDays)} gündür bekliyor</span></span><b class="num neg">${kTL(st.bal)}</b></button>`).join("")}</section>`;
+  if (az.length) x += `<section class="card stack"><div class="row between"><h2 class="kh">${ic("alert",22)} Bitiyor</h2><button class="link" data-act="kGo" data-tab="k-stok" data-f="az">Hepsi (${az.length})</button></div>
+    ${az.slice(0,3).map(r=>`<div class="krow3"><b>${esc(r.p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${r.s.c} 16%, transparent);color:${r.s.c}">${r.s.k==="out" ? "Bitti" : `${fmt(r.s.cur.v, r.s.cur.v<10?1:0)} ${esc(unitOf(r.p))} kaldı`}</span></div>`).join("")}</section>`;
+  x += `<button class="kother" data-act="kGo" data-tab="k-daha"><span class="bi c5">${ic("grid",24)}</span><span><b>Diğer İşler</b><small>Veresiye, tedarikçiler, raporlar, ayarlar</small></span><span class="kgo">${ic("back",20)}</span></button>`;
   return x;
 }
 function kPos(){
@@ -4855,10 +5045,10 @@ function kKasa(){
     h += `<form id="kasaform" class="card stack kform2" data-f="${f}"><h2>${T}</h2>
       ${f==="kapanis" ? `<p>Kasadaki parayı say ve yaz. Uygulama, olması gerekenle karşılaştırır.</p>` : ""}
       <label>${f==="kapanis" ? "Kasada Saydığın Para (TL)" : "Kaç TL?"}<input id="kf-a" inputmode="decimal" required placeholder="${f==="acilis" && left!=null ? fmt(left,2) : "Örn. 500"}" value="${f==="acilis" && left!=null ? String(left).replace(".",",") : ""}"></label>
-      ${f==="cikis" ? supSelectHtml() : ""}
-      ${reasons ? `<input type="hidden" id="kf-r" value="${esc(S.kReason||"")}"><div class="kreasons"><span class="small muted">Neden?</span>${reasons.map(r=>`<button type="button" class="tog ${S.kReason===r?"on":""}" data-act="kReason" data-v="${esc(r)}">${esc(r)}</button>`).join("")}</div>` : ""}
+      ${reasons ? `<input type="hidden" id="kf-r" value="${esc(S.kReason||"")}"><div class="kreasons"><span class="klab">Neden?</span>${reasons.map(r=>`<button type="button" class="tog ${S.kReason===r?"on":""}" data-act="kReason" data-v="${esc(r)}">${esc(r)}</button>`).join("")}</div>` : ""}
+      ${f==="cikis" && supList().length ? `<label id="k-supw" ${K_MAL.includes(S.kReason)?"":"hidden"}>Kime ödedin? <span class="muted">(borcundan düşsün)</span><select id="kf-sup"><option value="">Seçmeden geç</option>${supList().map(x=>{ const b = supStats(x.id).bal; return `<option value="${esc(x.id)}">${esc(x.name)}${b>0.005?` · borç ${kTL(b)}`:""}</option>`; }).join("")}</select></label>` : ""}
       ${f==="kapanis" ? `<label>Yarına Kasada Bırakılan (isteğe bağlı)<input id="kf-b" inputmode="decimal" placeholder="Örn. 500"></label>` : ""}
-      <label>Not (isteğe bağlı)<input id="kf-n" maxlength="120" placeholder="${f==="cikis" ? "Örn. Ekmekçi Hasan" : ""}"></label>
+      <details class="knote"><summary>Not ekle</summary><input id="kf-n" maxlength="120" aria-label="Not" placeholder="${f==="cikis" ? "Örn. Ekmekçi Hasan" : ""}"></details>
       ${S.kasaErr ? `<p class="notice bad">${esc(S.kasaErr)}</p>` : ""}
       <div class="row"><button class="primary big" type="submit">Kaydet</button><button type="button" class="big" data-act="kKasa" data-f="">Vazgeç</button></div></form>`;
   }
@@ -4868,17 +5058,18 @@ function kKasa(){
 }
 function kStok(){
   const rows = kStockRows(), f = S.kStokF || "all", q = (S.kq||"").trim();
-  if (!rows.length) return `<section class="card empty stack"><h2>Henüz Ürün Yok</h2><button class="primary big" data-act="kEdit" data-id="__new">${ic("plus",22)} Ürün Ekle</button></section>`;
-  let val = 0, valS = 0, unk = 0;
-  for (const r of rows){ if (!r.s.cur.known){ unk++; continue; } const b = r.st.money.buy ?? Number(r.p.buyPrice); if (b>0) val += r.s.cur.v*b; if (Number(r.p.salePrice)>0) valS += r.s.cur.v*Number(r.p.salePrice); }
+  if (!rows.length) return `<section class="kwelcome"><div class="kwart"><span>${ic("box",44)}</span></div><h2>Henüz Ürün Yok</h2><button class="kcta" data-act="kEdit" data-id="__new"><span class="kctai">${ic("plus",30)}</span><span><b>Ürün Ekle</b><small>Barkodu varsa okut, yoksa adını yaz</small></span></button></section>`;
+  let val = 0, valS = 0;
+  for (const r of rows){ if (!r.s.cur.known) continue; const b = r.st.money.buy ?? Number(r.p.buyPrice); if (b>0) val += r.s.cur.v*b; if (Number(r.p.salePrice)>0) valS += r.s.cur.v*Number(r.p.salePrice); }
   const n = {all: rows.length, az: rows.filter(r=>r.s.k==="low"||r.s.k==="out").length, bitti: rows.filter(r=>r.s.k==="out").length};
-  let h = noticeHtml() + `<div class="kstats two">
-    <div class="kstat c4"><span class="bi c4">${ic("box",24)}</span><span class="kl">Raftaki Malın Maliyeti</span><b class="num">${kTL(val)}</b><span class="ks">alış fiyatıyla${unk?` · ${unk} ürün bilinmiyor`:""}</span></div>
-    <div class="kstat c1"><span class="bi c1">${ic("coin",24)}</span><span class="kl">Satınca Eder</span><b class="num">${kTL(valS)}</b><span class="ks">satış fiyatıyla</span></div></div>
-  <div class="row kbar"><input id="k-q" type="search" placeholder="Ürün ara" value="${esc(q)}" autocomplete="off"><button class="primary" data-act="kEdit" data-id="__new">${ic("plus",18)} Ürün Ekle</button></div>
+  return noticeHtml() + pDupBanner() + `<div class="ktwo">
+    <button class="primary big" data-act="kEdit" data-id="__new">${ic("plus",22)} Ürün Ekle</button>
+    <button class="big" data-act="supMal" data-back="k-stok">${ic("truck",22)} Mal Geldi</button></div>
+  <input id="k-q" class="ksearch" type="search" placeholder="Ürün ara" value="${esc(q)}" autocomplete="off">
   <div class="fchips">${[["all","Hepsi"],["az","Azalan"],["bitti","Biten"]].map(([k,l])=>`<button class="tog ${f===k?"on":""}" data-act="kStokF" data-f="${k}">${l} <span class="num">${n[k]}</span></button>`).join("")}</div>
-  <section class="card" id="k-list">${kStokList(rows)}</section>`;
-  return h;
+  <p class="khelp">${ic("help",18)}<span>Sayı yanlışsa <b>−</b> / <b>+</b> ile düzelt. Toptancıdan mal geldiyse <b>Mal Geldi</b>'ye bas, borç da yazılsın.</span></p>
+  <section class="card" id="k-list">${kStokList(rows)}</section>
+  <p class="small muted kval">Raftaki mal: alışla ${kTL(val)} · satınca ${kTL(valS)}</p>`;
 }
 function kStokList(rows){
   const f = S.kStokF || "all", q = norm(S.kq||"");
@@ -4886,20 +5077,15 @@ function kStokList(rows){
   const list = rows.filter(r=>(f==="all" || (f==="az" && (r.s.k==="low"||r.s.k==="out")) || (f==="bitti" && r.s.k==="out")) && (!q || norm(r.p.name).includes(q)))
     .sort((a,b)=>order[a.s.k]-order[b.s.k] || a.p.name.localeCompare(b.p.name,"tr"));
   if (!list.length) return `<p class="muted">Ürün bulunamadı.</p>`;
-  return list.slice(0, 200).map(({p,st,s})=>{
-    const u = unitOf(p), b = st.money.buy ?? (Number(p.buyPrice)||null), sp = Number(p.salePrice)||null;
-    const open = S.kCount===p.id;
-    return `<div class="kitem"><div class="kn"><b>${esc(p.name)}</b><span class="small muted">${sp?kTL(sp):"Fiyat yok"}${b && sp?` · tanesinde ${kTL(sp-b)} kâr`:""}</span></div>
-      <div class="kq"><b class="num" style="color:${s.c}">${s.cur.known ? fmt(s.cur.v, s.cur.v<10?1:0) : "?"}</b><span class="small muted">${esc(u)}</span></div>
-      <div class="row kact"><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.k==="unk"?"Sayılmadı":s.t}</span>
-        <button data-act="kCount" data-id="${p.id}">${open?"Vazgeç":"Sayım"}</button><button data-act="supMal" data-p="${p.id}" data-back="k-stok">Mal Geldi</button><button data-act="kEdit" data-id="${p.id}">Düzenle</button></div>
-      ${open ? `<div class="kcntbox"><p class="small"><b>Sayım:</b> Rafa bak, şu an kaç ${esc(u)} olduğunu yaz. Eklenmez, yazdığın sayı rafın yeni durumu olur. Kimseye borç yazılmaz.</p><div class="row kcnt"><input id="kcnt-${p.id}" type="number" min="0" step="any" inputmode="decimal" placeholder="Rafta şu an kaç ${esc(u)} var?"><button class="primary" data-act="count" data-id="${p.id}" data-src="kcnt-">Kaydet</button></div><p class="small muted">Mal geldiyse <button class="link" data-act="supMal" data-p="${p.id}" data-back="k-stok">Mal Geldi</button>'yi kullan: stok artar, tedarikçiye borç yazılır.</p></div>` : ""}</div>`;
+  return list.slice(0, 200).map(({p,s})=>{
+    const sp = Number(p.salePrice)||null, warn = s.k==="out" || s.k==="low";
+    return `<div class="kitem"><button class="kn" data-act="kEdit" data-id="${p.id}"><b>${esc(p.name)}</b><span class="small">${sp?kTL(sp):"Fiyat yok"}${warn ? ` · <span style="color:${s.c};font-weight:700">${s.k==="out"?"Bitti":"Azaldı"}</span>` : ""}</span></button>${pStepper(p)}</div>`;
   }).join("") + (list.length > 200 ? `<p class="small muted">İlk 200 ürün gösteriliyor; aramayı daralt.</p>` : "");
 }
 function kKar(){
   const R = rpState(), d = S.rpData;
   if (!d && !S.rpBusy && !S.kKarAsked){ S.kKarAsked = true; setTimeout(()=>rpAct("rpPre", {dataset:{k:"buay"}}), 0); }
-  let h = `<div class="fchips kper">${[["bugun","Bugün"],["hafta","Bu Hafta"],["buay","Bu Ay"],["gecenay","Geçen Ay"],["buyil","Bu Yıl"]].map(([k,l])=>`<button class="tog ${R.pre===k?"on":""}" data-act="rpPre" data-k="${k}">${l}</button>`).join("")}</div>`;
+  let h = `<div class="fchips kper">${[["bugun","Bugün"],["hafta","Bu Hafta"],["buay","Bu Ay"],["buyil","Bu Yıl"]].map(([k,l])=>`<button class="tog ${R.pre===k?"on":""}" data-act="rpPre" data-k="${k}">${l}</button>`).join("")}</div>`;
   if (S.rpErr) h += `<p class="notice bad">${esc(S.rpErr)}</p>`;
   if (!d) return h + `<p class="muted">${S.rpBusy ? '<span class="spin"></span> Hesaplanıyor' : "Dönem seç."}</p>`;
   const T = rpSum(d), rs = d.reasons || [];
@@ -4928,7 +5114,6 @@ function kKar(){
 function kDaha(){
   const t = (act, extra, cls, icon, title, sub) => `<button class="ktile ${cls}" data-act="${act}" ${extra}><span class="bi ${cls}">${icon}</span><b>${title}</b><span>${sub}</span></button>`;
   return noticeHtml() + `<div class="kgrid">
-    ${t("kEdit", 'data-id="__new"', "c1", ic("plus",28), "Ürün Ekle", "Barkodlu ya da barkodsuz")}
     ${t("goRapor", "", "c8", ic("sheet",28), "Satış Raporları", "Excel'e indir")}
     ${t("kGo", 'data-tab="veresiye"', "c3", ic("book",28), "Veresiye", "Kim ne kadar borçlu")}
     ${t("kGo", 'data-tab="tedarik"', "c2", ic("truck",28), "Tedarikçiler", (()=>{ const v = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return v>0.005 ? `Borcum: ${kTL(v)}` : "Borç, mal geldi, ödeme"; })())}
@@ -4950,7 +5135,7 @@ function kUrun(){
       <div class="kuscan">${ic("scan",26)}<input id="ku-bc" inputmode="numeric" value="${esc(bc)}" placeholder="Okut ya da yaz"></div>
       <div id="ku-bcinfo" class="small muted">${bc ? "" : "Barkodu yoksa bu adımı geç."}</div></div></section>
     <section class="kustep"><span class="kun">2</span><div class="kubody">
-      <label for="ku-name">Ürün Adı</label><input id="ku-name" class="kubig" required value="${esc(v.name)}" placeholder="Örn. Eti Browni"></div></section>
+      <label for="ku-name">Ürün Adı</label><input id="ku-name" class="kubig" required value="${esc(v.name)}" placeholder="Örn. Eti Browni">${p ? "" : `<div id="pdup-box"></div>`}</div></section>
     <section class="kustep"><span class="kun">3</span><div class="kubody">
       <div class="kuprices"><label>Satış Fiyatı<span class="kutl"><input id="ku-sale" inputmode="decimal" value="${esc(num(v.salePrice))}" placeholder="25"><b>TL</b></span></label>
         <label>Alış Fiyatı<span class="kutl"><input id="ku-buy" inputmode="decimal" value="${esc(num(v.buyPrice))}" placeholder="18"><b>TL</b></span></label></div>
@@ -4961,6 +5146,7 @@ function kUrun(){
       ${p ? `<p class="small muted">Değişmediyse boş bırak.</p>` : ""}
       <label class="kuswitch"><input id="ku-w" type="checkbox" ${v.byWeight?"checked":""}><span></span> Tartıyla satılıyor (kilo)</label></div></section>
     ${S.kErr ? `<p class="notice bad">${esc(S.kErr)}</p>` : ""}
+    ${p ? `<button type="button" class="big kumal" data-act="supMal" data-p="${p.id}" data-back="k-stok">${ic("truck",20)} Bu Üründen Mal Geldi</button>` : ""}
     ${p ? `<button type="button" class="link dangerLink kdel" data-act="kDel" data-id="${p.id}">${S.kDelC===p.id ? "Emin misin? Ürünü sil" : "Ürünü sil"}</button>` : ""}
     <div class="kusave"><button class="primary big" type="submit" data-k="done">${ic("check",22)} Kaydet</button>${p || S.kBack==="satis" ? "" : `<button class="big" type="submit" data-k="next">Kaydet + Yeni</button>`}</div>
   </form>`;
@@ -4990,7 +5176,9 @@ async function kSave(next){
   if (!(sale > 0)){ S.kErr = "Satış fiyatını yaz."; render(true); document.getElementById("ku-sale")?.focus(); return; }
   const old = S.kEdit!=="__new" ? S.products.find(x=>x.id===S.kEdit) : null;
   const twin = S.products.find(x=>x.id!==old?.id && norm(x.name)===norm(name));
-  if (twin && S.kDupOk!==norm(name)){ S.kDupOk = norm(name); S.kErr = `"${twin.name}" adında bir ürün zaten var. Aynı ürünse vazgeç ve onu düzenle; farklıysa tekrar Kaydet'e bas.`; render(true); return; }
+  if (twin && S.kDupOk!==norm(name)){ S.kDupOk = norm(name); const bx = !old && document.getElementById("pdup-box");
+    if (bx){ bx.innerHTML = pDupHint(name, null, "ku-cnt") + `<p class="small muted">Gerçekten ayrı bir ürünse tekrar Kaydet'e bas.</p>`; bx.scrollIntoView({block:"center"}); return; }
+    S.kErr = `"${twin.name}" adında bir ürün zaten var. Farklı bir ürünse tekrar Kaydet'e bas.`; render(true); return; }
   for (const c of codes){ const own = barcodeOwner(c, old?.id); if (own){ S.kErr = `${c} barkodu zaten ${own.name} ürününde kayıtlı.`; render(true); return; } }
   await posMarkStart();
   const keep = (old?.barcodes||[]).filter(b=>codes.includes(b.c)), bcs = keep.concat(codes.filter(c=>!keep.some(b=>b.c===c)).map(c=>({c, q:1})));
@@ -5013,7 +5201,8 @@ async function kSave(next){
 async function kolayAct(a, t, id){
   if (a==="kGo"){ if (t.dataset.tab==="tedarik"){ S.supOpen = null; S.supForm = null; S.supEdit = null; } S.tab = t.dataset.tab; S.msg = null; S.kEdit = null; S.vCust = null; S.editId = null; if (t.dataset.f) S.kStokF = t.dataset.f; if (S.tab==="satis") S.posView = "sat"; render(); window.scrollTo(0,0); if (S.tab==="satis") posFocus(); return true; }
   if (a==="kKasa"){ S.tab = "k-kasa"; S.kasaForm = t.dataset.f || null; S.kReason = null; S.kasaErr = null; S.msg = null; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
-  if (a==="kReason"){ S.kReason = t.dataset.v; const h = document.getElementById("kf-r"); if (h) h.value = S.kReason; document.querySelectorAll('[data-act="kReason"]').forEach(b=>b.classList.toggle("on", b===t)); return true; }
+  if (a==="kReason"){ S.kReason = t.dataset.v; const h = document.getElementById("kf-r"); if (h) h.value = S.kReason;
+    const w = document.getElementById("k-supw"); if (w){ w.hidden = !K_MAL.includes(S.kReason); if (w.hidden) document.getElementById("kf-sup").value = ""; } document.querySelectorAll('[data-act="kReason"]').forEach(b=>b.classList.toggle("on", b===t)); return true; }
   if (a==="settings"){ S.tab = S.tab==="k-daha" ? "k-ana" : "k-daha"; S.msg = null; render(); window.scrollTo(0,0); return true; }
   if (a==="kStokF"){ S.kStokF = t.dataset.f; render(); return true; }
   if (a==="kCount"){ S.kCount = S.kCount===id ? null : id; render(true); setTimeout(()=>document.getElementById("kcnt-"+id)?.focus(),0); return true; }

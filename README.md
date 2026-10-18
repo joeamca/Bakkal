@@ -18,7 +18,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 ## Neler var?
 
 - **Satış:** Barkod okuyucuyla (USB ya da Bluetooth) okut, sepete eklensin. Nakit, kart ya da veresiye; isimli ya da isimsiz müşteri. Tartılı ürünler için terazi barkodu ve elle kilo girişi.
-- **Stok:** Her satışta raftan düşer. Sayım, fatura ve "bitti" bilgisiyle düzelir; azalan ve biten ürünleri gösterir.
+- **Stok:** Her satışta raftan düşer. Her ürünün yanında − / + ile raftaki sayı düzeltilir; fatura ve "bitti" bilgisiyle de düzelir. Aynı isimle ürün girilince yeni ürün açmak yerine **üstüne ekler**; eskiden çift girilmiş ürünler **Birleştir** ile teke iner.
 - **Kasa:** Açılış parası, kasaya giriş ve kasadan çıkış (sebebiyle), gün kapanışı ve kasa farkı.
 - **Sipariş ve fatura:** Hangi üründen ne kadar alınacağını, araç günlerine ve özel günlere göre hesaplar.
 - **Veresiye:** Kim ne kadar borçlu, ne zamandır bekliyor; borç sınırı.
@@ -38,7 +38,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 ## Bilmen gerekenler
 
 - Kayıtlar internette, dükkânın hesabında durur; telefon değişse de kaybolmaz.
-- İnternet yokken yapılan satışlar telefonda bekler, bağlantı gelince kendiliğinden gönderilir. Kasa hiç durmaz.
+- Uygulama bir kez açıldıktan sonra telefona kaydedilir, **internet yokken de açılır**. İnternetsiz yapılan satışlar telefonda bekler, bağlantı gelince kendiliğinden gönderilir. Kasa hiç durmaz.
 - Dükkân sahibi çalışanına ayrı hesap açabilir; kimin ne girdiği görünür.
 
 <img src="ekran/simgeler.png" width="620" alt="Uygulama ve bildirim simgeleri">
@@ -49,7 +49,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 |---|---|
 | `index.html` | Tam sürüm (tek dosya uygulama) |
 | `kolay/` | Bakkal Kolay |
-| `sw.js` | Bildirimler için servis çalışanı (sayfaları önbelleğe almaz) |
+| `sw.js` | Bildirimler ve internetsiz açılış (sayfa önce internetten istenir, yoksa telefondaki kopya açılır) |
 | `manifest.webmanifest` | Ana ekrana ekleme bilgileri |
 | `icons/` | Uygulama ve bildirim simgeleri |
 | `supabase-kurulum.sql` | Veritabanı kurulumu |

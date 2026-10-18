@@ -487,6 +487,27 @@ nav.tabs button[aria-current="page"] svg .f{fill-opacity:.28}
 /* Üst başlık */
 header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(--accent) 60%,var(--ink)));-webkit-background-clip:text;background-clip:text;color:transparent}
 .chip{font-weight:600}
+
+/* boş ekran: büyük rakam stili düğmelere bulaşmasın */
+.empty button.big{font-family:inherit;font-size:19px;color:inherit}
+.empty button.primary.big{color:var(--accent-ink)}
+/* − / + */
+.pstep{display:inline-flex;align-items:center;gap:4px;flex:none;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--card)}
+.pstep button{width:44px;height:44px;min-height:0;padding:0;border-radius:50%;border:0;display:inline-flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent) 10%,var(--card));color:var(--accent)}
+.pstep button:disabled{opacity:.35}
+.pstep button:active{transform:scale(.92)}
+.pstep b{min-width:44px;text-align:center;font-size:22px;font-family:var(--display);font-weight:700;transition:color .2s}
+.pstep b.pend{color:var(--accent)}
+.srhead{flex-wrap:nowrap;gap:10px}
+.sname{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.pdup{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:color-mix(in srgb,var(--c2) 12%,var(--card));border:1px solid color-mix(in srgb,var(--c2) 35%,var(--line));color:var(--ink);font-size:16px;line-height:1.4}
+.pdup > span{color:var(--c2);flex:none;margin-top:1px}
+.pdup .row{margin-top:8px}
+.pdup .pq{margin-top:6px;font-weight:600;color:var(--c3)}
+.pask{border-color:var(--c3)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--c3) 16%,transparent)!important}
+.pmerge{border-color:color-mix(in srgb,var(--c2) 40%,var(--line))}
+.pmrow{gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.pmrow:first-of-type{border-top:0}
 </style>
 </head>
 <body>
@@ -1335,6 +1356,7 @@ function viewProducts(){
     html += `<form id="pform" class="card stack">
       <h2>${p?"Ürünü düzenle":"Yeni ürün"}</h2>
       <label>Ürün adı<input id="f-name" required value="${esc(v.name)}" placeholder="${S.formMade?"Örn. Kaşarlı tost":"Örn. Pınar süt 1 L"}"></label>
+      ${p ? "" : `<div id="pdup-box"></div>`}
       <label class="check"><input id="f-made" type="checkbox" ${S.formMade?"checked":""}> Dükkânda hazırladığım ürün (tost, sandviç gibi: reçetesi var)</label>
       ${S.formMade ? `
       <div class="grid2"><label>Günde kaç tane hazırlıyorsun?<input id="f-daily" type="number" min="0" step="1" inputmode="numeric" value="${esc(v.dailyEst??"")}"></label>
@@ -1377,7 +1399,7 @@ function viewProducts(){
     </form>`;
     return html;
   }
-  html += `<button class="primary" data-act="newProduct">Ürün Ekle</button>`;
+  html += `<button class="primary" data-act="newProduct">Ürün Ekle</button>` + pDupBanner();
   if (!S.products.length) return html + emptyProducts();
   html += `<div class="card">` + S.products.slice().sort((a,b)=>a.name.localeCompare(b.name,"tr")).map(p=>{
     if (isMade(p)) return `<div class="item"><div class="name">${esc(p.name)} <span class="pill info">reçeteli</span><div class="small muted">günde ${fmt(p.dailyEst||0)} tane · ${p.recipe.map(r=>{ const c=S.products.find(x=>x.id===r.id); return c?`${esc(c.name)} ×${fmt(r.qty,3)}`:""; }).filter(Boolean).join(", ")}</div></div>
@@ -1676,6 +1698,7 @@ function viewStock(){
   let value = 0; for (const r of rows) if (r.s.cur.known){ const b = r.st.money.buy ?? Number(r.p.buyPrice); if (b>0) value += r.s.cur.v*b; }
   const f = S.stockF || "all";
   let html = backLink() + noticeHtml();
+  html += pDupBanner();
   html += `<section class="card stack"><h2>Raf Durumu</h2>
     ${donut(SKIND.map(([k,l,c])=>({l, v:cnt[k], c, act:"stockF", f:k})), {center:fmt(rows.length), sub:"ürün", label:"Stok durumu"})}
     <div class="tiles t2"><div class="tile"><span class="tn num">${TL(value)}</span><span>raftaki malın değeri (tahmini)</span></div>
@@ -1688,7 +1711,7 @@ function viewStock(){
     const u = unitOf(p), scale = Math.max(14, s.need*2.2);
     const cov = s.cover==null ? null : Math.min(s.cover, scale);
     const nextTxt = st.sch ? (st.sch.a===0 ? "araç bugün" : `araç ${st.sch.a} gün sonra`) : "";
-    return `<div class="srow"><div class="row between"><b>${esc(p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.t}</span></div>
+    return `<div class="srow"><div class="row between srhead"><span class="sname"><b>${esc(p.name)}</b><span class="pill" style="background:color-mix(in srgb, ${s.c} 18%, transparent);color:${s.c}">${s.t}</span></span>${s.k==="unk" ? "" : pStepper(p)}</div>
       ${s.k==="unk" ? `<p class="small muted">Rafta kaç ${esc(u)} olduğu bilinmiyor.</p>
         <label class="row cnt" style="color:inherit"><input id="scnt-${p.id}" type="number" min="0" step="any" inputmode="decimal" placeholder="Rafta kaç var?"><button data-act="count" data-id="${p.id}" data-src="scnt-">Kaydet</button></label>`
       : `<div class="cover"><div class="hb tall"><span style="width:${(100*(cov||0)/scale).toFixed(1)}%;background:${s.c}"></span></div><i class="need" style="left:${Math.min(100,100*s.need/scale).toFixed(1)}%" title="sonraki araç"></i></div>
@@ -2373,6 +2396,7 @@ document.addEventListener("click", async ev=>{
   const a = t.dataset.act, id = t.dataset.id;
   try{
     if (await nAct(a)) return;
+    if (await pAct(a, t)) return;
     if (await supAct(a, t)) return;
     if (await posAct(a, t)) return;
     if (CLOUD_ON && await cloudAct(a, t, id)) return;
@@ -2503,6 +2527,8 @@ document.addEventListener("submit", async ev=>{
   const g = id => (document.getElementById(id)?.value ?? "").trim();
   const chk = id => !!document.getElementById(id)?.checked;
   const old = S.products.find(x=>x.id===S.editId);
+  if (!old && !S.formMade && pTwin(g("f-name")) && S.pDupOk!==norm(g("f-name"))){ S.pDupOk = norm(g("f-name")); const bx = document.getElementById("pdup-box");
+    if (bx){ bx.innerHTML = pDupHint(g("f-name"), null, "f-stock") + `<p class="small muted">Gerçekten ayrı bir ürünse tekrar Kaydet'e bas.</p>`; bx.scrollIntoView({block:"center"}); } return; }
   const base = {...(old||{id:newId(),createdAt:nowIso(),aliases:[],outSince:null})};
   let p;
   if (S.formMade){
@@ -4614,6 +4640,101 @@ document.addEventListener("keydown", ev=>{
   const k = /^[0-9]$/.test(ev.key) ? ev.key : (ev.key==="Backspace" || ev.key==="Delete") ? "del" : null; if (!k) return;
   ev.preventDefault(); const b = document.querySelector(`.pinpad .pk[data-k="${k}"]`); if (b && !b.disabled) b.click();
 });
+
+/* ===== Ürün yardımcıları (iki uygulamada ortak): − / + düğmesi, aynı isimli ürüne ekleme, çift ürünleri birleştirme ===== */
+function pCur(p){ const s = stockStatus(p, stats(p)); return s.cur.known ? Number(s.cur.v)||0 : null; }
+const pQtyTxt = v => v==null ? "?" : fmt(v, v<10 && v%1 ? 1 : 0);
+function pTwin(name, exceptId){ const n = norm(String(name||"").trim()); if (!n) return null; return stockP().find(x=>x.id!==exceptId && norm(x.name)===n) || null; }
+// − / + : ekranda hemen değişir, 1 sn dokunulmazsa tek sayım olarak kaydedilir
+S.pPend = S.pPend || {};
+function pStepper(p, cls){
+  const v = S.pPend[p.id] ?? pCur(p);
+  return `<span class="pstep ${cls||""}"><button type="button" data-act="pStep" data-id="${p.id}" data-d="-1" aria-label="${esc(p.name)} bir azalt" ${v===0?"disabled":""}>${ic("minus",22)}</button><b class="num" data-pq="${p.id}">${pQtyTxt(v)}</b><button type="button" data-act="pStep" data-id="${p.id}" data-d="1" aria-label="${esc(p.name)} bir artır">${ic("plus",22)}</button></span>`;
+}
+function pStep(id, d){
+  const p = S.products.find(x=>x.id===id); if (!p) return;
+  const base = S.pPend[id] ?? pCur(p) ?? 0, v = Math.max(0, r2(base + d));
+  S.pPend[id] = v;
+  document.querySelectorAll(`[data-pq="${id}"]`).forEach(el=>{ el.textContent = pQtyTxt(v); el.classList.add("pend"); const m = el.parentElement.querySelector('[data-d="-1"]'); if (m) m.disabled = v===0; });
+  clearTimeout(pStep.t[id]); pStep.t[id] = setTimeout(()=>pCommit(id), 1000);
+}
+pStep.t = {};
+async function pCommit(id){
+  const v = S.pPend[id]; if (v==null) return; const p = S.products.find(x=>x.id===id);
+  if (p && v !== pCur(p)) await addCount(p, v);
+  delete S.pPend[id];
+  document.querySelectorAll(`[data-pq="${id}"]`).forEach(el=>el.classList.remove("pend"));
+}
+window.addEventListener("pagehide", ()=>{ for (const id of Object.keys(S.pPend)) pCommit(id); });
+// Aynı isimde ürün varsa: yeni ürün açmak yerine onun üstüne ekle
+async function pAddTo(id, qty, o){
+  const p = S.products.find(x=>x.id===id); if (!p) return null;
+  o = o || {}; const before = pCur(p), add = qty > 0 ? qty : 0;
+  const codes = (o.codes||[]).filter(c=>!(p.barcodes||[]).some(b=>b.c===c) && !barcodeOwner(c, p.id));
+  const sale = o.sale > 0 ? r2(o.sale) : null, buy = o.buy > 0 ? r2(o.buy) : null;
+  if (codes.length || sale || buy) await store.saveProduct({...p, barcodes:(p.barcodes||[]).concat(codes.map(c=>({c, q:1}))),
+    ...(sale ? {salePrice:sale, salePriceAt: Number(p.salePrice)===sale ? (p.salePriceAt||null) : nowIso()} : {}), ...(buy ? {buyPrice:buy} : {})});
+  if (add) await addCount(S.products.find(x=>x.id===id), r2((before||0) + add));
+  const u = unitOf(p);
+  return add ? (before==null ? `${p.name}: rafta ${pQtyTxt(add)} ${u} oldu.` : `${p.name}: ${pQtyTxt(before)} + ${pQtyTxt(add)} = ${pQtyTxt(r2(before+add))} ${u} oldu.`) : `${p.name} güncellendi.`;
+}
+function pDupHint(name, exceptId, qtyId){
+  const t = pTwin(name, exceptId); if (!t) return "";
+  const c = pCur(t);
+  return `<div class="pdup"><span>${ic("alert",20)}</span><div><b>${esc(t.name)} zaten var</b>${c!=null?` · rafta ${pQtyTxt(c)} ${esc(unitOf(t))}`:""}<br><span class="small">Yeni ürün açma, rafa geleni bunun üstüne ekle.</span>
+    <div class="row"><button type="button" class="primary" data-act="pAddTo" data-id="${t.id}" data-q="${qtyId}">${ic("plus",18)} Üstüne Ekle</button></div></div></div>`;
+}
+// Aynı isimli ürünler (eskiden iki kez eklenmiş): birleştir
+function pDupGroups(){
+  const m = new Map(); for (const p of stockP()){ const k = norm(p.name); if (!m.has(k)) m.set(k, []); m.get(k).push(p); }
+  return [...m.values()].filter(g=>g.length>1);
+}
+function pDupBanner(){
+  const G = pDupGroups(); if (!G.length) return "";
+  return `<section class="card stack pmerge"><h2 class="kh">${ic("alert",22)} Aynı İsimde Ürünler</h2>
+    <p class="small muted">Aynı ürün iki kez eklenmiş. Birleştirince stokları toplanır, tek ürün kalır.</p>
+    ${G.map(g=>{ const tot = g.reduce((a,p)=>a+(pCur(p)||0),0), k = g.map(p=>p.id).join(",");
+      return `<div class="row between pmrow"><span><b>${esc(g[0].name)}</b> <span class="small muted">${g.length} kayıt: ${g.map(p=>pQtyTxt(pCur(p))).join(" + ")} = ${pQtyTxt(r2(tot))} ${esc(unitOf(g[0]))}</span></span>
+        <button class="primary" data-act="pMerge" data-ids="${k}">${S.pMergeC===k ? "Emin misin? Birleştir" : "Birleştir"}</button></div>`; }).join("")}</section>`;
+}
+async function pMerge(ids){
+  const g = ids.map(id=>S.products.find(x=>x.id===id)).filter(Boolean); if (g.length<2) return;
+  // en çok bilgisi olanı (barkod, fiyat) bırak
+  const score = p => (p.barcodes||[]).length*2 + (p.salePrice>0?1:0) + (p.buyPrice>0?1:0);
+  g.sort((a,b)=>score(b)-score(a) || String(a.createdAt||"").localeCompare(String(b.createdAt||"")));
+  const keep = g[0], rest = g.slice(1);
+  const known = g.map(pCur), tot = r2(known.reduce((a,v)=>a+(v||0),0)), anyKnown = known.some(v=>v!=null);
+  const bc = [...(keep.barcodes||[])]; for (const p of rest) for (const b of (p.barcodes||[])) if (!bc.some(x=>x.c===b.c)) bc.push(b);
+  const pick = k => keep[k] ?? rest.map(p=>p[k]).find(v=>v!=null && v!=="");
+  await store.saveProduct({...keep, barcodes:bc, salePrice:pick("salePrice") ?? null, buyPrice:pick("buyPrice") ?? null, supplier: keep.supplier || pick("supplier") || ""});
+  for (const p of rest) await store.deleteProduct(p.id);
+  if (anyKnown) await addCount(S.products.find(x=>x.id===keep.id), tot);
+  return `${keep.name} birleştirildi${anyKnown ? `: rafta ${pQtyTxt(tot)} ${unitOf(keep)}` : ""}.`;
+}
+async function pAct(a, t){
+  const id = t.dataset.id;
+  if (a==="pStep"){ pStep(id, Number(t.dataset.d)); return true; }
+  if (a==="pMerge"){ const k = t.dataset.ids; if (S.pMergeC!==k){ S.pMergeC = k; render(true); return true; } S.pMergeC = null;
+    const m = await pMerge(k.split(",")); S.msg = {kind:"ok", text:m}; render(true); return true; }
+  if (a==="pAddTo"){
+    const g = x => (document.getElementById(x)?.value ?? "").trim();
+    const kol = !!document.getElementById("ku-name"), q = pnum(g(t.dataset.q));
+    if (!(q > 0)){ const el = document.getElementById(t.dataset.q); S.pAddErr = true; if (el){ el.focus(); el.closest(kol ? ".kustep" : "label")?.classList.add("pask"); }
+      const h = t.closest(".pdup"); if (h && !h.querySelector(".pq")) h.querySelector("div").insertAdjacentHTML("beforeend", `<p class="pq">Kaç ${kol ? "tane geldi? 4. adımdaki" : "tane geldi? \"Şu an rafta\" kutusundaki"} sayıya yaz, sonra tekrar bas.</p>`); return true; }
+    const codes = g(kol ? "ku-bc" : "f-bc").split(/[,;\s]+/).map(c=>c.replace(/[^\dA-Za-z\-]/g,"")).filter(Boolean);
+    const m = await pAddTo(id, q, {codes, sale: pnum(g(kol ? "ku-sale" : "f-sale")), buy: pnum(g(kol ? "ku-buy" : "f-buy"))});
+    S.msg = {kind:"ok", text:m}; S.pAddErr = false;
+    if (kol){ S.kEdit = null; S.kBc = null; S.tab = S.kBack==="satis" ? "satis" : "k-stok"; } else { S.editId = null; S.rcFor = null; }
+    render(); window.scrollTo(0,0); return true; }
+  return false;
+}
+document.addEventListener("input", ev=>{ const id = ev.target.id; if (id!=="ku-name" && id!=="f-name") return;
+  const box = document.getElementById("pdup-box"); if (!box) return;
+  box.innerHTML = pDupHint(ev.target.value, null, id==="ku-name" ? "ku-cnt" : "f-stock"); });
+
+// İnternetsiz açılış: uygulama dosyalarını telefona kaydeden servis çalışanı her açılışta kaydedilir
+if ("serviceWorker" in navigator && !FILE_MODE && (location.protocol==="https:" || location.hostname==="localhost"))
+  window.addEventListener("load", ()=>{ const [u, sc] = nSwUrl(); navigator.serviceWorker.register(u, {scope:sc}).catch(()=>{}); });
 
 try{ if (!localStorage.getItem("bd-rehber")){ S.guide=true; S.tab="urunler"; localStorage.setItem("bd-rehber","1"); } }catch(_){}
 try{ document.getElementById("today").textContent = "· " + new Date().toLocaleDateString("tr-TR",{day:"numeric",month:"long",weekday:"long"}); }catch(_){}

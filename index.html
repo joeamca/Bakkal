@@ -76,7 +76,7 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
 .notice.bad{background:var(--bad-soft);color:var(--bad)}
 .empty{text-align:center;padding:28px 12px}
 .empty .big{font-size:40px;font-family:var(--mono);color:var(--muted)}
-body.staff [data-act="goKasa"],body.staff [data-act="kKasa"],body.staff [data-act="goRapor"],body.staff [data-act="posView"][data-v="kasa"],body.staff [data-tab="k-kar"],body.staff [data-tab="k-kasa"],body.staff [data-tab="kar"],body.staff [data-tab="rapor"],body.staff [data-tab="maliyet"],body.staff [data-tab="plan"],body.staff [data-tab="duyuru"],body.staff .ktoday,body.staff #excel{display:none!important}
+body.staff [data-act="goKasa"],body.staff [data-act="kKasa"],body.staff [data-act="goRapor"],body.staff [data-act="posView"][data-v="kasa"],body.staff [data-tab="k-kar"],body.staff [data-tab="k-kasa"],body.staff [data-tab="kar"],body.staff [data-tab="rapor"],body.staff [data-tab="maliyet"],body.staff [data-tab="plan"],body.staff [data-tab="duyuru"],body.staff [data-tab="fire"],body.staff [data-act="posRet"],body.staff .ktoday,body.staff #excel{display:none!important}
 html.kolay body.staff nav.tabs{grid-template-columns:repeat(3,1fr)}
 .hr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .hr>div:first-child{min-width:0;flex:1}.hr b{display:block;overflow-wrap:anywhere}.hr .d{text-align:right;font-weight:800;white-space:nowrap}.hr .d small{display:block;font-weight:700}
@@ -2904,7 +2904,7 @@ function subscribe(){
 }
 async function loadPeople(){ if (!C.shop || !SB) return; try{ const {data, error} = await SB.rpc("shop_members", {p_shop:C.shop.id}); if (!error){ C.people = data||[]; C.peopleAt = Date.now(); cloudSave(); } }catch(_){} }
 /* Çalışan (staff) yetkisi: kasa, kâr, rapor, duyuru ve yedek ekranlarını görmez */
-const STAFF_NO = new Set(["hareket","kar","k-kar","rapor","kasa","k-kasa","maliyet","plan","duyuru"]);
+const STAFF_NO = new Set(["fire","hareket","kar","k-kar","rapor","kasa","k-kasa","maliyet","plan","duyuru"]);
 function isStaff(){
   if (S.mode!=="cloud" || !C.shop) return false; const x = C.ctx || {}; if (x.is_admin) return false;
   const me = (x.shops||[]).find(s=>s.id===C.shop.id); return !!me && me.role==="staff";

@@ -36,12 +36,12 @@ drop trigger if exists docs_zlog on public.docs;
 create trigger docs_zlog after update on public.docs for each row execute function public.docs_log_fn();
 
 -- 2) Çalışan sınırı (güncel sürüm; tekrar çalıştırmak güvenlidir)
---  * kasa kaydı yazamaz
+--  * kasa kaydı yazamaz, okuyamaz
 --  * yeni satış / stok / ürün / müşteri kaydı ekleyebilir
+--  * satış: iade yazamaz; ürün fiyatı kayıtlı fiyattan farklı olamaz; toplam kalemlerle tutmalı
+--  * fire / arıza / iade kaydı giremez; stoğu azaltan sayım giremez
 --  * başkasının kaydını değiştiremez ya da silemez; kendi kaydını 2 dk içinde geri alabilir
---  * var olan ürünün satış/alış fiyatını değiştiremez (fiyatı boşsa yazabilir)
---  * var olan müşteriyi (limit, ad) değiştiremez
---  * ürün adı, barkod, tedarikçi ve ayar bilgisini düzenleyebilir ama silemez
+--  * var olan ürünün satış/alış fiyatını, var olan müşteriyi değiştiremez
 create or replace function public.docs_guard() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
@@ -49,11 +49,46 @@ declare
   o public.docs;
   win interval := interval '2 minutes';
   osale numeric; nsale numeric; obuy numeric; nbuy numeric;
+  etype text; wasv numeric; i jsonb; ps numeric; sm numeric := 0;
 begin
   if me is null then return new; end if;                      -- servis / cron
   if is_owner(new.shop_id) or is_admin() then return new; end if;
   if new.kind = 'cash' then
     raise exception 'YETKI: kasa kaydını sadece dükkân sahibi değiştirebilir' using errcode = 'P0001';
+  end if;
+  if new.deleted = false then
+    if new.kind = 'event' then
+      etype := new.data->>'type';
+      if etype in ('fire','ariza','iade') then
+        raise exception 'YETKI: fire ve iade kaydını sadece dükkân sahibi girer' using errcode = 'P0001';
+      end if;
+      if etype = 'sayim' then
+        wasv := nullif(new.data->>'was','')::numeric;
+        if wasv is null or coalesce(nullif(new.data->>'qty','')::numeric, 0) < wasv then
+          raise exception 'YETKI: stoğu azaltmayı sadece dükkân sahibi yapar' using errcode = 'P0001';
+        end if;
+      end if;
+    elsif new.kind = 'sale' then
+      if coalesce((new.data->>'r')::boolean, false) then
+        raise exception 'YETKI: iade satışını sadece dükkân sahibi yapar' using errcode = 'P0001';
+      end if;
+      for i in select * from jsonb_array_elements(coalesce(new.data->'it','[]'::jsonb)) loop
+        if coalesce(nullif(i->>'q','')::numeric, 0) <= 0 or coalesce(nullif(i->>'u','')::numeric, 0) <= 0 then
+          raise exception 'YETKI: satış kalemi hatalı' using errcode = 'P0001';
+        end if;
+        sm := sm + (i->>'q')::numeric * (i->>'u')::numeric;
+        if coalesce(i->>'p','-') <> '-' then
+          select nullif(data->>'salePrice','')::numeric into ps from docs
+            where shop_id = new.shop_id and kind = 'product' and id = i->>'p' and not deleted;
+          if ps is not null and ps > 0 and abs((i->>'u')::numeric - ps) > 0.005 then
+            raise exception 'YETKI: satış fiyatını sadece dükkân sahibi değiştirir' using errcode = 'P0001';
+          end if;
+        end if;
+      end loop;
+      if abs(coalesce(nullif(new.data->>'tot','')::numeric, 0) - sm) > 0.02 then
+        raise exception 'YETKI: satış tutarı kalemlerle tutmuyor' using errcode = 'P0001';
+      end if;
+    end if;
   end if;
   select * into o from docs where shop_id = new.shop_id and kind = new.kind and id = new.id;
   if not found then return new; end if;                       -- yeni kayıt serbest
@@ -71,3 +106,46 @@ begin
 end $$;
 drop trigger if exists docs_guard on public.docs;
 create trigger docs_guard before insert or update on public.docs for each row execute function public.docs_guard();
+
+-- 3) Okuma sınırı: çalışan kasa kayıtlarını okuyamaz, satış raporunu çekemez
+drop policy if exists docs_read on public.docs;
+create policy docs_read on public.docs for select to authenticated
+  using (is_member(shop_id) and (kind <> 'cash' or is_owner(shop_id)));
+
+do $$
+declare d text;
+begin
+  select pg_get_functiondef(p.oid) into d from pg_proc p
+    where p.pronamespace = 'public'::regnamespace and p.proname = 'pos_report';
+  if d like '%if not is_member(p_shop) then%' then
+    d := replace(d, 'if not is_member(p_shop) then', 'if not (is_owner(p_shop) or is_admin()) then');
+    execute d;
+  end if;
+end $$;
+
+-- 4) Bildirimler: çalışan kasa/rapor bildirimi alamaz
+create or replace function public.push_save(p_shop uuid, p_endpoint text, p_p256dh text, p_auth text, p_app text, p_types text[], p_ua text)
+returns void language plpgsql security definer set search_path = public, pg_temp as $$
+declare staff boolean;
+begin
+  if auth.uid() is null then raise exception 'Giriş gerekli.' using errcode = '42501'; end if;
+  if p_shop is not null and not public.is_member(p_shop) then raise exception 'Bu dükkânın kayıtlarına erişimin yok.' using errcode = '42501'; end if;
+  if p_endpoint is null or p_endpoint !~ '^https://' or char_length(p_endpoint) > 1000
+     or coalesce(char_length(p_p256dh), 0) not between 20 and 200 or coalesce(char_length(p_auth), 0) not between 8 and 100 then
+    raise exception 'Bildirim kaydı hatalı.' using errcode = 'P0001'; end if;
+  staff := p_shop is not null and not public.is_owner(p_shop) and not public.is_admin();
+  insert into push_subs (endpoint, user_id, shop_id, p256dh, auth, app, types, ua)
+  values (p_endpoint, auth.uid(), p_shop, p_p256dh, p_auth, case when p_app = 'kolay' then 'kolay' else 'tam' end,
+          coalesce((select array_agg(distinct t) from unnest(coalesce(p_types, '{}')) t
+                    where t in ('stok','bitti','kasa','cikis','veresiye','basvuru','rgun','rhafta','ray','tedarik')
+                      and not (staff and t in ('kasa','cikis','rgun','rhafta','ray','basvuru'))), '{}'),
+          left(p_ua, 200))
+  on conflict (endpoint) do update set user_id = excluded.user_id, shop_id = excluded.shop_id, p256dh = excluded.p256dh, auth = excluded.auth,
+    app = excluded.app, types = excluded.types, ua = excluded.ua, updated_at = now();
+  delete from push_subs where user_id = auth.uid() and endpoint in (
+    select endpoint from push_subs where user_id = auth.uid() order by updated_at desc offset 20);
+end $$;
+
+-- mevcut çalışan abonelikleri temizle
+update push_subs ps set types = array(select t from unnest(ps.types) t where t not in ('kasa','cikis','rgun','rhafta','ray','basvuru'))
+where exists (select 1 from members m where m.user_id = ps.user_id and m.shop_id = ps.shop_id and m.role = 'staff');

@@ -534,6 +534,12 @@ header.top h1{background:linear-gradient(90deg,var(--ink),color-mix(in srgb,var(
 .tile .tn{overflow-wrap:anywhere}
 /* Kolay: rapor sade */
 html.kolay .rpctl .grid2,html.kolay .rpctl [aria-label="Gruplama"],html.kolay .rpctl [data-act="rpGo"]{display:none}
+/* 320 px: iki sütunlu ızgaralar içerik yüzünden genişleyip taşmasın */
+.grid2,.tiles.t2,.tiles.t4,.btiles,.mgrid,.vbtns,.smline,.adtiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+.paybtns{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mtile,.btile,.grid2>*,.smline>*,.vbtns>*,.btiles>*,.mgrid>*{min-width:0;overflow-wrap:anywhere}
+@media (max-width:380px){.mtile{padding:12px}.btile{padding:12px}.mtile b,.btile b{font-size:16px}}
+@media (max-width:380px){ nav.seg{flex-wrap:wrap;overflow-x:visible} nav.seg button{flex:1 1 auto;padding-left:10px;padding-right:10px} }
 </style>
 </head>
 <body>
@@ -1314,7 +1320,7 @@ function fireHistory(){
   return html + `</div>`;
 }
 
-const TL = (n, d=0) => (n<0?"−":"") + fmt(Math.abs(n), d) + " TL";
+const TL = (n, d=0) => { const k = Math.pow(10, d), a = Math.round(Math.abs(Number(n)||0)*k)/k; return (n<0 && a>0 ? "−" : "") + fmt(a, d) + " TL"; };   // −0,3 → "0 TL" ("−0 TL" yazılmaz)
 function viewProfit(){
   if (!S.products.length) return emptyProducts();
   const all = stockP().map(p=>({p, st:stats(p)}));
@@ -1850,7 +1856,7 @@ function custStats(c){
   const buckets = [0,0,0,0]; for (const d of open){ const age = (Date.now()-d.t)/DAY; buckets[age<15?0:age<30?1:age<60?2:3] += d.left; }
   return {bal: Math.round(bal*100)/100, ev, oldest, ageDays: oldest ? (Date.now()-oldest)/DAY : 0, buckets, lastT, series};
 }
-const TLx = n => (n<0?"−":"") + Number(Math.abs(n)||0).toLocaleString("tr-TR",{maximumFractionDigits:2}) + " TL";
+const TLx = n => { const a = Math.round(Math.abs(Number(n)||0)*100)/100; return (n<0 && a>0 ? "−" : "") + a.toLocaleString("tr-TR",{maximumFractionDigits:2}) + " TL"; };
 function initials(n){ return String(n||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toLocaleUpperCase("tr-TR") || "?"; }
 function avatar(c, s=44){ let h = 0; for (const ch of String(c.name||"")) h = (h*31 + ch.charCodeAt(0))>>>0; return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*0.38)}px;background:${COL[[0,3,5,1,4][h%5]]}">${esc(initials(c.name))}</span>`; }
 const agoTxt = t => { if (!t) return "kayıt yok"; const d = Math.floor((today0() - new Date(new Date(t).setHours(0,0,0,0)).getTime())/DAY); return d<=0 ? "bugün" : d===1 ? "dün" : d+" gün önce"; };
@@ -2452,7 +2458,10 @@ document.addEventListener("click", async ev=>{
     else if (a==="vMode"){ S.vMode = t.dataset.m || null; render(); const el=document.getElementById("v-amt"); if (el) el.focus(); }
     else if (a==="vQuick"){ const el=document.getElementById("v-amt"); if (!el) return; if (t.dataset.v==="all"){ el.value = String(custStats(S.customers[S.vCust]).bal); } else el.value = String((Number(el.value)||0) + Number(t.dataset.v)); const er=document.getElementById("v-err"); if (er) er.hidden=true; }
     else if (a==="vSave"){ const c=S.customers[S.vCust]; const amt=Number(String(document.getElementById("v-amt").value).replace(",",".")); const note=document.getElementById("v-note").value.trim(); const er=document.getElementById("v-err");
+      { const ve = document.getElementById("v-amt"); if (ve && !ve.checkValidity()){ er.textContent = ve.validationMessage; er.hidden=false; return; } }
       if (!(amt>0)){ er.textContent="Tutarı yaz."; er.hidden=false; return; }
+      if (amt >= 1000000 && S.vBigOk!==amt){ S.vBigOk=amt; er.textContent=`${TLx(amt)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`; er.hidden=false; return; }
+      S.vBigOk=null;
       if (S.vMode==="odeme"){ const sb=custStats(c).bal; if (amt > Math.max(0,sb)+0.005 && S.overOk!==amt){ S.overOk=amt;
         er.textContent = sb>0.005 ? `Borcu ${TLx(sb)}. ${TLx(amt)} alırsan ${TLx(amt-sb)} fazla ödeme olur. Tutar doğruysa tekrar Kaydet'e bas.` : `Bu müşterinin borcu yok. ${TLx(amt)} fazla ödeme olarak yazılır. Doğruysa tekrar Kaydet'e bas.`;
         er.hidden=false; return; } }
@@ -3548,9 +3557,11 @@ const OUT_REASONS = ["Toptancı / plasiyer ödemesi","Ekmekçi","Fatura (elektri
 const IN_REASONS = ["Bozuk para / para eklendi","Bankadan çekildi","Borç ödemesi (deftersiz)","Diğer"];
 const r2 = n => Math.round((Number(n)||0)*100)/100;
 const r3 = n => Math.round((Number(n)||0)*1000)/1000;
-const pnum = v => { let s = String(v ?? "").trim().replace(/\s/g,"").replace(/TL$/i,""); if (s==="") return NaN;
+const NUM_MAX = 999999999;   // bir sayı kutusuna yazılabilecek en büyük değer (≈ 1 milyar); fazlası saçma girdi sayılır
+const pnumAny = v => { let s = String(v ?? "").trim().replace(/\s/g,"").replace(/TL$/i,""); if (s==="") return NaN;
   if (/^[1-9]\d{0,2}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g,"");   // 1.500 / 1.500,50 → binlik ayraç
   const n = Number(s.replace(",", ".")); return isFinite(n) ? n : NaN; };
+const pnum = v => { const n = pnumAny(v); return Math.abs(n) > NUM_MAX ? NaN : n; };
 const posCutoffT = () => today0() - POS_KEEP_DAYS*DAY;
 const posCloud = () => S.mode==="cloud";
 const tOf = x => Date.parse(x.d);
@@ -3747,7 +3758,7 @@ function viewSell(){
     if (p) L += `<form id="weighform" class="pcard"><div><b>${esc(p.name)}</b><div class="small muted">${p.salePrice>0?TLx(p.salePrice)+" / kg":"kilo fiyatı yok"} · gram yazarsan (350) kiloya çevrilir</div></div>
       <div class="row nowrap"><input id="pw-kg" inputmode="decimal" placeholder="Kaç kilo? Örn. 0,350"><button class="primary" type="submit">Ekle</button><button type="button" class="link" data-act="posWeighClose">Vazgeç</button></div></form>`; }
   if (S.posPrice) L += `<form id="priceform" class="pcard"><b>Fiyat Yazıp Sat</b>
-      <div class="row nowrap"><input id="pp-name" value="${esc(S.posUnknown?.code ? "Barkodsuz ürün" : "Diğer")}" aria-label="Ürün adı" style="flex:1.4"><input id="pp-u" inputmode="decimal" placeholder="Tutar" aria-label="Tutar" style="flex:1"><button class="primary" type="submit">Ekle</button><button type="button" class="link" data-act="posPriceClose">Vazgeç</button></div></form>`;
+      <div class="row nowrap"><input id="pp-name" maxlength="80" value="${esc(S.posUnknown?.code ? "Barkodsuz ürün" : "Diğer")}" aria-label="Ürün adı" style="flex:1.4"><input id="pp-u" inputmode="decimal" placeholder="Tutar" aria-label="Tutar" style="flex:1"><button class="primary" type="submit">Ekle</button><button type="button" class="link" data-act="posPriceClose">Vazgeç</button></div></form>`;
   L += `<div class="qrow" aria-label="Hızlı ürünler">${quick.map(p=>`<button data-act="posPick" data-id="${p.id}">${esc(p.name)}<span class="num">${p.salePrice>0?TLx(p.salePrice)+(p.byWeight?"/kg":""):""}</span></button>`).join("")}<button data-act="posPriceOpen" class="qother">${ic("plus",16)} Fiyat Yaz</button></div>`;
   L += `<section class="cart ${ret?"isret":""}"><div class="carth"><b>${ret?"İade Edilecekler":"Sepet"}</b><span class="small muted">${n ? `${n} kalem` : ""}</span>${ret?`<span class="pill bad">İade Modu</span>`:""}</div>
     ${n ? items.map(x=>{ const lt = r2(x.q*x.u), ed = S.posEditK===x.k;
@@ -3770,7 +3781,7 @@ function viewSell(){
     R += `<div class="custpick"><input id="pos-cq" placeholder="Müşteri ara" autocomplete="off" aria-label="Müşteri ara">
       <div id="pos-cl" class="custlist">${custListHtml(cs, "")}</div>
       <div class="row">${cust ? `<button data-act="posCust" data-id="">İsimsiz Müşteri</button>` : ""}${S.posNewCust ? "" : `<button data-act="posNewCust" data-v="1">${ic("plus",16)} Yeni Müşteri</button>`}<button class="link" data-act="posCustClose">Kapat</button></div>
-      ${S.posNewCust ? `<form id="pcform" class="stack" style="gap:6px"><input id="pc-name" placeholder="Adı soyadı"><input id="pc-phone" type="tel" placeholder="Telefon (isteğe bağlı)"><div class="row"><button class="primary" type="submit">Kaydet ve Seç</button><button type="button" class="link" data-act="posNewCust" data-v="0">Vazgeç</button></div></form>` : ""}</div>`;
+      ${S.posNewCust ? `<form id="pcform" class="stack" style="gap:6px"><input id="pc-name" maxlength="50" placeholder="Adı soyadı"><input id="pc-phone" type="tel" placeholder="Telefon (isteğe bağlı)"><div class="row"><button class="primary" type="submit">Kaydet ve Seç</button><button type="button" class="link" data-act="posNewCust" data-v="0">Vazgeç</button></div></form>` : ""}</div>`;
   }
   const lim = cust && cust.limit>0 && !ret ? (custStats(cust).bal + tot > cust.limit) : false;
   R += `<div class="ptotal ${ret?"isret":""}"><span>${ret?"Geri Verilecek":"Ödenecek"}</span><b class="num" id="pos-tot">${TLx(tot)}</b></div>`;
@@ -3874,11 +3885,12 @@ async function kasaSave(f){
   if (!(a >= 0) || (f!=="kapanis" && !(a > 0))){ S.kasaErr = "Tutarı yaz."; render(true); return; }
   if ((f==="cikis"||f==="giris") && !r && !supSel){ S.kasaErr = "Sebebini seç."; render(true); return; }
   if ((f==="cikis"||f==="giris") && r==="Diğer" && !n){ S.kasaErr = "\"Diğer\" seçtiysen açıklamaya ne olduğunu yaz."; render(true); setTimeout(()=>{ const d = document.querySelector(".knote"); if (d) d.open = true; document.getElementById("kf-n")?.focus(); }, 0); return; }
+  if (a >= 1000000 && S.kasaBigOk!==r2(a)){ S.kasaBigOk = r2(a); S.kasaErr = `${TLx(a)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`; render(true); return; }
   if (f==="cikis"){ const kb = r2(kasaDay(today0()).beklenen);
     if (r2(a) > Math.max(0, kb) + 0.005 && S.kasaOver!==r2(a)){ S.kasaOver = r2(a); S.kasaErr = `Kasada ${TLx(Math.max(0, kb))} olmalı, ${TLx(a)} çıkıyor. Para kasadan değil başka yerden ödendiyse buraya yazma. Yine de doğruysa tekrar Kaydet'e bas.`; render(true); return; } }
   if (f==="kapanis"){ const kp = kasaDay(today0()).cash.filter(c=>c.t==="kapanis");
     if (kp.length && !S.kapOk){ S.kapOk = true; S.kasaErr = `Gün bugün saat ${hhmm(tOf(kp[kp.length-1]))}'de zaten kapatıldı. Kasayı yeniden saydıysan tekrar Kaydet'e bas.`; render(true); return; } }
-  S.kasaOver = null; S.kapOk = false;
+  S.kasaOver = null; S.kapOk = false; S.kasaBigOk = null;
   const x = {id: newId(), d: nowIso(), t: f, a: r2(a), ...(r ? {r} : {}), ...(n ? {n} : {}), ...(supSel ? {sup:supSel, ...(r ? {} : {r:supCashReason(supName(supSel))}), ...(n ? {} : {n:supName(supSel)})} : {})};
   if (f==="kapanis"){ const k = kasaDay(today0()); x.say = r2(a); x.beklenen = k.beklenen; x.fark = r2(a - k.beklenen); if (b >= 0) x.birak = r2(b); }
   await posMarkStart();
@@ -3942,7 +3954,7 @@ function viewTanit(){
           <div class="row"><button class="primary" type="submit">Bağla</button><button type="button" data-act="tanClose">Vazgeç</button></div></form>`;
       } else {
         const sups = [...new Set(S.products.map(x=>x.supplier).filter(Boolean))];
-        h += `<form id="tannform" class="stack"><label>Ürün adı<input id="tn-name" required placeholder="Örn. Pınar süt 1 L"></label>
+        h += `<form id="tannform" class="stack"><label>Ürün adı<input id="tn-name" required maxlength="80" placeholder="Örn. Pınar süt 1 L"></label>
           <div class="grid2"><label>Satış fiyatı (TL)<input id="tn-sale" inputmode="decimal" required></label><label>Rafta kaç tane var?<input id="tn-cnt" inputmode="decimal" placeholder="Bilmiyorsan boş"></label>
             <label>Alış fiyatı (isteğe bağlı)<input id="tn-buy" inputmode="decimal"></label><label>Tedarikçi (isteğe bağlı)<input id="tn-sup" list="tn-sups"><datalist id="tn-sups">${sups.map(s=>`<option value="${esc(s)}">`).join("")}</datalist></label></div>
           <label class="check"><input id="tn-w" type="checkbox"> Kilo ile satılır (peynir, zeytin gibi; fiyat kilo fiyatı)</label>
@@ -4012,6 +4024,8 @@ async function posSubmit(id, form){
     if (!(kg > 0)){ S.posErr = "Kiloyu yaz."; render(true); return true; }
     if (p) cartAdd(p, r3(kg), null, {w:true}); S.posWeigh = null; S.posErr = null; render(); posFocus(); return true; }
   if (id==="priceform"){ const u = pnum(v("pp-u")); if (!(u > 0)){ S.posErr = "Tutarı yaz."; render(true); return true; }
+    if (u >= 100000 && S.posBigOk!==u){ S.posBigOk = u; S.posErr = `${TLx(u)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Ekle'ye bas.`; render(true); return true; }
+    S.posBigOk = null;
     cartAdd(null, 1, r2(u), {n: (v("pp-name").trim() || "Diğer")}); S.posPrice = false; S.posUnknown = null; S.posErr = null; render(); posFocus(); return true; }
   if (id==="pcform"){ const name = v("pc-name").trim(); if (!name) return true;
     const c = {id:newId(), createdAt:nowIso(), name, phone:v("pc-phone").trim(), limit:null, note:""};
@@ -4055,7 +4069,7 @@ document.addEventListener("input", ev=>{
 document.addEventListener("change", ev=>{
   const el = ev.target;
   if (el.dataset?.cq){ const x = S.pos.items.find(y=>y.k===el.dataset.cq); if (x){ let q = pnum(el.value); if (x.w && q > 20 && Number.isInteger(q)) q = q/1000; if (q > 0) x.q = r3(q); else S.pos.items = S.pos.items.filter(y=>y!==x); cartSave(); } render(); posFocus(); }
-  else if (el.dataset?.cu){ const x = S.pos.items.find(y=>y.k===el.dataset.cu); if (x){ const u = pnum(el.value); if (u >= 0) x.u = r2(u); cartSave(); } S.posEditK = null; render(); posFocus(); }
+  else if (el.dataset?.cu){ const x = S.pos.items.find(y=>y.k===el.dataset.cu); if (x){ const u = pnum(el.value); if (u >= 0) x.u = r2(u); if (u >= 100000) S.posWarn = `Fiyat çok yüksek görünüyor: ${TLx(u)}. Yanlışsa fiyatına dokunup düzelt.`; cartSave(); } S.posEditK = null; render(); posFocus(); }
 });
 document.addEventListener("keydown", ev=>{
   if (S.tab!=="satis" || (S.posView||"sat")!=="sat" || S.locked) return;
@@ -4777,7 +4791,13 @@ if ("serviceWorker" in navigator && !FILE_MODE && (location.protocol==="https:" 
 (function(){ const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
   Object.defineProperty(HTMLInputElement.prototype, "value", {configurable:true, enumerable:d.enumerable,
     get(){ const v = d.get.call(this); if (!this.hasAttribute("data-num")) return v; const t = String(v).trim(); if (t==="") return ""; const n = pnum(t); return isNaN(n) ? "" : String(n); },
-    set(x){ d.set.call(this, x); }}); })();
+    set(x){ d.set.call(this, x); }});
+  // çok büyük sayı (99.999.999.999 gibi): yazarken uyar, formun gönderilmesini engelle
+  document.addEventListener("input", ev=>{ const el = ev.target; if (!(el instanceof HTMLInputElement)) return;
+    if (!el.hasAttribute("data-num") && el.getAttribute("inputmode")!=="decimal") return;
+    const big = Math.abs(pnumAny(d.get.call(el))) > NUM_MAX;
+    el.setCustomValidity(big ? "Bu kadar büyük sayı yazılamaz (en fazla 999.999.999)." : "");
+    if (big && document.activeElement===el) el.reportValidity(); }, true); })();
 // eksi sayı yazılamayan kutular (min="0"): formu göndermeden uyar
 document.addEventListener("submit", ev=>{
   const bad = [...ev.target.querySelectorAll("input[data-num][min]")].find(i=>i.value!=="" && Number(i.value) < Number(i.min));
@@ -4786,19 +4806,30 @@ document.addEventListener("submit", ev=>{
 }, true);
 
 /* ===== Geri tuşu: uygulamanın içinde bir önceki ekrana döner ===== */
-var H_TAB = null, H_POP = false, H_USER = 0;
+var H_STACK = [], H_I = -1, H_POP = false, H_SKIP = false, H_USER = 0;
 ["pointerdown","keydown"].forEach(e=>document.addEventListener(e, ()=>{ H_USER = Date.now(); }, true));
+// geri tuşunun hatırlayacağı "ekran içi" durumlar: açık form, müşteri/ürün ayrıntısı, Satış alt ekranı, rehber
+const H_KEYS = ["posView","kasaForm","vCust","editId","kEdit","supOpen","supForm","supEdit","guide"];
+function hSnap(){ const v = {}; for (const k of H_KEYS){ const x = S[k]; if (x!=null && x!==false && x!=="" && !(k==="posView" && x==="sat")) v[k] = x; } return {bdTab:S.tab, v}; }
 function histSync(){
-  if (H_POP){ H_POP = false; H_TAB = S.tab; return; }
-  if (S.tab===H_TAB || S.locked) return;
-  const st = {bdTab:S.tab};
-  try{ if (H_TAB===null || Date.now() - H_USER > 1500) history.replaceState(st, ""); else history.pushState(st, ""); }catch(_){}
-  H_TAB = S.tab;
+  if (S.locked) return;
+  const st = hSnap(), sig = JSON.stringify(st);
+  if (H_POP){ H_POP = false; if (H_I>=0) H_STACK[H_I] = sig; return; }
+  if (H_I>=0 && sig===H_STACK[H_I]) return;
+  const user = Date.now() - H_USER <= 1500;
+  try{
+    if (H_I<0 || !user){ H_I = Math.max(H_I,0); st.i = H_I; history.replaceState(st, ""); H_STACK[H_I] = sig; }
+    else if (H_I>0 && sig===H_STACK[H_I-1]){ H_SKIP = true; H_I--; history.back(); }   // form/ayrıntı kapandı: bir adım geri git, boş adım bırakma
+    else { H_STACK.length = H_I+1; H_I++; st.i = H_I; history.pushState(st, ""); H_STACK[H_I] = sig; }
+  }catch(_){}
 }
 window.addEventListener("popstate", ev=>{
-  let t = ev.state && ev.state.bdTab; if (!t || S.locked) return;
-  if (t==="k-urun") t = "k-stok";
-  H_POP = true; S.tab = t; S.msg = null; S.editId = null; S.kEdit = null; S.kasaForm = null; S.kasaErr = null; S.supForm = null; S.supOpen = null; S.supEdit = null; S.vCust = null; S.posView = "sat";
+  const stt = ev.state; let t = stt && stt.bdTab; if (!t || S.locked) return;
+  if (typeof stt.i==="number") H_I = stt.i;
+  if (H_SKIP){ H_SKIP = false; return; }
+  const v = stt.v || {};
+  H_POP = true; S.tab = t; S.msg = null; S.editId = null; S.kEdit = null; S.kasaForm = null; S.kasaErr = null; S.kasaOver = null; S.supForm = null; S.supOpen = null; S.supEdit = null; S.vCust = null; S.posView = "sat"; S.guide = false;
+  for (const k of H_KEYS) if (v[k]!==undefined) S[k] = v[k];
   render(); window.scrollTo(0,0);
 });
 

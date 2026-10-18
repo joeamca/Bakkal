@@ -25,7 +25,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 - **Tedarikçiler:** Veresiyenin tersi: kime ne kadar borcun var. **Mal Geldi** ile stok artar ve tedarikçiye borç yazılır (ya da peşin ödenir); fatura girişi de borç yazar. Kasadan tedarikçiye ödeme yapınca borç düşer. Vade dolunca "ödeme zamanı" hatırlatması gelir. **Sayım** ise sadece düzeltmedir, kimseye borç yazmaz.
 - **Kâr-zarar ve raporlar:** Günlük, haftalık, aylık, yıllık satış raporu ve Excel çıktısı (kasa giriş-çıkış sebepleri dahil).
 - **Bildirimler:** Stok azalınca, ürün bitince, gün kapanınca, kasadan büyük para çıkınca telefona, tablete ya da bilgisayara simgeli bildirim.
-- **Rapor bildirimi:** Her akşam "Günün raporu hazır", pazar akşamı haftanın, ayın son günü ayın raporu bildirim olarak gelir (satış, fiş, kâr). Dokununca o dönemin raporu açılır, tek dokunuşla Excel iner.
+- **Rapor bildirimi:** Dükkân **Gün Kapanışı**'na basınca "Günün raporu hazır" bildirimi gelir (satış, fiş, kâr); pazar günü haftanın, ayın son günü ayın raporu da gelir. Kapanışı unutan dükkâna sunucu saat 23:30'da yine gönderir. Dokununca o dönemin raporu açılır, tek dokunuşla Excel iner.
 - **Güvenlik:** Hesaba özel PIN kilidi, e-postayla şifre yenileme. Bir dükkân başka dükkânın kayıtlarını göremez; yönetici de kayıtların içeriğini görmez.
 
 ## Nasıl kullanılır?
@@ -71,4 +71,5 @@ Uygulamada açılışta bir kez "Yenilikler" kutusu çıkar; **Tamam**'a basınc
 - **Saçma değerler:** 999.999.999'dan büyük sayı kabul edilmez. Kasa ve veresiye tutarı 1 milyon TL'yi, sepetteki fiyat 100.000 TL'yi aşarsa "doğruysa tekrar bas" uyarısı çıkar. Barkodsuz ürün, müşteri ve yeni ürün adlarına uzunluk sınırı kondu.
 - **Kâr ekranı:** "−0 TL" yazılmaz.
 - **Kasa uyarıları:** Kasada olandan fazla çıkış yazılırsa ya da gün ikinci kez kapatılırsa önce uyarır.
+- **Rapor bildirimi:** Günün raporu artık "Gün Kapanışı"na basınca gelir (eskiden her akşam sabit saatteydi). Kapanışı yapmayan dükkâna 23:30'da yedek olarak gider. Sunucu tarafı için `supabase-kurulum.sql` yeniden çalıştırılır (güvenli) ve `bildir` fonksiyonu güncellenir (`supabase/functions/bildir/index.ts`).
 - **Kolay:** Kasa'da "Diğer" seçilince açıklama kutusu kendiliğinden açılır; rapor ekranı sadeleştirildi; ürün eklerken rafa eksi sayı yazılırsa uyarır.

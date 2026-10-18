@@ -772,17 +772,18 @@ do $$ begin
 end $$;
 
 -- ===== Rapor bildirimleri (gün / hafta / ay sonu) =====
--- Sunucunun kendi zamanlayıcısı her akşam 21:45'te (Türkiye) bildirim servisini çağırır. Çağrıyı doğrulayan anahtar burada üretilir, kimse okuyamaz.
+-- Günün raporu, dükkân "Gün kapanışı"na basınca uygulamadan gider. Kapanış yapmayan dükkânlar için sunucunun zamanlayıcısı her akşam 23:30'da (Türkiye) bildirim servisini çağırır. Çağrıyı doğrulayan anahtar burada üretilir, kimse okuyamaz.
 create table if not exists public.app_secrets (name text primary key, val text not null);
 alter table public.app_secrets enable row level security;
 revoke all on public.app_secrets from anon, authenticated;
 insert into public.app_secrets (name, val) values ('cron', encode(extensions.gen_random_bytes(24), 'hex')) on conflict (name) do nothing;
 
-create or replace function public.push_report_targets(p_key text, p_now timestamptz default now())
+-- Raporu hesaplayan ortak fonksiyon. p_shop boşsa tüm dükkânlar; p_only_open doluysa bugün "Gün kapanışı" yapmış dükkânlar atlanır
+-- (onlara rapor kapanış anında zaten gitti).
+create or replace function public.bd_report_items(p_shop uuid, p_now timestamptz, p_only_open boolean)
 returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
 declare d date := (p_now at time zone 'Europe/Istanbul')::date; res jsonb := '[]'::jsonb; k record;
 begin
-  if p_key is null or p_key is distinct from (select val from app_secrets where name = 'cron') then return jsonb_build_object('ok', false); end if;
   for k in select * from (values ('gun', 'rgun', d, d + 1), ('hafta', 'rhafta', d - 6, d + 1), ('ay', 'ray', date_trunc('month', d)::date, d + 1)) v(kind, typ, a, b)
            where kind = 'gun' or (kind = 'hafta' and extract(isodow from d) = 7) or (kind = 'ay' and extract(day from d + 1) = 1)
   loop
@@ -799,14 +800,40 @@ begin
         from docs s where s.shop_id = sh.id and s.kind = 'sale' and not s.deleted and not coalesce((s.data->>'x')::boolean, false)
           and (s.data->>'d')::timestamptz >= (k.a::timestamp at time zone 'Europe/Istanbul')
           and (s.data->>'d')::timestamptz <  (k.b::timestamp at time zone 'Europe/Istanbul')) t on true
-      where sh.active), '[]'::jsonb);
+      where sh.active and (p_shop is null or sh.id = p_shop)
+        and (not p_only_open or not exists (
+              select 1 from docs c where c.shop_id = sh.id and c.kind = 'cash' and not c.deleted and c.data->>'t' = 'kapanis'
+                and (c.data->>'d')::timestamptz >= (d::timestamp at time zone 'Europe/Istanbul')))), '[]'::jsonb);
   end loop;
-  return jsonb_build_object('ok', true, 'items', res);
+  return res;
 end $$;
+
+-- Yedek zamanlayıcı (23:30): sadece bugün günü kapatmamış dükkânlara gider
+create or replace function public.push_report_targets(p_key text, p_now timestamptz default now())
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
+begin
+  if p_key is null or p_key is distinct from (select val from app_secrets where name = 'cron') then return jsonb_build_object('ok', false); end if;
+  return jsonb_build_object('ok', true, 'items', bd_report_items(null, p_now, true));
+end $$;
+
+-- Gün kapanışında uygulama çağırır: sadece kendi dükkânının raporu (üyelik kontrol edilir)
+create or replace function public.push_report_shop(p_uid uuid, p_shop uuid, p_now timestamptz default now())
+returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $$
+begin
+  if not exists (select 1 from members m join shops s on s.id = m.shop_id where m.shop_id = p_shop and m.user_id = p_uid and s.active) then
+    return jsonb_build_object('ok', false);
+  end if;
+  return jsonb_build_object('ok', true, 'items', bd_report_items(p_shop, p_now, false));
+end $$;
+
+revoke all on function public.bd_report_items(uuid, timestamptz, boolean) from public, anon, authenticated;
 revoke all on function public.push_report_targets(text, timestamptz) from public, anon, authenticated;
+revoke all on function public.push_report_shop(uuid, uuid, timestamptz) from public, anon, authenticated;
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on function public.bd_report_items(uuid, timestamptz, boolean) to service_role;
     grant execute on function public.push_report_targets(text, timestamptz) to service_role;
+    grant execute on function public.push_report_shop(uuid, uuid, timestamptz) to service_role;
   end if;
 end $$;
 
@@ -848,7 +875,7 @@ do $$ begin
   if exists (select 1 from pg_available_extensions where name = 'pg_cron') and exists (select 1 from pg_available_extensions where name = 'pg_net') then
     create extension if not exists pg_cron;
     create extension if not exists pg_net with schema extensions;
-    perform cron.schedule('bakkal-rapor-bildirimi', '45 18 * * *', $job$
+    perform cron.schedule('bakkal-rapor-bildirimi', '30 20 * * *', $job$
       select net.http_post(
         url := 'https://mvonvaoatjhfmezlidrv.supabase.co/functions/v1/bildir',
         headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im12b252YW9hdGpoZm1lemxpZHJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTg0NjAsImV4cCI6MjEwNzQ3NDQ2MH0.Rwg4ZXS9XXLGKeM4eZb_hOYLbGDgL_o03yz4c8bkapA'),

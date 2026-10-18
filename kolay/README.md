@@ -51,7 +51,7 @@ Tek bir **Ürün Ekle** düğmesi var; barkodlu ya da barkodsuz fark etmez. Form
 
 ## Rapor bildirimi
 
-Her akşam 21:45'te "Günün raporu hazır" bildirimi gelir; pazar akşamı haftanın, ayın son günü ayın raporu da gelir. Bildirimde satış, fiş sayısı ve kâr yazar; dokununca rapor açılır, **Excel'i İndir** ile dosya iner. Ayarlar → Bildirimler'den hangilerinin geleceği seçilir.
+Dükkân **Gün Kapanışı**'na basınca "Günün raporu hazır" bildirimi gelir; pazar günü haftanın, ayın son günü ayın raporu da gelir. Kapanışı unutursan saat 23:30'da yine gelir. Bildirimde satış, fiş sayısı ve kâr yazar; dokununca rapor açılır, **Excel'i İndir** ile dosya iner. Ayarlar → Bildirimler'den hangilerinin geleceği seçilir.
 
 ## Kâr nasıl hesaplanır?
 
@@ -91,4 +91,5 @@ Uygulamada açılışta bir kez "Yenilikler" kutusu çıkar; **Tamam**'a basınc
 - **Saçma değerler:** 999.999.999'dan büyük sayı kabul edilmez. Kasa ve veresiye tutarı 1 milyon TL'yi, sepetteki fiyat 100.000 TL'yi aşarsa "doğruysa tekrar bas" uyarısı çıkar. Barkodsuz ürün, müşteri ve yeni ürün adlarına uzunluk sınırı kondu.
 - **Kâr ekranı:** "−0 TL" yazılmaz.
 - **Kasa uyarıları:** Kasada olandan fazla çıkış yazılırsa ya da gün ikinci kez kapatılırsa önce uyarır.
+- **Rapor bildirimi:** Günün raporu artık "Gün Kapanışı"na basınca gelir (eskiden her akşam sabit saatteydi). Kapanışı yapmayan dükkâna 23:30'da yedek olarak gider.
 - **Kolay:** Kasa'da "Diğer" seçilince açıklama kutusu kendiliğinden açılır; rapor ekranı sadeleştirildi; ürün eklerken rafa eksi sayı yazılırsa uyarır.

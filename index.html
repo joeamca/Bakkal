@@ -962,9 +962,10 @@ function renderToast(){
 function offerUndo(text, run){ S.undo = {text, run, until: Date.now()+9000}; renderToast(); clearTimeout(offerUndo.t); offerUndo.t = setTimeout(()=>{ S.undo=null; renderToast(); }, 9100); }
 // Yenilikler kutusu: her güncellemede bir kez gösterilir, "Tamam" denince bu cihazda bir daha çıkmaz.
 // Yeni güncellemede YENI_VER'i değiştir ve YENI_NOT listesini yenile.
-const YENI_VER = "2026-10-18";
+const YENI_VER = "2026-10-18b";
 const YENI_BASLIK = "Yenilikler · 18 Ekim 2026";
 const YENI_NOT = [
+  "Günün raporu bildirimi artık \"Gün kapanışı\"na basınca gelir. Kapatmayı unutursan saat 23:30'da yine gelir.",
   "Telefonun geri tuşu artık önce açık formu ya da ayrıntı ekranını kapatır; seni uygulamadan hemen çıkarmaz.",
   "Küçük telefonlarda Menü ve Satış sekmeleri taşmaz, hepsi görünür.",
   "Tutarlar doğru okunur: 1.500 yazarsan 1.500 TL, 12,5 yazarsan 12,5 TL olur.",
@@ -4318,7 +4319,7 @@ const abToB64u = ab => btoa(String.fromCharCode(...new Uint8Array(ab))).replace(
 const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","alert","c3"],["kasa","Gün kapanışı (kasa özeti)","coin","c1"],
   ["cikis","Kasadan büyük para çıkışı","minus","c3"],["veresiye","Veresiye borç sınırı aşıldı","book","c8"],
   ["tedarik","Tedarikçiye ödeme zamanı","truck","c2"],
-  ["rgun","Günün raporu (her akşam, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar akşamı)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
+  ["rgun","Günün raporu (gün kapanınca, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar günü kapanınca)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
   ["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
 const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
 const nSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -4386,6 +4387,13 @@ function nSend(type, title, body, tag){
   try{ if (!SB || S.mode!=="cloud" || !S.cloud.shop || !navigator.onLine) return;
     SB.functions.invoke("bildir", {body:{type, title, body, tag, shop_id: S.cloud.shop.id, exclude: N.endpoint}}).catch(()=>{}); }catch(_){}
 }
+// Gün kapanışında günün raporu (pazarsa haftanın, ayın son günüyse ayın raporu da) bildirim olarak gider.
+// Aynı gün ikinci kapanışta tekrar gönderilmez. Kapanış yapmayan dükkânlara sunucu 23:30'da yedek olarak gönderir.
+function nRapor(){
+  try{ if (!SB || S.mode!=="cloud" || !S.cloud.shop || !navigator.onLine) return;
+    if (kasaDay(today0()).cash.filter(c=>c.t==="kapanis").length > 1) return;
+    SB.functions.invoke("bildir", {body:{type:"rapor", shop_id: S.cloud.shop.id}}).catch(()=>{}); }catch(_){}
+}
 function nOnce(key){ const k = "bd-n-" + key + "-" + ymd(Date.now()); try{ if (localStorage.getItem(k)) return false; localStorage.setItem(k, "1"); }catch(_){} return true; }
 function nAfterSale(sale){
   if (sale.r) return;
@@ -4401,7 +4409,7 @@ function nAfterSale(sale){
 function nAfterCash(x){
   const who = S.cloud?.ctx?.username ? ` · ${S.cloud.ctx.username}` : "";
   if (x.t==="kapanis"){ const k = kasaDay(today0()); const f = Number(x.fark)||0;
-    nSend("kasa", "Gün kapandı", `Satış ${TLx(k.ciro)} · ${k.fis} fiş · ${Math.abs(f)<0.01 ? "kasa tuttu" : f>0 ? `kasa ${TLx(f)} fazla` : `kasa ${TLx(-f)} eksik`}${who}`, "kasa-"+ymd(Date.now())); }
+    nSend("kasa", "Gün kapandı", `Satış ${TLx(k.ciro)} · ${k.fis} fiş · ${Math.abs(f)<0.01 ? "kasa tuttu" : f>0 ? `kasa ${TLx(f)} fazla` : `kasa ${TLx(-f)} eksik`}${who}`, "kasa-"+ymd(Date.now())); nRapor(); }
   else if (x.t==="cikis" && Number(x.a) >= (Number(S.settings?.nCikis) || 500))
     nSend("cikis", "Kasadan para çıktı", `${TLx(x.a)}${x.r?` · ${x.r}`:""}${x.n?` · ${x.n}`:""}${who}`, "cikis-"+x.id);
 }

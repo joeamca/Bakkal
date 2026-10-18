@@ -49,6 +49,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 |---|---|
 | `index.html` | **Bakkal Defteri** (tam sürüm). HTML, CSS ve JS tek dosyada |
 | `kolay/` | **Bakkal Kolay** (sade sürüm): kendi `index.html`, `manifest.webmanifest` ve [README](kolay/README.md) dosyası |
+| `duyuru.js` | Duyuru kartı: hazır yazılar, kart çizimi, paylaşma (Kolay > Duyuru ekranı açılınca yüklenir) |
 | `kamera.js` | Telefonda kamerayla barkod okuma (kamera düğmesine ilk basınca yüklenir) |
 | `sw.js` | Bildirimleri alır ve internetsiz açılışı sağlar. Sayfa önce internetten istenir, yoksa telefondaki kopya açılır |
 | `manifest.webmanifest` | Tam sürümü ana ekrana ekleme bilgileri (ad, renk, simge) |
@@ -76,5 +77,6 @@ Uygulamada açılışta bir kez "Yenilikler" kutusu çıkar; **Tamam**'a basınc
 - **Kâr ekranı:** "−0 TL" yazılmaz.
 - **Kasa uyarıları:** Kasada olandan fazla çıkış yazılırsa ya da gün ikinci kez kapatılırsa önce uyarır.
 - **Rapor bildirimi:** Günün raporu artık "Gün Kapanışı"na basınca gelir (eskiden her akşam sabit saatteydi). Kapanışı yapmayan dükkâna 23:30'da yedek olarak gider. Sunucu tarafı için `supabase-kurulum.sql` yeniden çalıştırılır (güvenli) ve `bildir` fonksiyonu güncellenir (`supabase/functions/bildir/index.ts`).
+- **Duyuru (Kolay):** Daha Fazla > Duyuru. Stok geldi, Cuma, bayram, açık/kapalı, günaydın, kampanya için hazır esprili yazıyla kart çıkar; "Gönder" telefonun paylaşım menüsünü (WhatsApp, Instagram…) açar. Yapay zeka yok, internet gerekmez.
 - **Kamerayla barkod (telefon):** Satış ekranındaki ve barkod yazılan kutudaki kamera düğmesi telefonun kamerasını açar; barkodu çerçeveye tutunca ürün sepete düşer (Android'de telefonun kendi okuyucusu, iPhone'da uygulamanın okuyucusu `kamera.js`). Bilgisayarda düğme görünmez, orada barkod okuyucu kullanılır. Kamera ekranında **+ / −** ve iki parmakla yakınlaştırma, dokunulan yere odaklama (telefon destekliyorsa) ve netleşmezse **Fotoğraf Çek** düğmesi vardır.
 - **Kolay:** Kasa'da "Diğer" seçilince açıklama kutusu kendiliğinden açılır; rapor ekranı sadeleştirildi; ürün eklerken rafa eksi sayı yazılırsa uyarır.

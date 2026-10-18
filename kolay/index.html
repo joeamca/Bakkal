@@ -575,6 +575,13 @@ e-rows:auto auto auto;column-gap:12px;align-items:center;text-align:left;padding
 .kstat.c1{--tc:var(--c1)} .kstat.c4{--tc:var(--c4)} .kstat.c6{--tc:var(--c6)} .kstat.c7{--tc:var(--c7)}
 .kgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 @media (max-width:560px){.kgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dyimg{width:100%;aspect-ratio:1;border-radius:18px;display:block;background:var(--soft,#eee);margin:6px 0 12px}
+.dyctl{display:grid;gap:10px;margin-bottom:12px}.dyctl label{display:grid;gap:4px;font-weight:700}
+.dyctl input,.dyctl select{font-size:18px;min-height:50px;width:100%;box-sizing:border-box}
+.dyrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.dyrow button{min-height:54px;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px}
+.dybig{width:100%;min-height:68px;font-size:22px;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+.dycopy{width:100%;min-height:48px;margin-bottom:8px}
+.dyseg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.dyseg button{min-height:54px;font-size:18px;font-weight:800}.dyseg button.on{background:var(--c1);color:#fff}
 .ktile{--tc:var(--c1);display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:18px 16px;border-radius:20px;min-height:150px;text-align:left;font:inherit;color:inherit;text-decoration:none;
   border:1px solid color-mix(in srgb,var(--tc) 30%,var(--line));background:linear-gradient(160deg,color-mix(in srgb,var(--tc) 18%,var(--card)),var(--card) 72%);box-shadow:var(--shadow)}
 .ktile .bi{width:54px;height:54px;border-radius:16px}
@@ -1208,9 +1215,10 @@ function renderToast(){
 function offerUndo(text, run){ S.undo = {text, run, until: Date.now()+9000}; renderToast(); clearTimeout(offerUndo.t); offerUndo.t = setTimeout(()=>{ S.undo=null; renderToast(); }, 9100); }
 // Yenilikler kutusu: her güncellemede bir kez gösterilir, "Tamam" denince bu cihazda bir daha çıkmaz.
 // Yeni güncellemede YENI_VER'i değiştir ve YENI_NOT listesini yenile.
-const YENI_VER = "2026-10-18d";
+const YENI_VER = "2026-10-18e";
 const YENI_BASLIK = "Yenilikler";
 const YENI_NOT = [
+  "Yeni: Daha Fazla > Duyuru. Stok geldi, Cuma mesajı, bayram gibi hazır kartı seç, tek tuşla WhatsApp'a gönder.",
   "Telefonda barkodu kamerayla okutabilirsin: Satış ekranındaki kamera düğmesine bas.",
   "Günü Kapat'a basınca günün raporu telefona gelir.",
   "Geri tuşu artık bir önceki ekrana döner.",
@@ -4723,6 +4731,7 @@ Object.assign(ICONS, {
   plus:'<circle class="f" cx="12" cy="12" r="9"/><path d="M12 7v10M7 12h10"/>',
   minus:'<circle class="f" cx="12" cy="12" r="9"/><path d="M7 12h10"/>',
   search:'<circle class="f" cx="11" cy="11" r="7"/><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  mega:'<path class="f" d="M3 10v4h4l7 4V6l-7 4z"/><path d="M3 10v4h4l7 4V6l-7 4z"/><path d="M17 9a4 4 0 010 6"/>',
   bell:'<path class="f" d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/>',
   cash:'<rect class="f" x="2" y="6" width="20" height="12" rx="2"/><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5v.01M18 14.5v.01"/>',
   scan:'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect class="f" x="6" y="7" width="12" height="10" rx="1"/><path d="M8 8v8M11 8v8M13.5 8v8M16 8v8"/>',
@@ -5105,9 +5114,9 @@ GUIDE.tedarik = {t:"Tedarikçiler: kime ne borcun var", s:[
 /* ================= Bakkal Kolay: sade arayüz, aynı veri ve aynı hesaplar ================= */
 window.KOLAY = true;
 const K_MAP = {ana:"k-ana", menu:"k-daha", stok:"k-stok", kar:"k-kar"};
-const K_MORE = ["rapor","veresiye","ayarlar","plan","maliyet","fire","siparis","fatura"];
+const K_MORE = ["duyuru","rapor","veresiye","ayarlar","plan","maliyet","fire","siparis","fatura"];
 const K_MAL = ["Toptancı / plasiyer ödemesi","Ekmekçi"], K_DIS = ["Bankaya yatırıldı","Kendime aldım"];
-Object.assign(titles, {"k-ana":"Ana Sayfa", "k-kasa":"Kasa", "k-stok":"Stok", "k-kar":"Kâr ve Zarar", "k-daha":"Daha Fazla", "k-urun":"Ürün"});
+Object.assign(titles, {"k-ana":"Ana Sayfa", "k-kasa":"Kasa", "k-stok":"Stok", "k-kar":"Kâr ve Zarar", "k-daha":"Daha Fazla", "k-urun":"Ürün", duyuru:"Duyuru"});
 function kRoute(){
   if (S.tab==="urunler"){ if (!S.products.length) S.tab = "k-ana"; else if (S.editId){ S.kEdit = S.editId; S.editId = null; S.tab = "k-urun"; } else S.tab = "k-stok"; }
   if (K_MAP[S.tab]) S.tab = K_MAP[S.tab]; S.guide = false; }
@@ -5250,6 +5259,7 @@ function kDaha(){
     ${t("goRapor", "", "c8", ic("sheet",28), "Satış Raporları", "Excel'e indir")}
     ${t("kGo", 'data-tab="veresiye"', "c3", ic("book",28), "Veresiye", "Kim ne kadar borçlu")}
     ${t("kGo", 'data-tab="tedarik"', "c2", ic("truck",28), "Tedarikçiler", (()=>{ const v = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return v>0.005 ? `Borcum: ${kTL(v)}` : "Borç, mal geldi, ödeme"; })())}
+    ${t("kGo", 'data-tab="duyuru"', "c6", ic("mega",28), "Duyuru", "Mahalleye haber ver")}
     ${t("nGo", "", "c8", ic("bell",28), "Bildirimler", "Telefona haber gelsin")}
     ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",28), "Ayarlar", "Şifre, yedek")}
     <a class="ktile c4" href="../"><span class="bi c4">${ic("grid",28)}</span><b>Tam Sürüm</b><span>Sipariş, fatura, plan</span></a>
@@ -5333,7 +5343,79 @@ async function kSave(next){
   if (next){ S.kEdit = "__new"; S.msg = {kind:"ok", text:`${name} kaydedildi. Sıradaki ürünü okut.`}; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById("ku-bc")?.focus(),0); return; }
   S.msg = {kind:"ok", text:`${name} kaydedildi.`}; S.kEdit = null; S.tab = "k-stok"; render(); window.scrollTo(0,0);
 }
+
+// ---- Duyuru: hazır yazı + kart, WhatsApp'a vb. paylaş (duyuru.js ilk açılışta yüklenir) ----
+function dyLoad(){
+  if (window.Duyuru || S._dyLoading) return; S._dyLoading = true;
+  const s = document.createElement("script"); s.src = "../duyuru.js";
+  s.onload = () => { S._dyLoading = false; if (S.tab==="duyuru") render(true); };
+  s.onerror = () => { S._dyLoading = false; S.dyErr = true; if (S.tab==="duyuru") render(true); };
+  document.head.appendChild(s);
+}
+function dyState(){
+  if (!S.dy){ let sv = {}; try { sv = JSON.parse(localStorage.getItem("kolay-dy")||"{}"); } catch(_){}
+    S.dy = {type:null, v:0, theme:sv.theme||0, saat:sv.saat||"08:00 - 22:00", durum:"acik", bayram:sv.bayram||"Bayramınız", urun:"", fiyat:""}; }
+  return S.dy;
+}
+function dyCtx(){
+  const d = dyState(), p = S.products.find(x=>x.id===d.urun);
+  return {dukkan: shopTitle() || "Mahalle Bakkalı", urun: p ? p.name : "", fiyat: d.fiyat || (p && p.salePrice!=null ? String(p.salePrice).replace(".",",") : ""), saat: d.saat, durum: d.durum, bayram: d.bayram};
+}
+function dyImg(){
+  const d = dyState(); if (!window.Duyuru || !d.type) return "";
+  try { return Duyuru.dataUrl(d.type, d.v, d.theme, dyCtx()); } catch(_){ return ""; }
+}
+function dySave(){ const d = dyState(); try { localStorage.setItem("kolay-dy", JSON.stringify({theme:d.theme, saat:d.saat, bayram:d.bayram})); } catch(_){} }
+function kDuyuru(){
+  const d = dyState(); dyLoad();
+  const head = backLink();
+  if (S.dyErr) return noticeHtml() + head + `<div class="notice warn">Duyuru ilk açılışta internet ister. Bağlanınca tekrar dene.</div>`;
+  if (!window.Duyuru) return noticeHtml() + head + `<p class="muted" style="text-align:center;padding:30px">Yükleniyor…</p>`;
+  if (!d.type){
+    return noticeHtml() + head + `<h2 style="margin:6px 0 4px">Ne duyuralım?</h2><p class="muted small" style="margin:0 0 12px">Birini seç; hazır yazıyla kart çıkar, sen sadece gönder.</p><div class="kgrid">${
+      Duyuru.TYPES.map((x,i)=>`<button class="ktile c${[1,6,2,4,2,3][i]}" data-act="dyType" data-id="${x.id}"><span class="bi c${[1,6,2,4,2,3][i]}" style="font-size:28px;line-height:1">${x.emoji}</span><b>${x.ad}</b><span>${x.alt}</span></button>`).join("")}</div>`;
+  }
+  const c = dyCtx(), needP = d.type==="stok" || d.type==="kampanya";
+  const prods = S.products.slice().sort((a,b)=>a.name.localeCompare(b.name,"tr"));
+  const field = (cond, html) => cond ? html : "";
+  return noticeHtml() + `<button class="link back" type="button" data-act="dyBack">${ic("back",18)} Duyuru Seç</button>
+    <img id="dy-img" class="dyimg" alt="Duyuru kartı" src="${dyImg()}">
+    <div class="dyctl">
+      ${field(needP, `<label>Ürün<select id="dy-prod"><option value="">Seç…</option>${prods.map(p=>`<option value="${esc(p.id)}"${p.id===d.urun?" selected":""}>${esc(p.name)}</option>`).join("")}</select></label>`)}
+      ${field(d.type==="kampanya", `<label>Fiyat (TL)<input id="dy-price" inputmode="decimal" value="${esc(c.fiyat)}" placeholder="25"></label>`)}
+      ${field(d.type==="bayram" || d.type==="acik", `<div class="dyseg"><button type="button" class="${d.durum==="acik"?"on":""}" data-act="dyDurum" data-v="acik">Açığız</button><button type="button" class="${d.durum==="kapali"?"on":""}" data-act="dyDurum" data-v="kapali">Kapalıyız</button></div>`)}
+      ${field((d.type==="bayram"||d.type==="acik") && d.durum==="acik", `<label>Saat<input id="dy-saat" value="${esc(d.saat)}" placeholder="08:00 - 22:00"></label>`)}
+      ${field(d.type==="bayram", `<label>Bayram adı<input id="dy-bay" value="${esc(d.bayram)}" placeholder="Kurban Bayramınız"></label>`)}
+    </div>
+    <div class="dyrow"><button type="button" data-act="dyNext">${ic("search",20)} Başka Yazı</button><button type="button" data-act="dyTheme">${ic("tag",20)} Başka Renk</button></div>
+    <button class="primary dybig" type="button" data-act="dySend">${ic("mega",24)} Gönder</button>
+    <button class="dycopy" type="button" data-act="dyCopy">Sadece yazıyı kopyala</button>
+    <p class="muted small" style="text-align:center">“Gönder”e basınca WhatsApp, Instagram gibi uygulamalar çıkar; hangisini istersen onu seç.</p>`;
+}
+function dyUpd(){ const im = document.getElementById("dy-img"); if (im) im.src = dyImg(); }
+document.addEventListener("input", ev=>{ const id = ev.target.id, d = S.dy; if (!d) return;
+  if (id==="dy-price"){ d.fiyat = ev.target.value; dyUpd(); }
+  else if (id==="dy-saat"){ d.saat = ev.target.value; dySave(); dyUpd(); }
+  else if (id==="dy-bay"){ d.bayram = ev.target.value; dySave(); dyUpd(); } });
+document.addEventListener("change", ev=>{ if (ev.target.id==="dy-prod" && S.dy){ S.dy.urun = ev.target.value; S.dy.fiyat = ""; render(true); } });
+async function dyAct(a, t){
+  const d = dyState();
+  if (a==="dyType"){ d.type = t.dataset.id; d.v = 0; d.durum = "acik"; d.urun = ""; d.fiyat = ""; render(); window.scrollTo(0,0); return true; }
+  if (a==="dyBack"){ d.type = null; render(); window.scrollTo(0,0); return true; }
+  if (a==="dyNext"){ d.v++; dyUpd(); return true; }
+  if (a==="dyTheme"){ d.theme = (d.theme+1) % Duyuru.THEMES.length; dySave(); dyUpd(); return true; }
+  if (a==="dyDurum"){ d.durum = t.dataset.v; d.v = 0; render(true); return true; }
+  if (a==="dySend"){
+    const c = dyCtx(); if ((d.type==="stok"||d.type==="kampanya") && !c.urun){ alert("Önce ürünü seç."); return true; }
+    if (d.type==="kampanya" && !c.fiyat){ alert("Fiyatı yaz."); return true; }
+    const r = await Duyuru.share(d.type, d.v, d.theme, c);
+    if (r==="downloaded") alert("Kart telefona indirildi. Şimdi WhatsApp'ı açıp fotoğraf olarak gönderebilirsin.");
+    return true; }
+  if (a==="dyCopy"){ const ok = await Duyuru.copy(d.type, d.v, dyCtx()); alert(ok ? "Yazı kopyalandı." : "Kopyalanamadı."); return true; }
+  return false;
+}
 async function kolayAct(a, t, id){
+  if (a.startsWith("dy")) return dyAct(a, t);
   if (a==="kGo"){ if (t.dataset.tab==="tedarik"){ S.supOpen = null; S.supForm = null; S.supEdit = null; } S.tab = t.dataset.tab; S.msg = null; S.kEdit = null; S.vCust = null; S.editId = null; if (t.dataset.f) S.kStokF = t.dataset.f; if (S.tab==="satis") S.posView = "sat"; render(); window.scrollTo(0,0); if (S.tab==="satis") posFocus(); return true; }
   if (a==="kKasa"){ S.tab = "k-kasa"; S.kasaForm = t.dataset.f || null; S.kReason = null; S.kasaErr = null; S.kasaOver = null; S.kapOk = false; S.msg = null; render(); window.scrollTo(0,0); setTimeout(()=>document.getElementById("kf-a")?.focus(),0); return true; }
   if (a==="kReason"){ S.kReason = t.dataset.v; const h = document.getElementById("kf-r"); if (h) h.value = S.kReason;
@@ -5351,7 +5433,7 @@ async function kolayAct(a, t, id){
     offerUndo(`${old.name} silindi.`, ()=>store.saveProduct(old)); S.kEdit = null; S.tab = "k-stok"; S.msg = {kind:"ok", text:`${old.name} silindi.`}; render(); window.scrollTo(0,0); return true; }
   return false;
 }
-const KV = {"k-ana":kAna, "k-kasa":kKasa, "k-stok":kStok, "k-kar":kKar, "k-daha":kDaha, "k-urun":kUrun, satis:kPos};
+const KV = {"k-ana":kAna, "k-kasa":kKasa, "k-stok":kStok, "k-kar":kKar, "k-daha":kDaha, "k-urun":kUrun, satis:kPos, duyuru:kDuyuru};
 document.addEventListener("submit", ev=>{ if (ev.target.id==="kuform"){ ev.preventDefault(); kSave(ev.submitter?.dataset?.k==="next"); } });
 document.addEventListener("input", ev=>{ const id = ev.target.id; if (id==="ku-sale" || id==="ku-buy"){ const k = document.getElementById("ku-kar"); if (k) k.innerHTML = kKarTxt(document.getElementById("ku-sale").value, document.getElementById("ku-buy").value); } else if (id==="ku-bc") kBcCheck(); });
 document.addEventListener("input", ev=>{ if (ev.target.id==="k-q"){ S.kq = ev.target.value; const L = document.getElementById("k-list"); if (L) L.innerHTML = kStokList(kStockRows()); } });

@@ -76,6 +76,10 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
 .notice.bad{background:var(--bad-soft);color:var(--bad)}
 .empty{text-align:center;padding:28px 12px}
 .empty .big{font-size:40px;font-family:var(--mono);color:var(--muted)}
+body.staff [data-act="goKasa"],body.staff [data-act="kKasa"],body.staff [data-act="goRapor"],body.staff [data-act="posView"][data-v="kasa"],body.staff [data-tab="k-kar"],body.staff [data-tab="k-kasa"],body.staff [data-tab="kar"],body.staff [data-tab="rapor"],body.staff [data-tab="maliyet"],body.staff [data-tab="plan"],body.staff [data-tab="duyuru"],body.staff .ktoday,body.staff #excel{display:none!important}
+html.kolay body.staff nav.tabs{grid-template-columns:repeat(3,1fr)}
+.hr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.hr>div:first-child{min-width:0;flex:1}.hr b{display:block;overflow-wrap:anywhere}.hr .d{text-align:right;font-weight:800;white-space:nowrap}.hr .d small{display:block;font-weight:700}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav.tabs button{border:0;border-radius:0;background:none;color:var(--muted);font-size:13px;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px}
 nav.tabs button .ic{font-family:var(--mono);font-size:19px}
@@ -1233,6 +1237,8 @@ function yenilikHtml(){
   return `<div class="notice ok stack" style="margin-bottom:12px"><b>${YENI_BASLIK}</b><ul style="margin:0;padding-left:20px;display:grid;gap:6px">${YENI_NOT.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="primary" data-act="yeniOk">Tamam</button></div>`;
 }
 function render(keep){
+  { const stf = isStaff(); document.body.classList.toggle("staff", stf);
+    if (stf){ if (STAFF_NO.has(S.tab)) S.tab = window.KOLAY ? "k-ana" : "ana"; if (S.posView==="kasa") S.posView = "sat"; } }
   if (window.KOLAY) kRoute();
   $("#pageTitle").textContent = titles[S.tab];
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", (b.dataset.tab===S.tab || (window.KOLAY && kNavOn(b.dataset.tab)) || (b.dataset.tab==="menu" && MENU_TABS.includes(S.tab))) ? "page" : "false"));
@@ -1520,7 +1526,7 @@ function viewInvoice(){
       <label>Tedarikçi<input id="inv-sup" value="${esc(inv.supplier)}"></label>
       <label>Fatura no<input id="inv-no" value="${esc(inv.no)}"></label>
       <label>Tarih<input id="inv-date" type="date" max="${ymd(Date.now())}" value="${esc(inv.date)}"></label>
-      <label>Ödeme<select id="inv-pay">${[["borc","Borç yaz (sonra öderim)"],["kasa","Peşin (kasadan)"],["disari","Peşin (kasa dışı)"]].map(([v,l])=>`<option value="${v}" ${(inv.pay||"borc")===v?"selected":""}>${l}</option>`).join("")}</select></label>
+      <label>Ödeme<select id="inv-pay">${[["borc","Borç yaz (sonra öderim)"],["kasa","Peşin (kasadan)"],["disari","Peşin (kasa dışı)"]].filter(([v])=>!(v==="kasa"&&isStaff())).map(([v,l])=>`<option value="${v}" ${(inv.pay||"borc")===v?"selected":""}>${l}</option>`).join("")}</select></label>
     </div>
     ${S.invErr ? `<p class="notice bad">${esc(S.invErr)}</p>` : ""}
     ${dup ? `<p class="notice bad">Bu fatura numarası daha önce kaydedilmiş. İki kez kaydedersen stok iki kat görünür.</p>` : ""}
@@ -1825,7 +1831,7 @@ function lineChart(pts, o={}){ // pts: [{v, l, mark}]
 const isMade = p => Array.isArray(p.recipe) && p.recipe.length>0;
 const usedIn = id => S.products.filter(x=>isMade(x) && x.recipe.some(r=>r.id===id));
 const stockP = () => S.products.filter(p=>!isMade(p));
-const MENU_TABS = ["tedarik","menu","stok","plan","maliyet","kar","fire","urunler","ayarlar","yonetim","rapor"];
+const MENU_TABS = ["hareket","tedarik","menu","stok","plan","maliyet","kar","fire","urunler","ayarlar","yonetim","rapor"];
 function dayWeight(t){ const w=dayW(), m=w.reduce((x,y)=>x+y,0)/7||1, sd=specials().find(x=>x.d===ymd(t)); return sd ? (SPECIAL[sd.k]?.w??1) : w[new Date(t).getDay()]/m; }
 function depDaily(){ const d={}; for (const m of S.products) if (isMade(m)) for (const c of m.recipe){ d[c.id]=(d[c.id]||0)+(Number(m.dailyEst)||0)*(Number(c.qty)||0); } return d; }
 function gotToday(pid){ const k=ymd(Date.now()); return S.events.some(e=>e.productId===pid && e.type==="gelen" && ymd(new Date(e.date).getTime())===k); }
@@ -2301,9 +2307,10 @@ async function exportXlsx(){
         "— Hesaplanan —":"", "Haftalık satış (tahmini)":+st.weekly.toFixed(1), "Önerilen sipariş":st.q, "Rafta (tahmini)":sh==null?"":Math.round(sh),
         "Son alış TL":m.buy??"", "Adet kârı TL":m.unit==null?"":+m.unit.toFixed(2), "Fire oranı %":+(st.fireRate*100).toFixed(1), "Kod":p.id}; });
     const supLed = S.events.filter(isSupLedger).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({"Tarih":localStamp(e.date), "Tedarikçi":supName(e.supplierId), "İşlem":e.type==="tborc"?"Alım / borç":"Ödeme", "Tutar TL":Number(e.amount), "Not":e.note||"", "Kasadan":e.cashId?"Evet":"", "Kod":e.id}));
+    const hrFrom = {}, hrDiff = {}; for (const r of hareketRows()) if (r.e.type==="sayim"){ hrFrom[r.e.id] = r.from; hrDiff[r.e.id] = r.diff; }
     const mov = S.events.filter(e=>!isLedger(e) && !isSupLedger(e)).sort((a,b)=>a.date.localeCompare(b.date)).map(e=>({"Tarih":localStamp(e.date), "Ürün":e.productId==="-"?"":nm(e.productId), "Hareket":TYP[e.type]||e.type,
       "Miktar":e.type==="bos"?"":e.qty, "Gün":e.type==="bos"?e.days:"", "Adet fiyatı TL":e.price??"", "Fatura no":e.invoiceNo||"", "Tedarikçi":e.supplier||"",
-      "Neden":e.reason?(WHY[e.reason]||e.reason):"", "Not":e.note||"", "Ürün kodu":e.productId, "Fatura kodu":e.invKey||"", "Kod":e.id}));
+      "Eski adet":e.type==="sayim" ? (hrFrom[e.id] ?? "") : "", "Fark":e.type==="sayim" ? (hrDiff[e.id] ?? "") : "", "Yapan":(S.mode==="cloud" && C.by ? (whoName(C.by["event:"+e.id])||"") : ""), "Neden":e.reason?(WHY[e.reason]||e.reason):"", "Not":e.note||"", "Ürün kodu":e.productId, "Fatura kodu":e.invKey||"", "Kod":e.id}));
     const sup = Object.values(S.suppliers).map(x=>({"Tedarikçi":x.name||x.id, "Araç günleri":(x.days||[]).slice().sort((a,b)=>WEEK.indexOf(a)-WEEK.indexOf(b)).map(d=>DS[d]).join(", "), "Sipariş kaç gün önce":Number(x.lead)||0}));
     const cname = id => S.customers[id]?.name || "";
     const cust = Object.values(S.customers||{}).map(c=>({"Ad":c.name, "Telefon":c.phone||"", "Borç sınırı TL":c.limit??"", "Not":c.note||"", "Bakiye TL (hesaplanan)":custStats(c).bal, "Kod":c.id}));
@@ -2751,7 +2758,8 @@ document.addEventListener("click", async ev=>{
     else if (a==="delEv"){ if (S.confirmEv!==id){ S.confirmEv=id; render(); return; } S.confirmEv=null; const old={...S.events.find(x=>x.id===id)}; await store.deleteEvent(id); offerUndo("Fire kaydı silindi.", ()=>store.addEvent(old)); render(); }
     else if (a==="migrate"){ t.disabled=true; await migrateLocal(); }
     else if (a==="dropLocal"){ try{ localStorage.removeItem(LKEY); }catch(_){} S.localPending=null; render(); }
-    else if (a==="camScan"){ camScan(t.dataset.for); }
+    else if (a==="hrF"){ S.hrF = t.dataset.f; render(true); }
+  else if (a==="camScan"){ camScan(t.dataset.for); }
     else if (a==="guide"){ S.guide=!S.guide; if (S.guide) S.editId=null; render(); window.scrollTo(0,0); }
     else if (a==="guideClose"){ S.guide=false; render(); }
     else if (a==="guideGo"){ syncInv(); S.tab=t.dataset.tab; S.editId=null; S.msg=null; render(); window.scrollTo(0,0); }
@@ -3042,6 +3050,7 @@ async function flush(){
     C.queue = C.queue.filter(q=>!batch.includes(q)); C.err = null; C.online = true; cloudSave();
   }catch(e){
     if (isNetErr(e)){ C.online = false; flushTimer = setTimeout(flush, 15000); }
+    else if (/YETKI/.test(String(e?.message||""))){ await flushDenied(batch); }
     else { C.err = e; S.msg = {kind:"bad", text:"Kayıt internete gönderilemedi: " + sbMsg(e) + (e.code==="42501" ? " Dükkânın hesabı durdurulmuş ya da bu dükkândan çıkarılmış olabilirsin." : "") + " Kayıtlar telefonda duruyor; bir dakika sonra yeniden denenecek."}; render(); flushTimer = setTimeout(()=>{ C.err = null; flush(); }, 60000); }
   }finally{ C.flushing = false; saving(); }
   if (!C.err && C.online && C.queue.some(q=>q.shop===C.shop?.id)) flush();
@@ -3103,6 +3112,25 @@ function subscribe(){
   }catch(_){}
 }
 async function loadPeople(){ if (!C.shop || !SB) return; try{ const {data, error} = await SB.rpc("shop_members", {p_shop:C.shop.id}); if (!error){ C.people = data||[]; C.peopleAt = Date.now(); cloudSave(); } }catch(_){} }
+/* Çalışan (staff) yetkisi: kasa, kâr, rapor, duyuru ve yedek ekranlarını görmez */
+const STAFF_NO = new Set(["hareket","kar","k-kar","rapor","kasa","k-kasa","maliyet","plan","duyuru"]);
+function isStaff(){
+  if (S.mode!=="cloud" || !C.shop) return false; const x = C.ctx || {}; if (x.is_admin) return false;
+  const me = (x.shops||[]).find(s=>s.id===C.shop.id); return !!me && me.role==="staff";
+}
+async function flushDenied(batch){
+  let dropped = 0;
+  for (const q of batch){
+    try{
+      const {error} = await SB.from("docs").upsert([{shop_id:q.shop, kind:q.kind, id:q.id, data:q.data, deleted:q.deleted}]);
+      if (!error){ C.queue = C.queue.filter(x=>x!==q); continue; }
+      if (!/YETKI/.test(String(error.message||""))) throw error;
+      C.queue = C.queue.filter(x=>x!==q); dropped++;
+    }catch(e){ if (isNetErr(e)){ C.online = false; flushTimer = setTimeout(flush, 15000); return; } C.queue = C.queue.filter(x=>x!==q); dropped++; }
+  }
+  C.err = null; cloudSave();
+  if (dropped){ S.msg = {kind:"bad", text:"Bu işlem için yetkin yok, kaydedilmedi. Gerekirse dükkân sahibine söyle."}; C.lastSync = null; try{ await pull(); }catch(_){} render(); }
+}
 const whoName = uid => { const p = C.people.find(x=>x.user_id===uid); return p ? (p.full_name || p.username) : null; };
 // "kim girdi" etiketi: dükkânda birden fazla kişi varsa gösterilir
 const whoTag = (kind, id) => { if (S.mode!=="cloud" || C.people.length < 2) return ""; const n = whoName(C.by[kind+":"+id]); return n ? ` · <span class="who">${esc(n)}</span>` : ""; };
@@ -4240,10 +4268,43 @@ function tanScan(raw){
   if (sc && !sc.unknown) S.tan = {code:c, pid:sc.p.id, q:1};
   render(); setTimeout(()=>{ (document.getElementById(hit ? "tp-cnt" : "tn-name") || document.getElementById("tan-scan"))?.focus(); }, 0);
 }
+
+/* ---------- Stok hareketleri: kim, ne zaman, kaçtan kaça ---------- */
+const HR_TYPES = ["sayim","gelen","iade","fire","ariza"];
+function hareketRows(){
+  const prev = {}, out = [];
+  const evs = S.events.filter(e=>HR_TYPES.includes(e.type) && e.productId && e.productId!=="-").slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  for (const e of evs){
+    const p = S.products.find(x=>x.id===e.productId), q = Number(e.qty)||0;
+    let from = null, to = null, diff = null;
+    if (e.type==="sayim"){ from = e.was!=null ? Number(e.was) : (prev[e.productId]!=null ? prev[e.productId] : null); to = q; diff = from!=null ? r2(to-from) : null; prev[e.productId] = q; }
+    else diff = e.type==="gelen" ? q : -q;
+    const who = (S.mode==="cloud" && C.by) ? (whoName(C.by["event:"+e.id]) || "") : "";
+    out.push({e, name: p ? p.name : "(silinmiş ürün)", unit: p ? unitOf(p) : "", from, to, diff, who});
+  }
+  return out.reverse();
+}
+function hareketLabel(r){
+  const n = v => v==null ? "?" : fmt(v, v<10 && v%1 ? 1 : 0), sg = v => (v>0?"+":v<0?"−":"") + n(Math.abs(v));
+  if (r.e.type==="sayim") return r.from!=null ? `${n(r.from)} → ${n(r.to)}` : `Sayım: ${n(r.to)}`;
+  return sg(r.diff);
+}
+function viewHareket(){
+  const f = S.hrF || "all";
+  let rows = hareketRows();
+  if (f==="sayim") rows = rows.filter(r=>r.e.type==="sayim");
+  else if (f==="azalt") rows = rows.filter(r=>r.diff!=null && r.diff<0);
+  const chips = [["all","Hepsi"],["sayim","Sayım"],["azalt","Azalan"]].map(([k,l])=>`<button class="tog ${f===k?"on":""}" data-act="hrF" data-f="${k}">${l}</button>`).join("");
+  const list = rows.slice(0, 150).map(r=>{
+    const col = r.diff==null ? "var(--muted)" : r.diff<0 ? "var(--bad,#c0392b)" : "var(--c1,#2e9e6b)";
+    return `<div class="hr"><div><b>${esc(r.name)}</b><span class="small muted">${esc(localStamp(r.e.date))} · ${esc(TYP[r.e.type]||r.e.type)}${r.who ? ` · <span class="who">${esc(r.who)}</span>` : ""}</span></div><div class="d"><span>${esc(hareketLabel(r))}</span>${r.e.type==="sayim" && r.diff!=null && r.diff!==0 ? `<small style="color:${col}">${r.diff>0?"+":"−"}${fmt(Math.abs(r.diff), Math.abs(r.diff)<10 && Math.abs(r.diff)%1 ? 1 : 0)}</small>` : ""}</div></div>`;
+  }).join("");
+  return noticeHtml() + backLink() + `<section class="card stack"><h2>Stok Hareketleri</h2><p class="small muted">Sayım, mal geldi ve fire kayıtları. Sayımda "kaçtan kaça" yazılır; eski kayıtlarda önceki sayım esas alınır.</p><div class="fchips">${chips}</div>${list || `<p class="muted">Kayıt yok.</p>`}${rows.length>150 ? `<p class="small muted">Son 150 kayıt gösteriliyor.</p>` : ""}</section>`;
+}
 async function addCount(p, cnt){
   if (!(cnt >= 0)) return;
   await posMarkStart();
-  await store.addEvent({id:newId(), type:"sayim", productId:p.id, qty:cnt, date:nowIso()});
+  await store.addEvent({id:newId(), type:"sayim", productId:p.id, qty:cnt, was:pCur(p), date:nowIso()});
   if (p.outSince && cnt > 0) await store.saveProduct({...S.products.find(x=>x.id===p.id), outSince:null});
 }
 function barcodeOwner(code, exceptId){ for (const p of S.products) if (p.id!==exceptId && (p.barcodes||[]).some(b=>b.c===code)) return p; return null; }
@@ -4564,7 +4625,7 @@ const N_TYPES = [["stok","Stok azalıyor","box","c2"],["bitti","Ürün bitti","a
   ["rgun","Günün raporu (gün kapanınca, Excel)","chart","c6"],["rhafta","Haftanın raporu (pazar günü kapanınca)","chart","c6"],["ray","Ayın raporu (ayın son günü)","chart","c6"],
   ["basvuru","Yeni kayıt başvurusu (yönetici)","user","c4"]];
 // Kolay: bildirim türü seçtirmez; dükkânda olan her şey için bildirim gelir
-const nAll = () => N_TYPES.map(x=>x[0]).filter(t=>t!=="basvuru" || S.cloud?.ctx?.is_admin);
+const nAll = () => N_TYPES.map(x=>x[0]).filter(t=>(t!=="basvuru" || S.cloud?.ctx?.is_admin) && !(t==="kasa" && isStaff()));
 const N = {state:"?", types:null, endpoint:null, busy:false, err:null, ok:null};
 const nSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 const nIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
@@ -4844,7 +4905,7 @@ function supDetail(id){
     h += `<form id="supform" class="stack supf" data-f="${f}"><b>${f==="odeme" ? "Ödeme Yap" : "Borç Yaz (fatura dışı ya da eski borç)"}</b>
       <label>Tutar (TL)<input id="sf-a" inputmode="decimal" required placeholder="Örn. 500"></label>
       ${f==="odeme" && st.bal>0.005 ? `<div class="row"><button type="button" class="tog" data-act="supAll" data-v="${st.bal}">Borcun tamamı: ${TLx(st.bal)}</button></div>` : ""}
-      ${f==="odeme" ? `<div class="row" role="radiogroup"><label class="check"><input type="radio" name="sf-src" value="kasa" checked> Kasadan ödedim</label><label class="check"><input type="radio" name="sf-src" value="disari"> Banka / kasa dışı</label></div>` : ""}
+      ${f==="odeme" ? `<div class="row" role="radiogroup">${isStaff() ? "" : `<label class="check"><input type="radio" name="sf-src" value="kasa" checked> Kasadan ödedim</label>`}<label class="check"><input type="radio" name="sf-src" value="disari"${isStaff() ? " checked" : ""}> Banka / kasa dışı</label></div>` : ""}
       <label>Not (isteğe bağlı)<input id="sf-n" maxlength="120" placeholder="${f==="odeme" ? "Örn. haftalık hesap" : "Örn. geçen aydan kalan"}"></label>
       ${S.supErr ? `<p class="notice bad">${esc(S.supErr)}</p>` : ""}
       <div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-act="supForm" data-f="">Vazgeç</button></div></form>`;
@@ -4886,7 +4947,7 @@ function supMalForm(){
         <button type="button" class="link dangerLink" data-act="supLineDel" data-i="${i}">Çıkar</button></div>`; }).join("")}</div>
       <div class="supbal warn"><span>Toplam</span><b class="num" id="sm-tot">${TLx(tot)}</b></div>` : `<p class="small muted">Barkod okut ya da listeden seç.</p>`}
     <div class="stack" style="gap:6px"><span class="small"><b>Ödeme</b></span>
-      <div class="supbtns">${[["borc","Borç yaz"],["kasa","Peşin (kasadan)"],["disari","Peşin (cepten)"]].map(([v,l])=>`<label class="check"><input type="radio" name="sm-pay" value="${v}" ${(S.supMalPay||"borc")===v?"checked":""}> ${l}</label>`).join("")}</div></div>
+      <div class="supbtns">${[["borc","Borç yaz"],["kasa","Peşin (kasadan)"],["disari","Peşin (cepten)"]].filter(([v])=>!(v==="kasa"&&isStaff())).map(([v,l])=>`<label class="check"><input type="radio" name="sm-pay" value="${v}" ${(S.supMalPay||"borc")===v?"checked":""}> ${l}</label>`).join("")}</div></div>
     ${S.supErr ? `<p class="notice bad">${esc(S.supErr)}</p>` : ""}
     <div class="row"><button class="primary big" type="submit">${ic("check",20)} Kaydet</button></div></form>`;
 }
@@ -5115,9 +5176,9 @@ GUIDE.tedarik = {t:"Tedarikçiler: kime ne borcun var", s:[
 /* ================= Bakkal Kolay: sade arayüz, aynı veri ve aynı hesaplar ================= */
 window.KOLAY = true;
 const K_MAP = {ana:"k-ana", menu:"k-daha", stok:"k-stok", kar:"k-kar"};
-const K_MORE = ["duyuru","rapor","veresiye","ayarlar","plan","maliyet","fire","siparis","fatura"];
+const K_MORE = ["hareket","duyuru","rapor","veresiye","ayarlar","plan","maliyet","fire","siparis","fatura"];
 const K_MAL = ["Toptancı / plasiyer ödemesi","Ekmekçi"], K_DIS = ["Bankaya yatırıldı","Kendime aldım"];
-Object.assign(titles, {"k-ana":"Ana Sayfa", "k-kasa":"Kasa", "k-stok":"Stok", "k-kar":"Kâr ve Zarar", "k-daha":"Daha Fazla", "k-urun":"Ürün", duyuru:"Duyuru"});
+Object.assign(titles, {"k-ana":"Ana Sayfa", "k-kasa":"Kasa", "k-stok":"Stok", "k-kar":"Kâr ve Zarar", "k-daha":"Daha Fazla", "k-urun":"Ürün", duyuru:"Duyuru", hareket:"Stok Hareketleri"});
 function kRoute(){
   if (S.tab==="urunler"){ if (!S.products.length) S.tab = "k-ana"; else if (S.editId){ S.kEdit = S.editId; S.editId = null; S.tab = "k-urun"; } else S.tab = "k-stok"; }
   if (K_MAP[S.tab]) S.tab = K_MAP[S.tab]; S.guide = false; }
@@ -5260,6 +5321,7 @@ function kDaha(){
     ${t("goRapor", "", "c8", ic("sheet",28), "Satış Raporları", "Excel'e indir")}
     ${t("kGo", 'data-tab="veresiye"', "c3", ic("book",28), "Veresiye", "Kim ne kadar borçlu")}
     ${t("kGo", 'data-tab="tedarik"', "c2", ic("truck",28), "Tedarikçiler", (()=>{ const v = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return v>0.005 ? `Borcum: ${kTL(v)}` : "Borç, mal geldi, ödeme"; })())}
+    ${t("kGo", 'data-tab="hareket"', "c4", ic("list",28), "Stok Hareketleri", "Kim ne yaptı")}
     ${t("kGo", 'data-tab="duyuru"', "c6", ic("mega",28), "Duyuru", "Mahalleye haber ver")}
     ${t("nGo", "", "c8", ic("bell",28), "Bildirimler", "Telefona haber gelsin")}
     ${t("kGo", 'data-tab="ayarlar"', "c5", ic("gear",28), "Ayarlar", "Şifre, yedek")}
@@ -5433,7 +5495,7 @@ async function kolayAct(a, t, id){
     offerUndo(`${old.name} silindi.`, ()=>store.saveProduct(old)); S.kEdit = null; S.tab = "k-stok"; S.msg = {kind:"ok", text:`${old.name} silindi.`}; render(); window.scrollTo(0,0); return true; }
   return false;
 }
-const KV = {"k-ana":kAna, "k-kasa":kKasa, "k-stok":kStok, "k-kar":kKar, "k-daha":kDaha, "k-urun":kUrun, satis:kPos, duyuru:kDuyuru};
+const KV = {"k-ana":kAna, "k-kasa":kKasa, "k-stok":kStok, "k-kar":kKar, "k-daha":kDaha, "k-urun":kUrun, satis:kPos, duyuru:kDuyuru, hareket:viewHareket};
 document.addEventListener("submit", ev=>{ if (ev.target.id==="kuform"){ ev.preventDefault(); kSave(ev.submitter?.dataset?.k==="next"); } });
 document.addEventListener("input", ev=>{ const id = ev.target.id; if (id==="ku-sale" || id==="ku-buy"){ const k = document.getElementById("ku-kar"); if (k) k.innerHTML = kKarTxt(document.getElementById("ku-sale").value, document.getElementById("ku-buy").value); } else if (id==="ku-bc") kBcCheck(); });
 document.addEventListener("input", ev=>{ if (ev.target.id==="k-q"){ S.kq = ev.target.value; const L = document.getElementById("k-list"); if (L) L.innerHTML = kStokList(kStockRows()); } });

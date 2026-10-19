@@ -7,7 +7,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 | | Adres | Kimin için |
 |---|---|---|
 | **Bakkal Defteri** (tam sürüm) | https://joeamca.github.io/Bakkal/ | Sipariş, fatura, ihtiyaç planı, fire dahil her şey |
-| **Bakkal Kolay** | https://joeamca.github.io/Bakkal-Kolay/ | Büyük düğmeler, sade ekran: satış, kasa, stok, kâr. Ayrı depo: [Bakkal-Kolay](https://github.com/joeamca/Bakkal-Kolay) |
+| **Bakkal Kolay** (ayrı uygulama) | https://joeamca.github.io/Bakkal-Kolay/ | Bu depoda değil, kendi deposunda: [Bakkal-Kolay](https://github.com/joeamca/Bakkal-Kolay). Aynı Supabase hesabını ve verileri kullanır |
 
 <p>
 <img src="ekran/tam-bugun.jpg" width="200" alt="Bugün ekranı">
@@ -52,7 +52,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 | `kamera.js` | Telefonda kamerayla barkod okuma (kamera düğmesine ilk basınca yüklenir) |
 | `sw.js` | Bildirimleri alır ve internetsiz açılışı sağlar. Sayfa önce internetten istenir, yoksa telefondaki kopya açılır |
 | `manifest.webmanifest` | Tam sürümü ana ekrana ekleme bilgileri (ad, renk, simge) |
-| `icons/` | Uygulama simgeleri (`app-*`, `kolay-*`) ve bildirim simgeleri (`n-*`, `badge.png`) |
+| `icons/` | Uygulama simgeleri (`app-*`) ve bildirim simgeleri (`n-*`, `badge.png`) |
 | `ekran/` | Bu sayfadaki ekran görüntüleri |
 | `supabase-kurulum.sql` | Veritabanı kurulumu: tablolar, güvenlik kuralları, zamanlayıcı. Tekrar çalıştırmak güvenli |
 | `supabase/functions/bildir/` | Bildirimleri gönderen Supabase fonksiyonunun kaynağı |

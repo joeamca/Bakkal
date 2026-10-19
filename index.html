@@ -2069,7 +2069,6 @@ function viewMenu(){
     <button class="mtile" data-act="goRapor"><span class="bi c2">${ic("chart",26)}</span><b>Satış Raporları</b><span class="small muted">Günlük, haftalık, aylık, yıllık · Excel</span></button>
     <button class="mtile" data-act="goto" data-tab="tedarik" data-plain="1"><span class="bi c2">${ic("truck",26)}</span><b>Tedarikçiler</b><span class="small muted">${(()=>{ const t = supList().reduce((a,x)=>a+Math.max(0,supStats(x.id).bal),0); return t>0.005 ? `Borcum: ${TLx(r2(t))}` : "Borç, mal geldi, ödeme"; })()}</span></button>
     <button class="mtile" data-act="goKasa"><span class="bi c1">${ic("box",26)}</span><b>Kasa</b><span class="small muted">Açılış, giriş/çıkış, gün kapanışı</span></button>
-    <a class="mtile" href="https://joeamca.github.io/Bakkal-Kolay/" style="text-decoration:none"><span class="bi c7">${ic("home",26)}</span><b>Kolay Sürüm</b><span class="small muted">Büyük düğmeler, sade ekran</span></a>
     <button class="mtile" data-act="guide"><span class="bi c4">${ic("help",26)}</span><b>Rehber</b><span class="small muted">Her ekranı adım adım anlatır</span></button>
     ${S.mode==="cloud" && S.cloud.ctx?.is_admin ? `<button class="mtile" data-act="toAdmin"><span class="bi c1">${ic("grid",26)}</span><b>Yönetici Ekranı</b><span class="small muted">${S.cloud.ctx.pending_signups ? `<b>${S.cloud.ctx.pending_signups} başvuru bekliyor</b>` : "Dükkânlar, hesaplar, şifreler"}</span></button>` : ""}
     ${S.mode==="cloud" ? `<button class="mtile" data-act="goto" data-tab="ayarlar" data-plain="1"><span class="bi c5">${ic("user",26)}</span><b>Hesabım</b><span class="small muted">${esc(S.cloud.ctx?.username||"")} · şifre, kişiler, çıkış</span></button>` : ""}</div>`;
@@ -4552,7 +4551,7 @@ function nSend(type, title, body, tag, noEx){
 function nRapor(){
   try{ if (!SB || S.mode!=="cloud" || !S.cloud.shop || !navigator.onLine) return;
     if (kasaDay(today0()).cash.filter(c=>c.t==="kapanis").length > 1) return;
-    SB.functions.invoke("bildir", {body:{type:"rapor", shop_id: S.cloud.shop.id, app: window.KOLAY ? "kolay" : "tam"}}).catch(()=>{}); }catch(_){}
+    SB.functions.invoke("bildir", {body:{type:"rapor", shop_id: S.cloud.shop.id, app: window.KOLAY ? "kolay" : "tam", exclude: N.endpoint}}).catch(()=>{}); }catch(_){}
 }
 function nOnce(key){ const k = "bd-n-" + key + "-" + ymd(Date.now()); try{ if (localStorage.getItem(k)) return false; localStorage.setItem(k, "1"); }catch(_){} return true; }
 function nAfterSale(sale){

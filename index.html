@@ -81,6 +81,8 @@ html.kolay body.staff nav.tabs{grid-template-columns:repeat(3,1fr)}
 .hr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .hr>div:first-child{min-width:0;flex:1}.hr b{display:block;overflow-wrap:anywhere}.hr .d{text-align:right;font-weight:800;white-space:nowrap}.hr .d small{display:block;font-weight:700}
 body.staff .pstep [data-d="-1"]{visibility:hidden}
+body.staff [data-act="posPriceOpen"]{display:none!important}
+body.staff .pricebtn{pointer-events:none;text-decoration:none}
 .gq-hide{display:none!important}.gsw{margin:0 0 12px}.gsw input{width:100%;box-sizing:border-box;font-size:18px;padding:12px 14px;border-radius:12px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav.tabs button{border:0;border-radius:0;background:none;color:var(--muted);font-size:13px;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px}
@@ -1443,7 +1445,7 @@ function viewProducts(){
       <label class="check"><input id="f-made" type="checkbox" ${S.formMade?"checked":""}> Dükkânda hazırladığım ürün (tost, sandviç gibi: reçetesi var)</label>
       ${S.formMade ? `
       <div class="grid2"><label>Günde kaç tane hazırlıyorsun?<input id="f-daily" type="text" data-num="1" min="0" step="1" inputmode="numeric" value="${esc(v.dailyEst??"")}"></label>
-        <label>Satış fiyatı (TL)<input id="f-sale" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}"></label></div>
+        <label>Satış fiyatı (TL)<input id="f-sale" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}" ${isStaff()?"readonly":""}></label></div>
       <div class="stack" style="gap:8px"><b>Reçete: 1 tanesi için ne gidiyor?</b>
         ${S.rcRows.map((r,i)=>`<div class="rcrow"><label>Malzeme<select id="rc-p-${i}"><option value="">Seç</option>${comps.map(c=>`<option value="${c.id}" ${r.id===c.id?"selected":""}>${esc(c.name)} (${esc(unitOf(c))})</option>`).join("")}</select></label>
           <label>Miktar<input id="rc-q-${i}" type="text" inputmode="decimal" value="${esc(r.qty??"")}" placeholder="0,5"></label>
@@ -1460,8 +1462,8 @@ function viewProducts(){
         <label>Kaç teslimatta bir alınsın?<select id="f-every">${[1,2,3,4].map(n=>`<option value="${n}" ${(Number(v.everyN)||1)===n?"selected":""}>${n===1?"Her teslimatta":n+" teslimatta bir"}</option>`).join("")}</select></label>
         ${p?"":`<label>Şu an rafta ve depoda kaç tane var?<input id="f-stock" type="text" data-num="1" min="0" step="any" inputmode="decimal" placeholder="Bilmiyorsan boş bırak"></label>`}
         <label>Koli içi adet<input id="f-case" type="text" data-num="1" min="1" inputmode="numeric" value="${esc(v.caseSize)}"></label>
-        <label>Raf satış fiyatı (TL)<input id="f-sale" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}"></label>
-        <label>Alış fiyatı (TL, faturadan gelmezse)<input id="f-buy" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.buyPrice??"")}"></label>
+        <label>Raf satış fiyatı (TL)<input id="f-sale" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.salePrice??"")}" ${isStaff()?"readonly":""}></label>
+        <label>Alış fiyatı (TL, faturadan gelmezse)<input id="f-buy" type="text" data-num="1" min="0" step="0.01" inputmode="decimal" value="${esc(v.buyPrice??"")}" ${isStaff()?"readonly":""}></label>
         <label>Raf ömrü (gün, bozuluyorsa)<input id="f-life" type="text" data-num="1" min="1" inputmode="numeric" value="${esc(v.shelfDays??"")}" placeholder="Örn. süt 5"></label>
       </div>
       <label class="check"><input id="f-per" type="checkbox" ${v.perishable?"checked":""}> Çabuk bozulur (süt, yoğurt, ekmek, şarküteri)</label>
@@ -3956,7 +3958,7 @@ async function posFinish(pay){
   if (!items.length) return;
   const ret = !!S.pos.ret, sign = ret ? -1 : 1, cust = S.pos.cust || null;
   if (pay==="veresiye" && !cust){ S.posPick = true; S.posErr = "Veresiye için müşteri seç (ya da yeni müşteri ekle)."; render(); return; }
-  if (items.some(x=>!(Number(x.u) > 0))){ S.posErr = "Fiyatı olmayan ürün var. Sepette fiyatını yaz."; render(); return; }
+  if (items.some(x=>!(Number(x.u) > 0))){ S.posErr = isStaff() ? "Fiyatı olmayan ürünü dükkân sahibi satar. Ona haber ver." : "Fiyatı olmayan ürün var. Sepette fiyatını yaz."; render(); return; }
   const it = items.slice().reverse().map(x=>{ const p = x.p ? S.products.find(y=>y.id===x.p) : null, b = buyOf(p);
     return {p: x.p || "-", n: x.n, q: r3(sign*Math.abs(Number(x.q))), u: r2(x.u), ...(b!=null ? {b} : {}), ...(x.w ? {w:1} : {})}; });
   const tot = r2(it.reduce((a,x)=>a + x.q*x.u, 0)), given = pnum(S.posGiven);
@@ -4166,6 +4168,7 @@ async function posAct(a, t){
   if (a==="goKasa"){ S.tab = "satis"; S.posView = "kasa"; S.msg = null; render(); window.scrollTo(0,0); return true; }
   if (a==="posView"){ S.posView = t.dataset.v; S.msg = null; S.kasaForm = null; S.tan = null; render(); if (S.posView==="sat") posFocus(); if (S.posView==="tanit") setTimeout(()=>document.getElementById("tan-scan")?.focus(),0); return true; }
   if (a==="posPick"){ const p = S.products.find(x=>x.id===t.dataset.id); if (p){ S.posQ = ""; S.posWarn = null; addFromSearch(p, 1); } render(); if (S.posWeigh) setTimeout(()=>document.getElementById("pw-kg")?.focus(),0); else posFocus(); return true; }
+  if (a==="posEditPrice" && isStaff()){ S.posErr = "Fiyatı sadece dükkân sahibi değiştirir."; render(true); return true; }
   if (a==="posEditPrice"){ S.posEditK = k; render(); setTimeout(()=>{ const e = document.getElementById("pos-ep"); if (e){ e.focus(); e.select(); } },0); return true; }
   if (a==="posQ"){ const x = S.pos.items.find(y=>y.k===k); if (x){ x.q = r3(Number(x.q) + Number(t.dataset.d)); if (x.q <= 0) S.pos.items = S.pos.items.filter(y=>y!==x); cartSave(); } render(); posFocus(); return true; }
   if (a==="posDel"){ S.pos.items = S.pos.items.filter(y=>y.k!==k); cartSave(); render(); posFocus(); return true; }
@@ -4179,6 +4182,7 @@ async function posAct(a, t){
   if (a==="posNewCust"){ S.posNewCust = t.dataset.v==="1"; render(); if (S.posNewCust) setTimeout(()=>document.getElementById("pc-name")?.focus(),0); return true; }
   if (a==="posUnknownClose"){ S.posUnknown = null; S.posPrice = false; render(); posFocus(); return true; }
   if (a==="posTanitThis"){ const c = S.posUnknown?.code; S.posUnknown = null; S.posView = "tanit"; S.tan = {code:c, mode:"new"}; S.tanBack = true; render(); setTimeout(()=>document.getElementById("tn-name")?.focus(),0); return true; }
+  if (a==="posPriceOpen" && isStaff()){ S.posErr = "Listede olmayan ürünü sadece dükkân sahibi satar."; render(true); return true; }
   if (a==="posPriceOpen"){ S.posPrice = true; render(); setTimeout(()=>document.getElementById("pp-u")?.focus(),0); return true; }
   if (a==="posPriceClose"){ S.posPrice = false; render(); posFocus(); return true; }
   if (a==="posWeighClose"){ S.posWeigh = null; render(); posFocus(); return true; }
@@ -4197,6 +4201,7 @@ async function posSubmit(id, form){
   if (id==="weighform"){ const p = S.products.find(x=>x.id===S.posWeigh); let kg = pnum(v("pw-kg")); if (kg > 20 && Number.isInteger(kg)) kg = kg/1000;
     if (!(kg > 0)){ S.posErr = "Kiloyu yaz."; render(true); return true; }
     if (p) cartAdd(p, r3(kg), null, {w:true}); S.posWeigh = null; S.posErr = null; render(); posFocus(); return true; }
+  if (id==="priceform" && isStaff()){ S.posErr = "Listede olmayan ürünü sadece dükkân sahibi satar."; S.posPrice = false; render(true); return true; }
   if (id==="priceform"){ const u = pnum(v("pp-u")); if (!(u > 0)){ S.posErr = (u<0?"Tutar eksi olamaz.":"Tutarı yaz."); render(true); return true; }
     if (u >= 100000 && S.posBigOk!==u){ S.posBigOk = u; S.posErr = `${TLx(u)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Ekle'ye bas.`; render(true); return true; }
     S.posBigOk = null;

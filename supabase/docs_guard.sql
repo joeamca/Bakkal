@@ -41,7 +41,8 @@ create trigger docs_zlog after update on public.docs for each row execute functi
 --  * satış: iade yazamaz; ürün fiyatı kayıtlı fiyattan farklı olamaz; toplam kalemlerle tutmalı
 --  * fire / arıza / iade kaydı giremez; stoğu azaltan sayım giremez
 --  * başkasının kaydını değiştiremez ya da silemez; kendi kaydını 2 dk içinde geri alabilir
---  * var olan ürünün satış/alış fiyatını, var olan müşteriyi değiştiremez
+--  * ürüne fiyat yazamaz / değiştiremez; fiyatı olmayan ürünü ve listede olmayan kalemi satamaz
+--  * var olan müşteriyi değiştiremez
 create or replace function public.docs_guard() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
@@ -76,11 +77,17 @@ begin
         if coalesce(nullif(i->>'q','')::numeric, 0) <= 0 or coalesce(nullif(i->>'u','')::numeric, 0) <= 0 then
           raise exception 'YETKI: satış kalemi hatalı' using errcode = 'P0001';
         end if;
+        if coalesce(i->>'p','-') = '-' then
+          raise exception 'YETKI: listede olmayan kalemi sadece dükkân sahibi satar' using errcode = 'P0001';
+        end if;
         sm := sm + (i->>'q')::numeric * (i->>'u')::numeric;
         if coalesce(i->>'p','-') <> '-' then
           select nullif(data->>'salePrice','')::numeric into ps from docs
             where shop_id = new.shop_id and kind = 'product' and id = i->>'p' and not deleted;
-          if ps is not null and ps > 0 and abs((i->>'u')::numeric - ps) > 0.005 then
+          if ps is null or ps <= 0 then
+            raise exception 'YETKI: fiyatı olmayan ürünü sadece dükkân sahibi satar' using errcode = 'P0001';
+          end if;
+          if abs((i->>'u')::numeric - ps) > 0.005 then
             raise exception 'YETKI: satış fiyatını sadece dükkân sahibi değiştirir' using errcode = 'P0001';
           end if;
         end if;
@@ -91,15 +98,22 @@ begin
     end if;
   end if;
   select * into o from docs where shop_id = new.shop_id and kind = new.kind and id = new.id;
-  if not found then return new; end if;                       -- yeni kayıt serbest
+  if not found then                                           -- yeni kayıt serbest, ama çırak ürüne fiyat yazamaz
+    if new.kind = 'product' and not new.deleted and (coalesce(nullif(new.data->>'salePrice','')::numeric,0) > 0 or coalesce(nullif(new.data->>'buyPrice','')::numeric,0) > 0) then
+      raise exception 'YETKI: ürün fiyatını sadece dükkân sahibi yazar' using errcode = 'P0001';
+    end if;
+    return new;
+  end if;
+  if new.kind = 'product' and not new.deleted and (coalesce(nullif(new.data->>'salePrice','')::numeric,0) <> coalesce(nullif(o.data->>'salePrice','')::numeric,0) or coalesce(nullif(new.data->>'buyPrice','')::numeric,0) <> coalesce(nullif(o.data->>'buyPrice','')::numeric,0)) then
+    raise exception 'YETKI: fiyatı sadece dükkân sahibi değiştirebilir' using errcode = 'P0001';
+  end if;
   if o.updated_by = me and o.updated_at > now() - win then return new; end if;
   if new.kind = 'product' and new.deleted = false then
     osale := coalesce(nullif(o.data->>'salePrice','')::numeric, 0);
     nsale := coalesce(nullif(new.data->>'salePrice','')::numeric, 0);
     obuy  := coalesce(nullif(o.data->>'buyPrice','')::numeric, 0);
     nbuy  := coalesce(nullif(new.data->>'buyPrice','')::numeric, 0);
-    if (osale = 0 or osale = nsale) and (obuy = 0 or obuy = nbuy) then return new; end if;
-    raise exception 'YETKI: fiyatı sadece dükkân sahibi değiştirebilir' using errcode = 'P0001';
+    return new;                                               -- fiyat değişimi yukarıda engellendi
   end if;
   if new.kind in ('supplier','settings') and new.deleted = false then return new; end if;
   raise exception 'YETKI: bu kaydı değiştirme ya da silme yetkin yok' using errcode = 'P0001';

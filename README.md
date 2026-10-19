@@ -48,7 +48,6 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 | Dosya / klasör | Ne işe yarar |
 |---|---|
 | `index.html` | **Bakkal Defteri** (tam sürüm). HTML, CSS ve JS tek dosyada |
-| `duyuru.js` | Duyuru kartı: hazır yazılar, kart çizimi, paylaşma (Kolay > Duyuru ekranı açılınca yüklenir) |
 | `kamera.js` | Telefonda kamerayla barkod okuma (kamera düğmesine ilk basınca yüklenir) |
 | `sw.js` | Bildirimleri alır ve internetsiz açılışı sağlar. Sayfa önce internetten istenir, yoksa telefondaki kopya açılır |
 | `manifest.webmanifest` | Tam sürümü ana ekrana ekleme bilgileri (ad, renk, simge) |

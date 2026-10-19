@@ -7,7 +7,7 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 | | Adres | Kimin için |
 |---|---|---|
 | **Bakkal Defteri** (tam sürüm) | https://joeamca.github.io/Bakkal/ | Sipariş, fatura, ihtiyaç planı, fire dahil her şey |
-| **Bakkal Kolay** | https://joeamca.github.io/Bakkal/kolay/ | Büyük düğmeler, sade ekran: satış, kasa, stok, kâr. Ayrıntılar: [kolay/](kolay/) |
+| **Bakkal Kolay** | https://joeamca.github.io/Bakkal-Kolay/ | Büyük düğmeler, sade ekran: satış, kasa, stok, kâr. Ayrı depo: [Bakkal-Kolay](https://github.com/joeamca/Bakkal-Kolay) |
 
 <p>
 <img src="ekran/tam-bugun.jpg" width="200" alt="Bugün ekranı">
@@ -48,7 +48,6 @@ Mahalle bakkalı için dükkân defteri: barkodla satış, kasa, stok, sipariş,
 | Dosya / klasör | Ne işe yarar |
 |---|---|
 | `index.html` | **Bakkal Defteri** (tam sürüm). HTML, CSS ve JS tek dosyada |
-| `kolay/` | **Bakkal Kolay** (sade sürüm): kendi `index.html`, `manifest.webmanifest` ve [README](kolay/README.md) dosyası |
 | `duyuru.js` | Duyuru kartı: hazır yazılar, kart çizimi, paylaşma (Kolay > Duyuru ekranı açılınca yüklenir) |
 | `kamera.js` | Telefonda kamerayla barkod okuma (kamera düğmesine ilk basınca yüklenir) |
 | `sw.js` | Bildirimleri alır ve internetsiz açılışı sağlar. Sayfa önce internetten istenir, yoksa telefondaki kopya açılır |

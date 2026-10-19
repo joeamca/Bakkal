@@ -1,8 +1,8 @@
 // Bakkal Defteri / Bakkal Kolay servis çalışanı: bildirimler + internetsiz açılış
 // Sayfalar önce internetten istenir (her zaman güncel sürüm); internet yoksa ya da çok yavaşsa telefondaki kopya açılır.
-const CACHE = "bakkal-v13";
+const CACHE = "bakkal-v14";
 const CORE = ["./", "manifest.webmanifest",
-  "kamera.js","duyuru.js", "icons/app-192.png", "icons/app-512.png"];
+  "kamera.js", "icons/app-192.png", "icons/app-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(CORE.map(u => c.add(new Request(u, { cache: "reload" })).catch(() => {})))).then(() => self.skipWaiting()));
 });

@@ -76,13 +76,13 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
 .notice.bad{background:var(--bad-soft);color:var(--bad)}
 .empty{text-align:center;padding:28px 12px}
 .empty .big{font-size:40px;font-family:var(--mono);color:var(--muted)}
-body.staff [data-act="goKasa"],body.staff [data-act="kKasa"],body.staff [data-act="goRapor"],body.staff [data-act="posView"][data-v="kasa"],body.staff [data-tab="k-kar"],body.staff [data-tab="k-kasa"],body.staff [data-tab="kar"],body.staff [data-tab="rapor"],body.staff [data-tab="maliyet"],body.staff [data-tab="plan"],body.staff [data-tab="duyuru"],body.staff [data-tab="fire"],body.staff [data-act="posRet"],body.staff .ktoday,body.staff #excel{display:none!important}
+body.staff [data-act="goKasa"],body.staff [data-act="kKasa"],body.staff [data-act="goRapor"],body.staff [data-act="posView"][data-v="kasa"],body.staff [data-tab="k-kar"],body.staff [data-tab="k-kasa"],body.staff [data-tab="kar"],body.staff [data-tab="rapor"],body.staff [data-tab="maliyet"],body.staff [data-tab="plan"],body.staff [data-tab="duyuru"],body.staff:not(.p-fire) [data-tab="fire"],body.staff:not(.p-iade) [data-act="posRet"],body.staff .ktoday,body.staff #excel{display:none!important}
 html.kolay body.staff nav.tabs{grid-template-columns:repeat(3,1fr)}
 .hr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .hr>div:first-child{min-width:0;flex:1}.hr b{display:block;overflow-wrap:anywhere}.hr .d{text-align:right;font-weight:800;white-space:nowrap}.hr .d small{display:block;font-weight:700}
 body.staff .pstep [data-d="-1"]{visibility:hidden}
-body.staff [data-act="posPriceOpen"]{display:none!important}
-body.staff .pricebtn{pointer-events:none;text-decoration:none}
+body.staff:not(.p-serbest) [data-act="posPriceOpen"]{display:none!important}
+body.staff:not(.p-fiyat) .pricebtn{pointer-events:none;text-decoration:none}
 .gq-hide{display:none!important}.gsw{margin:0 0 12px}.gsw input{width:100%;box-sizing:border-box;font-size:18px;padding:12px 14px;border-radius:12px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav.tabs button{border:0;border-radius:0;background:none;color:var(--muted);font-size:13px;padding:10px 4px 12px;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:58px}
@@ -1248,8 +1248,8 @@ function yenilikHtml(){
   return `<div class="notice ok stack" style="margin-bottom:12px"><b>${YENI_BASLIK}</b><ul style="margin:0;padding-left:20px;display:grid;gap:6px">${YENI_NOT.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="primary" data-act="yeniOk">Tamam</button></div>`;
 }
 function render(keep){
-  { const stf = isStaff(); document.body.classList.toggle("staff", stf);
-    if (stf){ if (STAFF_NO.has(S.tab)) S.tab = window.KOLAY ? "k-ana" : "ana"; if (S.posView==="kasa") S.posView = "sat"; } }
+  { const stf = isStaff(); document.body.classList.toggle("staff", stf); for (const k of ["fire","iade","azalt","serbest","fiyat"]) document.body.classList.toggle("p-"+k, stf && can(k)); if (S.tab!=="ayarlar") S.pm = null;
+    if (stf){ if (STAFF_NO.has(S.tab) && !(S.tab==="fire" && can("fire"))) S.tab = window.KOLAY ? "k-ana" : "ana"; if (S.posView==="kasa") S.posView = "sat"; } }
   if (window.KOLAY) kRoute();
   $("#pageTitle").textContent = titles[S.tab];
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", (b.dataset.tab===S.tab || (window.KOLAY && kNavOn(b.dataset.tab)) || (b.dataset.tab==="menu" && MENU_TABS.includes(S.tab))) ? "page" : "false"));
@@ -1745,6 +1745,7 @@ function viewSettings(){
   if (S.msg) html += `<div class="notice ${S.msg.kind||"ok"}">${esc(S.msg.text)}</div>`;
   html += accountCards();
   html += nSection();
+  html += permCard();
   const sups = [...new Set(S.products.map(x=>x.supplier).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"tr"));
   html += `<section class="card stack"><h2>Dükkân</h2>
     <div class="row" style="align-items:flex-end"><label style="flex:1;min-width:180px">Dükkânın adı<input id="shop-name" maxlength="40" value="${esc(S.settings?.shopName||"")}" placeholder="Örn. Yıldız Bakkal"></label><button data-act="saveShop">Kaydet</button></div>
@@ -2783,7 +2784,7 @@ document.addEventListener("click", async ev=>{
     else if (a==="count"){ const v=document.getElementById((t.dataset.src||"cnt-")+id).value; if (v==="") return; const cq=Number(String(v).replace(",",".")), cp=S.products.find(x=>x.id===id);
       if (isNaN(cq) || cq<0){ S.msg={kind:"bad",text:"Raf sayısı eksi olamaz. Rafta hiç yoksa 0 yaz."}; render(true); return; }
       if (unitOf(cp)==="tane" && !Number.isInteger(cq)){ S.msg={kind:"bad",text:"Adet küsuratlı olamaz; tam sayı yaz."}; render(true); return; }
-      if (isStaff()){ const cur0 = pCur(cp); if (cur0!=null && cq < cur0){ S.msg={kind:"bad",text:"Stoğu azaltmayı sadece dükkân sahibi yapar. Sayım yanlışsa dükkân sahibine söyle."}; render(true); return; } }
+      if (isStaff() && !can("azalt")){ const cur0 = pCur(cp); if (cur0!=null && cq < cur0){ staffTry("Stoğu azaltmayı denedi"); S.msg={kind:"bad",text:"Stoğu azaltmayı sadece dükkân sahibi yapar. Sayım yanlışsa dükkân sahibine söyle."}; render(true); return; } }
       const cid = newId(); await store.addEvent({id:cid, type:"sayim",productId:id,qty:cq,was:pCur(cp),date:nowIso()}); offerUndo("Raf sayısı kaydedildi.", ()=>store.deleteEvent(cid)); const p=S.products.find(x=>x.id===id); if(p) p.showCount=false; S.msg={kind:"ok",text:"Raf sayısı kaydedildi; öneri buna göre güncellendi."}; render(); }
     else if (a==="copy"){ const txt=orderText(t.dataset.sup); try{ await navigator.clipboard.writeText(txt); S.msg={kind:"ok",text:"Sipariş listesi kopyalandı. WhatsApp'tan plasiyere yapıştırabilirsin."}; }catch(_){ S.msg={kind:"warn",text:txt}; } render(); }
     else if (a==="closeInvSum2"){ S.invSummary=null; render(); }
@@ -3027,7 +3028,7 @@ const sbMsg = e => { const m = String(e?.message||e||""); return /fetch|network|
 const isNetErr = e => /fetch|network|Load failed|NetworkError|timeout/i.test(String(e?.message||e||"")) || (!e?.code && !e?.status);
 
 function cloudSave(){ clearTimeout(cloudSave.t); cloudSave.t = setTimeout(cloudSaveNow, 150); }
-function cloudSaveNow(){ clearTimeout(cloudSave.t); if (!C.user) return; try{ localStorage.setItem(BKEY, JSON.stringify({uid:C.user.id, admin:!!S.admin, ctx:C.ctx, shop:C.shop, queue:C.queue, lastSync:C.lastSync, by:C.by, people:C.people,
+function cloudSaveNow(){ clearTimeout(cloudSave.t); if (!C.user) return; try{ localStorage.setItem(BKEY, JSON.stringify({uid:C.user.id, admin:!!S.admin, ctx:C.ctx, shop:C.shop, queue:C.queue, lastSync:C.lastSync, by:C.by, people:C.people, perm:S.perm||{},
   posOld:C.posOld||null, data:{products:S.products.map(({showCount,...x})=>x), events:S.events, suppliers:S.suppliers, customers:S.customers, settings:S.settings, sales:S.sales, cash:S.cash}})); }catch(_){} }
 function cloudRead(){ try{ return JSON.parse(localStorage.getItem(BKEY)||"null"); }catch(_){ return null; } }
 window.addEventListener("pagehide", ()=>{ if (CLOUD_ON) cloudSaveNow(); });
@@ -3099,6 +3100,7 @@ function applyRow(r){
   else if (r.kind==="sale"){ inArr(S.sales); salesTouch(); }
   else if (r.kind==="cash") inArr(S.cash);
   else if (r.kind==="supplier" || r.kind==="customer"){ const key = r.kind==="supplier" ? "suppliers" : "customers"; const o = {...S[key]}; if (d) o[r.id] = {...d, id:r.id}; else delete o[r.id]; S[key] = o; }
+  else if (r.kind==="settings" && r.id==="staffperm"){ S.perm = d ? {...d} : {}; }
   else if (r.kind==="settings" && d){ S.settings = {...d}; S.settingsFromDb = true; }
 }
 async function pull(){
@@ -3180,17 +3182,17 @@ function staffFlush(){
 }
 window.addEventListener("pagehide", ()=>{ try{ staffFlush(); }catch(_){} });
 async function flushDenied(batch){
-  let dropped = 0;
+  let dropped = 0; const why = new Set();
   for (const q of batch){
     try{
       const {error} = await SB.from("docs").upsert([{shop_id:q.shop, kind:q.kind, id:q.id, data:q.data, deleted:q.deleted}]);
       if (!error){ C.queue = C.queue.filter(x=>x!==q); continue; }
       if (!/YETKI/.test(String(error.message||""))) throw error;
-      C.queue = C.queue.filter(x=>x!==q); dropped++;
+      C.queue = C.queue.filter(x=>x!==q); dropped++; why.add(String(error.message).replace(/^.*YETKI:\s*/, "").slice(0, 70));
     }catch(e){ if (isNetErr(e)){ C.online = false; flushTimer = setTimeout(flush, 15000); return; } C.queue = C.queue.filter(x=>x!==q); dropped++; }
   }
   C.err = null; cloudSave();
-  if (dropped){ try{ nSend("calisan", staffWho() + ": yetkisiz işlem denedi", dropped + " işlem reddedildi, kaydedilmedi.", "calisan-yetki"); }catch(_){}
+  if (dropped){ try{ nSend("calisan", staffWho() + ": yetkisiz işlem denedi", dropped + " işlem reddedildi" + (why.size ? ": " + [...why].slice(0,2).join("; ") : "") + ".", "calisan-yetki"); }catch(_){}
     S.msg = {kind:"bad", text:"Bu işlem için yetkin yok, kaydedilmedi. Gerekirse dükkân sahibine söyle."}; C.lastSync = null; try{ await pull(); }catch(_){} render(); }
 }
 const whoName = uid => { const p = C.people.find(x=>x.user_id===uid); return p ? (p.full_name || p.username) : null; };
@@ -3222,7 +3224,7 @@ async function cloudBoot(){
   C.recovery = RECOVERY;
   if (LINK_ERR){ C.loginErr = "Şifre yenileme bağlantısının süresi dolmuş ya da daha önce kullanılmış. \"Şifremi unuttum\"a basıp yeni bağlantı iste."; try{ history.replaceState(null, "", SITE()); }catch(_){} }
   if (c && c.uid && (c.shop || c.admin)){
-    C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[];
+    C.user = {id:c.uid}; C.ctx = c.ctx; C.shop = c.shop; C.queue = c.queue||[]; C.lastSync = c.lastSync||null; C.by = c.by||{}; C.people = c.people||[]; S.perm = c.perm||{};
     const d = c.data||{}; S.products = d.products||[]; S.events = d.events||[]; S.suppliers = d.suppliers||{}; S.customers = d.customers||{}; if (d.settings) S.settings = d.settings;
     S.sales = d.sales||[]; S.cash = d.cash||[]; C.posOld = c.posOld||null; salesTouch(); prunePos();
     setStore(cloudStore()); S.mode = c.ctx?.must_change ? "newpass" : c.ctx?.has_pin===false ? "setpin" : c.shop?.active===false ? "paused" : "cloud";
@@ -3269,7 +3271,7 @@ async function afterLogin(user){
   }
   await openShop(pick);
 }
-function clearData(){ S.sales = []; S.cash = []; salesTouch(); if (C) C.posOld = null; S.products = []; S.events = []; S.suppliers = {}; S.customers = {}; S.settings = {dayW:[1,1,1,1,1,1,1], bigText:true}; S.settingsFromDb = false; }
+function clearData(){ S.sales = []; S.cash = []; salesTouch(); if (C) C.posOld = null; S.products = []; S.events = []; S.suppliers = {}; S.customers = {}; S.perm = {}; S.settings = {dayW:[1,1,1,1,1,1,1], bigText:true}; S.settingsFromDb = false; }
 async function openShop(sh){
   if (C.shop && C.shop.id!==sh.id){ clearData(); C.lastSync = null; C.by = {}; C.people = []; }
   C.shop = sh; try{ localStorage.setItem("bd-son-dukkan", sh.id); }catch(_){}
@@ -4169,7 +4171,7 @@ async function posFinish(pay){
   if (!items.length) return;
   const ret = !!S.pos.ret, sign = ret ? -1 : 1, cust = S.pos.cust || null;
   if (pay==="veresiye" && !cust){ S.posPick = true; S.posErr = "Veresiye için müşteri seç (ya da yeni müşteri ekle)."; render(); return; }
-  if (items.some(x=>!(Number(x.u) > 0))){ S.posErr = isStaff() ? "Fiyatı olmayan ürünü dükkân sahibi satar. Ona haber ver." : "Fiyatı olmayan ürün var. Sepette fiyatını yaz."; render(); return; }
+  if (items.some(x=>!(Number(x.u) > 0))){ S.posErr = (isStaff() && !can("fiyat")) ? "Fiyatı olmayan ürünü dükkân sahibi satar. Ona haber ver." : "Fiyatı olmayan ürün var. Sepette fiyatını yaz."; render(); return; }
   const it = items.slice().reverse().map(x=>{ const p = x.p ? S.products.find(y=>y.id===x.p) : null, b = buyOf(p);
     return {p: x.p || "-", n: x.n, q: r3(sign*Math.abs(Number(x.q))), u: r2(x.u), ...(b!=null ? {b} : {}), ...(x.w ? {w:1} : {})}; });
   const tot = r2(it.reduce((a,x)=>a + x.q*x.u, 0)), given = pnum(S.posGiven);
@@ -4365,7 +4367,7 @@ function viewHareket(){
 }
 async function addCount(p, cnt){
   if (!(cnt >= 0)) return;
-  if (isStaff()){ const cur = pCur(p); if (cur!=null && cnt < cur){ S.msg = {kind:"bad", text:"Stoğu azaltmayı sadece dükkân sahibi yapar. Sayım yanlışsa dükkân sahibine söyle."}; render(); return; } }
+  if (isStaff() && !can("azalt")){ const cur = pCur(p); if (cur!=null && cnt < cur){ staffTry("Stoğu azaltmayı denedi"); S.msg = {kind:"bad", text:"Stoğu azaltmayı sadece dükkân sahibi yapar. Sayım yanlışsa dükkân sahibine söyle."}; render(); return; } }
   await posMarkStart();
   await store.addEvent({id:newId(), type:"sayim", productId:p.id, qty:cnt, was:pCur(p), date:nowIso()});
   if (p.outSince && cnt > 0) await store.saveProduct({...S.products.find(x=>x.id===p.id), outSince:null});
@@ -4379,7 +4381,7 @@ async function posAct(a, t){
   if (a==="goKasa"){ S.tab = "satis"; S.posView = "kasa"; S.msg = null; render(); window.scrollTo(0,0); return true; }
   if (a==="posView"){ S.posView = t.dataset.v; S.msg = null; S.kasaForm = null; S.tan = null; render(); if (S.posView==="sat") posFocus(); if (S.posView==="tanit") setTimeout(()=>document.getElementById("tan-scan")?.focus(),0); return true; }
   if (a==="posPick"){ const p = S.products.find(x=>x.id===t.dataset.id); if (p){ S.posQ = ""; S.posWarn = null; addFromSearch(p, 1); } render(); if (S.posWeigh) setTimeout(()=>document.getElementById("pw-kg")?.focus(),0); else posFocus(); return true; }
-  if (a==="posEditPrice" && isStaff()){ S.posErr = "Fiyatı sadece dükkân sahibi değiştirir."; render(true); return true; }
+  if (a==="posEditPrice" && isStaff() && !can("fiyat")){ staffTry("Satış fiyatını değiştirmeyi denedi"); S.posErr = "Fiyatı sadece dükkân sahibi değiştirir."; render(true); return true; }
   if (a==="posEditPrice"){ S.posEditK = k; render(); setTimeout(()=>{ const e = document.getElementById("pos-ep"); if (e){ e.focus(); e.select(); } },0); return true; }
   if (a==="posQ"){ const x = S.pos.items.find(y=>y.k===k); if (x){ x.q = r3(Number(x.q) + Number(t.dataset.d)); if (x.q <= 0) S.pos.items = S.pos.items.filter(y=>y!==x); cartSave(); } render(); posFocus(); return true; }
   if (a==="posDel"){ S.pos.items = S.pos.items.filter(y=>y.k!==k); cartSave(); render(); posFocus(); return true; }
@@ -4393,7 +4395,7 @@ async function posAct(a, t){
   if (a==="posNewCust"){ S.posNewCust = t.dataset.v==="1"; render(); if (S.posNewCust) setTimeout(()=>document.getElementById("pc-name")?.focus(),0); return true; }
   if (a==="posUnknownClose"){ S.posUnknown = null; S.posPrice = false; render(); posFocus(); return true; }
   if (a==="posTanitThis"){ const c = S.posUnknown?.code; S.posUnknown = null; S.posView = "tanit"; S.tan = {code:c, mode:"new"}; S.tanBack = true; render(); setTimeout(()=>document.getElementById("tn-name")?.focus(),0); return true; }
-  if (a==="posPriceOpen" && isStaff()){ S.posErr = "Listede olmayan ürünü sadece dükkân sahibi satar."; render(true); return true; }
+  if (a==="posPriceOpen" && isStaff() && !can("serbest")){ staffTry("Listede olmayan ürün satmayı denedi"); S.posErr = "Listede olmayan ürünü sadece dükkân sahibi satar."; render(true); return true; }
   if (a==="posPriceOpen"){ S.posPrice = true; render(); setTimeout(()=>document.getElementById("pp-u")?.focus(),0); return true; }
   if (a==="posPriceClose"){ S.posPrice = false; render(); posFocus(); return true; }
   if (a==="posWeighClose"){ S.posWeigh = null; render(); posFocus(); return true; }
@@ -4412,7 +4414,7 @@ async function posSubmit(id, form){
   if (id==="weighform"){ const p = S.products.find(x=>x.id===S.posWeigh); let kg = pnum(v("pw-kg")); if (kg > 20 && Number.isInteger(kg)) kg = kg/1000;
     if (!(kg > 0)){ S.posErr = "Kiloyu yaz."; render(true); return true; }
     if (p) cartAdd(p, r3(kg), null, {w:true}); S.posWeigh = null; S.posErr = null; render(); posFocus(); return true; }
-  if (id==="priceform" && isStaff()){ S.posErr = "Listede olmayan ürünü sadece dükkân sahibi satar."; S.posPrice = false; render(true); return true; }
+  if (id==="priceform" && isStaff() && !can("serbest")){ staffTry("Listede olmayan ürün satmayı denedi"); S.posErr = "Listede olmayan ürünü sadece dükkân sahibi satar."; S.posPrice = false; render(true); return true; }
   if (id==="priceform"){ const u = pnum(v("pp-u")); if (!(u > 0)){ S.posErr = (u<0?"Tutar eksi olamaz.":"Tutarı yaz."); render(true); return true; }
     if (u >= 100000 && S.posBigOk!==u){ S.posBigOk = u; S.posErr = `${TLx(u)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Ekle'ye bas.`; render(true); return true; }
     S.posBigOk = null;
@@ -4753,9 +4755,9 @@ async function nTest(){
   render(true);
 }
 // Arka planda gönder: hata kasayı durdurmasın
-function nSend(type, title, body, tag){
+function nSend(type, title, body, tag, noEx){
   try{ if (!SB || S.mode!=="cloud" || !S.cloud.shop || !navigator.onLine) return;
-    SB.functions.invoke("bildir", {body:{type, title, body, tag, shop_id: S.cloud.shop.id, exclude: N.endpoint}}).catch(()=>{}); }catch(_){}
+    SB.functions.invoke("bildir", {body:{type, title, body, tag, shop_id: S.cloud.shop.id, exclude: noEx ? undefined : N.endpoint}}).catch(()=>{}); }catch(_){}
 }
 // Gün kapanışında günün raporu (pazarsa haftanın, ayın son günüyse ayın raporu da) bildirim olarak gider.
 // Aynı gün ikinci kapanışta tekrar gönderilmez. Kapanış yapmayan dükkânlara sunucu 23:30'da yedek olarak gönderir.
@@ -4783,6 +4785,81 @@ function nAfterCash(x){
   else if (x.t==="cikis" && Number(x.a) >= (Number(S.settings?.nCikis) || 500))
     nSend("cikis", "Kasadan para çıktı", `${TLx(x.a)}${x.r?` · ${x.r}`:""}${x.n?` · ${x.n}`:""}${who}`, "cikis-"+x.id);
 }
+/* ---------- Çırak yetkileri (sadece sahip ayarlar; yetki parolasıyla korunur) ---------- */
+const PERMS = [
+  ["fiyat","Fiyat yazsın ve değiştirsin","Ürüne fiyat yazar, satışta fiyatı değiştirir, fiyatsız ürünü satar."],
+  ["serbest","Listede olmayan şeyi satsın","Ürün kaydı olmadan tutar yazıp satış yapar."],
+  ["azalt","Stoğu azaltsın","Sayımda stoğu düşürebilir."],
+  ["fire","Fire ve arıza girsin","Çöpe giden ya da bozulan malı yazar."],
+  ["iade","İade alsın","İade satışı ve iade kaydı yapar."],
+  ["musteri","Müşteri bilgisini değiştirsin","Var olan müşterinin adını, telefonunu, sınırını değiştirir."],
+  ["sil","Kayıt silsin","Başkasının girdiği kaydı da siler (kasa hariç)."]
+];
+function can(k){ return !isStaff() || !!(S.perm && S.perm[k]); }
+let _staffTryT = 0;
+function staffTry(text){ if (Date.now() - _staffTryT < 30000) return; _staffTryT = Date.now();
+  try{ nSend("calisan", staffWho() + ": yetkisiz işlem denedi", text, "calisan-yetki"); }catch(_){} }
+function permCard(){
+  if (S.mode!=="cloud" || !C.shop || isStaff()) return "";
+  let p = S.pm || {st:"closed"};
+  if (p.st==="open" && Date.now() - p.t > 300000){ p = S.pm = {st:"closed"}; }
+  const err = p.err ? `<div class="notice bad">${esc(p.err)}</div>` : "";
+  const pw = (id, l, ac) => `<label>${l}<input id="${id}" type="password" autocomplete="${ac||"off"}" maxlength="30"></label>`;
+  let b;
+  if (p.st==="setup") b = `${err}<p class="small">Önce bir <b>yetki parolası</b> belirle. Ekran kilidi PIN'inden farklı olmalı, en az 6 karakter. Çırak bu ayarlara girmeye çalışırsa parola ister.</p>
+    <form id="pmform" data-pm="setup" class="stack">${pw("pm-a","Yetki parolası","new-password")}${pw("pm-b","Parolayı tekrar yaz","new-password")}<div class="row"><button class="primary" type="submit">Kaydet</button><button type="button" data-perm="close">Vazgeç</button></div></form>`;
+  else if (p.st==="lock") b = `${err}<form id="pmform" data-pm="lock" class="stack">${pw("pm-a","Yetki parolası")}<div class="row"><button class="primary" type="submit">Aç</button><button type="button" data-perm="close">Vazgeç</button></div></form>`;
+  else if (p.st==="change") b = `${err}<form id="pmform" data-pm="change" class="stack">${pw("pm-a","Eski parola")}${pw("pm-b","Yeni parola (en az 6 karakter)","new-password")}<div class="row"><button class="primary" type="submit">Değiştir</button><button type="button" data-perm="open">Vazgeç</button></div></form>`;
+  else if (p.st==="open") b = `${err}<p class="small muted">İşaretlediklerini çırak yapabilir. İşaretsizler kapalıdır; çırak denerse sana bildirim gelir.</p>
+    ${PERMS.map(([k,l,d])=>`<label class="check" style="align-items:flex-start"><input type="checkbox" data-pk="${k}" ${S.perm&&S.perm[k]?"checked":""}><span><b>${l}</b><br><small class="muted">${d}</small></span></label>`).join("")}
+    <p class="small muted">Kasa, kâr ve raporlar her zaman sadece sende kalır.</p>
+    <div class="row"><button class="primary" data-perm="save">Kaydet</button><button data-perm="change">Parolayı Değiştir</button><button data-perm="close">Kapat</button></div>`;
+  else b = `${err}<p class="small muted">Çırağın neleri yapabileceğini sen seçersin. Şu an ${PERMS.filter(x=>S.perm&&S.perm[x[0]]).length ? PERMS.filter(x=>S.perm&&S.perm[x[0]]).length + " izin açık" : "hepsi kapalı"}. Kasa ve raporlar her zaman sadece sende kalır.</p><button data-perm="start" ${p.busy?"disabled":""}>Yetkileri Ayarla</button>`;
+  return `<section class="card stack" id="permcard"><h2>Çırak Yetkileri</h2>${b}</section>`;
+}
+async function permNotify(){ nSend("calisan", "Yetki parolası 3 kez yanlış girildi", "Yetki ayarlarını açmaya çalışan oldu. Sen değilsen kontrol et.", "yetki-parola", true); }
+function permWait(w){ const m = Math.max(1, Math.ceil((w||300)/60)); return "Çok fazla yanlış deneme. " + m + " dakika bekle."; }
+document.addEventListener("click", async ev=>{
+  const t = ev.target.closest?.("[data-perm]"); if (!t || !SB || !C.shop) return; const a = t.dataset.perm;
+  try{
+    if (a==="close"){ S.pm = null; render(true); }
+    else if (a==="open"){ S.pm = {st:"open", t:Date.now()}; render(true); }
+    else if (a==="change"){ S.pm = {st:"change", t:Date.now()}; render(true); }
+    else if (a==="start"){ S.pm = {st:"closed", busy:true}; render(true);
+      const {data, error} = await SB.rpc("perm_pin_info", {p_shop:C.shop.id});
+      S.pm = error ? {st:"closed", err:"Şu an açılamadı. İnternetini kontrol et."} : {st: data && data.set ? "lock" : "setup"}; render(true); }
+    else if (a==="save"){
+      const o = {}; document.querySelectorAll("#permcard [data-pk]").forEach(i=>{ if (i.checked) o[i.dataset.pk] = true; });
+      S.perm = o; put("settings", "staffperm", o); S.pm = {st:"open", t:Date.now()}; S.msg = {kind:"ok", text:"Çırak yetkileri kaydedildi."}; render(true); }
+  }catch(e){ S.pm = {st:"closed", err:"İşlem yapılamadı. Tekrar dene."}; render(true); }
+});
+document.addEventListener("submit", async ev=>{
+  if (ev.target.id!=="pmform") return; ev.preventDefault(); if (!SB || !C.shop) return;
+  const kind = ev.target.dataset.pm, a = document.getElementById("pm-a")?.value || "", b = document.getElementById("pm-b")?.value || "";
+  try{
+    if (kind==="setup"){
+      if (a.length < 6) { S.pm = {st:"setup", err:"En az 6 karakter yaz."}; return render(true); }
+      if (a !== b){ S.pm = {st:"setup", err:"İki parola aynı değil."}; return render(true); }
+      const {data, error} = await SB.rpc("perm_pin_set", {p_shop:C.shop.id, p_new:a});
+      if (error) S.pm = {st:"setup", err:String(error.message||"Kaydedilemedi.")};
+      else S.pm = {st:"open", t:Date.now()};
+    } else if (kind==="lock"){
+      const {data, error} = await SB.rpc("perm_pin_check", {p_shop:C.shop.id, p_pin:a});
+      if (error) S.pm = {st:"lock", err:"Şu an kontrol edilemedi."};
+      else if (data.ok) S.pm = {st:"open", t:Date.now()};
+      else { if (data.notify) permNotify();
+        S.pm = {st:"lock", err: data.reason==="wrong" ? "Yanlış parola. " + data.left + " hakkın kaldı." : permWait(data.wait)}; }
+    } else if (kind==="change"){
+      if (b.length < 6) { S.pm = {st:"change", err:"Yeni parola en az 6 karakter olmalı."}; return render(true); }
+      const {data, error} = await SB.rpc("perm_pin_set", {p_shop:C.shop.id, p_new:b, p_old:a});
+      if (error) S.pm = {st:"change", err:String(error.message||"Değiştirilemedi.")};
+      else if (data.ok){ S.pm = {st:"open", t:Date.now()}; S.msg = {kind:"ok", text:"Yetki parolası değişti."}; }
+      else { if (data.notify) permNotify(); S.pm = {st:"change", err: data.reason==="wrong" ? "Eski parola yanlış." : permWait(300)}; }
+    }
+  }catch(e){ S.pm = {st:"lock", err:"İşlem yapılamadı. Tekrar dene."}; }
+  render(true);
+});
+
 function nSection(){
   if (S.mode!=="cloud") return `<section class="card stack"><h2>${ic("bell",20)} Bildirimler</h2><p class="small muted">Bildirimler için hesabınla giriş yapman gerekiyor.</p></section>`;
   if (N.state==="?"){ nRefresh().then(()=>render(true)); }
@@ -5404,7 +5481,7 @@ function kUrun(){
   const v = p || {name:"", salePrice:"", buyPrice:"", barcodes:[], byWeight:false};
   const bc = p ? (v.barcodes||[]).map(b=>b.c).join(", ") : (S.kBc || "");
   const back = S.kBack==="satis" ? `<button class="link back" type="button" data-act="kGo" data-tab="satis">${ic("back",18)} Satışa Dön</button>` : `<button class="link back" type="button" data-act="kGo" data-tab="k-stok">${ic("back",18)} Stok</button>`;
-  const num = x => x==null||x==="" ? "" : String(x).replace(".",","), lockP = isStaff();
+  const num = x => x==null||x==="" ? "" : String(x).replace(".",","), lockP = isStaff() && !can("fiyat");
   return noticeHtml() + back + `<form id="kuform" class="kuform" autocomplete="off">
     <div class="kuhead"><span class="bi ${p?"c4":"c1"}">${ic(p?"tag":"plus",26)}</span><div><h2>${p ? "Ürünü Düzenle" : "Yeni Ürün"}</h2><p class="muted small">${p ? esc(v.name) : "Barkodu okut ya da adını yaz."}</p></div></div>
     <section class="kustep"><span class="kun">1</span><div class="kubody">
@@ -5450,7 +5527,7 @@ async function kSave(next){
   const codes = g("ku-bc").split(/[,\s]+/).map(cleanCode).filter(Boolean);
   S.kErr = null;
   if (!name){ S.kErr = "Ürün adını yaz."; render(true); document.getElementById("ku-name")?.focus(); return; }
-  if (!isStaff() && !(sale >= 0.01)){ S.kErr = "Satış fiyatını yaz."; render(true); document.getElementById("ku-sale")?.focus(); return; }
+  if ((!isStaff() || can("fiyat")) && !(sale >= 0.01)){ S.kErr = "Satış fiyatını yaz."; render(true); document.getElementById("ku-sale")?.focus(); return; }
   if (cnt < 0){ S.kErr = "Rafta kaç tane var: eksi sayı olamaz."; render(true); document.getElementById("ku-cnt")?.focus(); return; }
   if ((sale >= 100000 || buy >= 100000) && S.kBigOk!==name+sale+"/"+buy){ S.kBigOk = name+sale+"/"+buy; S.kErr = `Fiyat çok yüksek görünüyor: ${kTL(Math.max(sale, buy||0))}. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`; render(true); return; }
   const old = S.kEdit!=="__new" ? S.products.find(x=>x.id===S.kEdit) : null;

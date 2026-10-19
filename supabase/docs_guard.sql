@@ -43,6 +43,7 @@ create trigger docs_zlog after update on public.docs for each row execute functi
 --  * başkasının kaydını değiştiremez ya da silemez; kendi kaydını 2 dk içinde geri alabilir
 --  * ürüne fiyat yazamaz / değiştiremez; fiyatı olmayan ürünü ve listede olmayan kalemi satamaz
 --  * var olan müşteriyi değiştiremez
+--  * Sahip Ayarlar'dan izin verirse (docs: settings/staffperm: fire, iade, azalt, serbest, fiyat, musteri, sil) o kısıtlar kalkar
 create or replace function public.docs_guard() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
@@ -50,38 +51,43 @@ declare
   o public.docs;
   win interval := interval '2 minutes';
   osale numeric; nsale numeric; obuy numeric; nbuy numeric;
-  etype text; wasv numeric; i jsonb; ps numeric; sm numeric := 0;
+  etype text; wasv numeric; i jsonb; ps numeric; sm numeric := 0; perm jsonb;
 begin
   if me is null then return new; end if;                      -- servis / cron
   if is_owner(new.shop_id) or is_admin() then return new; end if;
+  if new.kind = 'settings' and new.id = 'staffperm' then
+    raise exception 'YETKI: çırak yetkilerini sadece dükkân sahibi değiştirir' using errcode = 'P0001';
+  end if;
+  select data into perm from docs where shop_id = new.shop_id and kind = 'settings' and id = 'staffperm' and not deleted;
+  perm := coalesce(perm, '{}'::jsonb);                         -- sahibin açtığı izinler; boşsa hepsi kapalı
   if new.kind = 'cash' then
     raise exception 'YETKI: kasa kaydını sadece dükkân sahibi değiştirebilir' using errcode = 'P0001';
   end if;
   if new.deleted = false then
     if new.kind = 'event' then
       etype := new.data->>'type';
-      if etype in ('fire','ariza','iade') then
+      if (etype in ('fire','ariza') and not coalesce((perm->>'fire')::boolean,false)) or (etype = 'iade' and not coalesce((perm->>'iade')::boolean,false)) then
         raise exception 'YETKI: fire ve iade kaydını sadece dükkân sahibi girer' using errcode = 'P0001';
       end if;
       if etype = 'sayim' then
         wasv := nullif(new.data->>'was','')::numeric;
-        if wasv is null or coalesce(nullif(new.data->>'qty','')::numeric, 0) < wasv then
+        if (wasv is null or coalesce(nullif(new.data->>'qty','')::numeric, 0) < wasv) and not coalesce((perm->>'azalt')::boolean,false) then
           raise exception 'YETKI: stoğu azaltmayı sadece dükkân sahibi yapar' using errcode = 'P0001';
         end if;
       end if;
     elsif new.kind = 'sale' then
-      if coalesce((new.data->>'r')::boolean, false) then
+      if coalesce((new.data->>'r')::boolean, false) and not coalesce((perm->>'iade')::boolean,false) then
         raise exception 'YETKI: iade satışını sadece dükkân sahibi yapar' using errcode = 'P0001';
       end if;
       for i in select * from jsonb_array_elements(coalesce(new.data->'it','[]'::jsonb)) loop
         if coalesce(nullif(i->>'q','')::numeric, 0) <= 0 or coalesce(nullif(i->>'u','')::numeric, 0) <= 0 then
           raise exception 'YETKI: satış kalemi hatalı' using errcode = 'P0001';
         end if;
-        if coalesce(i->>'p','-') = '-' then
+        if coalesce(i->>'p','-') = '-' and not coalesce((perm->>'serbest')::boolean,false) then
           raise exception 'YETKI: listede olmayan kalemi sadece dükkân sahibi satar' using errcode = 'P0001';
         end if;
         sm := sm + (i->>'q')::numeric * (i->>'u')::numeric;
-        if coalesce(i->>'p','-') <> '-' then
+        if coalesce(i->>'p','-') <> '-' and not coalesce((perm->>'fiyat')::boolean,false) then
           select nullif(data->>'salePrice','')::numeric into ps from docs
             where shop_id = new.shop_id and kind = 'product' and id = i->>'p' and not deleted;
           if ps is null or ps <= 0 then
@@ -99,12 +105,12 @@ begin
   end if;
   select * into o from docs where shop_id = new.shop_id and kind = new.kind and id = new.id;
   if not found then                                           -- yeni kayıt serbest, ama çırak ürüne fiyat yazamaz
-    if new.kind = 'product' and not new.deleted and (coalesce(nullif(new.data->>'salePrice','')::numeric,0) > 0 or coalesce(nullif(new.data->>'buyPrice','')::numeric,0) > 0) then
+    if new.kind = 'product' and not new.deleted and not coalesce((perm->>'fiyat')::boolean,false) and (coalesce(nullif(new.data->>'salePrice','')::numeric,0) > 0 or coalesce(nullif(new.data->>'buyPrice','')::numeric,0) > 0) then
       raise exception 'YETKI: ürün fiyatını sadece dükkân sahibi yazar' using errcode = 'P0001';
     end if;
     return new;
   end if;
-  if new.kind = 'product' and not new.deleted and (coalesce(nullif(new.data->>'salePrice','')::numeric,0) <> coalesce(nullif(o.data->>'salePrice','')::numeric,0) or coalesce(nullif(new.data->>'buyPrice','')::numeric,0) <> coalesce(nullif(o.data->>'buyPrice','')::numeric,0)) then
+  if new.kind = 'product' and not new.deleted and not coalesce((perm->>'fiyat')::boolean,false) and (coalesce(nullif(new.data->>'salePrice','')::numeric,0) <> coalesce(nullif(o.data->>'salePrice','')::numeric,0) or coalesce(nullif(new.data->>'buyPrice','')::numeric,0) <> coalesce(nullif(o.data->>'buyPrice','')::numeric,0)) then
     raise exception 'YETKI: fiyatı sadece dükkân sahibi değiştirebilir' using errcode = 'P0001';
   end if;
   if o.updated_by = me and o.updated_at > now() - win then return new; end if;
@@ -116,6 +122,8 @@ begin
     return new;                                               -- fiyat değişimi yukarıda engellendi
   end if;
   if new.kind in ('supplier','settings') and new.deleted = false then return new; end if;
+  if new.kind = 'customer' and not new.deleted and coalesce((perm->>'musteri')::boolean,false) then return new; end if;
+  if new.deleted and new.kind not in ('cash','settings') and coalesce((perm->>'sil')::boolean,false) then return new; end if;
   raise exception 'YETKI: bu kaydı değiştirme ya da silme yetkin yok' using errcode = 'P0001';
 end $$;
 drop trigger if exists docs_guard on public.docs;

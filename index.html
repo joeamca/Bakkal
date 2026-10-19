@@ -380,6 +380,9 @@ header.top>.row{flex-wrap:nowrap}
 
 .icon{flex:none;vertical-align:middle}
 nav.tabs button svg{width:24px;height:24px}
+button.link.back,.back{min-height:44px}
+.postools .link{min-height:44px;padding:0 10px}
+.check input[type=checkbox]{width:28px;height:28px}
 .back{display:inline-flex;align-items:center;gap:4px;text-decoration:none;font-weight:600;align-self:flex-start}
 #guideBtn,#setBtn{display:inline-flex;align-items:center;gap:6px}
 .dwrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center}
@@ -994,7 +997,11 @@ const YENI_NOT = [
   "Kasada olandan fazla para çıkarırsan ya da günü ikinci kez kapatırsan önce uyarır."
 ];
 function yenilikHtml(){
-  if (S.locked || !(S.products && S.products.length || S.events && S.events.length)) return "";   // yeni kullanıcıya gösterme
+  if (S.locked) return "";
+  if (!(S.products && S.products.length || S.events && S.events.length)){   // yeni kullanıcıya gösterme; ilk ürünü ekleyince de çıkmasın
+    try{ if (!localStorage.getItem("bd-yenilik")) localStorage.setItem("bd-yenilik", YENI_VER); }catch(_){}
+    return "";
+  }
   let seen = ""; try{ seen = localStorage.getItem("bd-yenilik") || ""; }catch(_){}
   if (seen===YENI_VER) return "";
   return `<div class="notice ok stack" style="margin-bottom:12px"><b>${YENI_BASLIK}</b><ul style="margin:0;padding-left:20px;display:grid;gap:6px">${YENI_NOT.map(x=>`<li>${esc(x)}</li>`).join("")}</ul><button class="primary" data-act="yeniOk">Tamam</button></div>`;
@@ -1899,7 +1906,7 @@ function custStats(c){
   const buckets = [0,0,0,0]; for (const d of open){ const age = (Date.now()-d.t)/DAY; buckets[age<15?0:age<30?1:age<60?2:3] += d.left; }
   return {bal: Math.round(bal*100)/100, ev, oldest, ageDays: oldest ? (Date.now()-oldest)/DAY : 0, buckets, lastT, series};
 }
-const TLx = n => { const a = Math.round(Math.abs(Number(n)||0)*100)/100; return (n<0 && a>0 ? "−" : "") + a.toLocaleString("tr-TR",{maximumFractionDigits:2}) + " TL"; };
+const TLx = n => { const a = Math.round(Math.abs(Number(n)||0)*100)/100; return (n<0 && a>0 ? "−" : "") + a.toLocaleString("tr-TR",{minimumFractionDigits:a%1?2:0,maximumFractionDigits:2}) + " TL"; };
 function initials(n){ return String(n||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toLocaleUpperCase("tr-TR") || "?"; }
 function avatar(c, s=44){ let h = 0; for (const ch of String(c.name||"")) h = (h*31 + ch.charCodeAt(0))>>>0; return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*0.38)}px;background:${COL[[0,3,5,1,4][h%5]]}">${esc(initials(c.name))}</span>`; }
 const agoTxt = t => { if (!t) return "kayıt yok"; const d = Math.floor((today0() - new Date(new Date(t).setHours(0,0,0,0)).getTime())/DAY); return d<=0 ? "bugün" : d===1 ? "dün" : d+" gün önce"; };
@@ -2503,7 +2510,7 @@ document.addEventListener("click", async ev=>{
     else if (a==="vQuick"){ const el=document.getElementById("v-amt"); if (!el) return; if (t.dataset.v==="all"){ el.value = String(custStats(S.customers[S.vCust]).bal); } else el.value = String((Number(el.value)||0) + Number(t.dataset.v)); const er=document.getElementById("v-err"); if (er) er.hidden=true; }
     else if (a==="vSave"){ const c=S.customers[S.vCust]; const amt=Number(String(document.getElementById("v-amt").value).replace(",",".")); const note=document.getElementById("v-note").value.trim(); const er=document.getElementById("v-err");
       { const ve = document.getElementById("v-amt"); if (ve && !ve.checkValidity()){ er.textContent = ve.validationMessage; er.hidden=false; return; } }
-      if (!(amt>0)){ er.textContent="Tutarı yaz."; er.hidden=false; return; }
+      if (!(amt>0)){ er.textContent=(amt<0?"Tutar eksi olamaz.":"Tutarı yaz."); er.hidden=false; return; }
       if (amt >= 1000000 && S.vBigOk!==amt){ S.vBigOk=amt; er.textContent=`${TLx(amt)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`; er.hidden=false; return; }
       S.vBigOk=null;
       if (S.vMode==="odeme"){ const sb=custStats(c).bal; if (amt > Math.max(0,sb)+0.005 && S.overOk!==amt){ S.overOk=amt;
@@ -4015,7 +4022,7 @@ async function kasaSave(f){
   const a = pnum(document.getElementById("kf-a")?.value), r = document.getElementById("kf-r")?.value || "", n = (document.getElementById("kf-n")?.value||"").trim();
   const b = pnum(document.getElementById("kf-b")?.value), supSel = f==="cikis" ? (document.getElementById("kf-sup")?.value || "") : "";
   S.kasaErr = null;
-  if (!(a >= 0) || (f!=="kapanis" && !(a > 0))){ S.kasaErr = "Tutarı yaz."; render(true); return; }
+  if (!(a >= 0) || (f!=="kapanis" && !(a > 0))){ S.kasaErr = (a<0?"Tutar eksi olamaz.":"Tutarı yaz."); render(true); return; }
   if ((f==="cikis"||f==="giris") && !r && !supSel){ S.kasaErr = "Sebebini seç."; render(true); return; }
   if ((f==="cikis"||f==="giris") && r==="Diğer" && !n){ S.kasaErr = "\"Diğer\" seçtiysen açıklamaya ne olduğunu yaz."; render(true); setTimeout(()=>{ const d = document.querySelector(".knote"); if (d) d.open = true; document.getElementById("kf-n")?.focus(); }, 0); return; }
   if (a >= 1000000 && S.kasaBigOk!==r2(a)){ S.kasaBigOk = r2(a); S.kasaErr = `${TLx(a)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Kaydet'e bas.`; render(true); return; }
@@ -4190,7 +4197,7 @@ async function posSubmit(id, form){
   if (id==="weighform"){ const p = S.products.find(x=>x.id===S.posWeigh); let kg = pnum(v("pw-kg")); if (kg > 20 && Number.isInteger(kg)) kg = kg/1000;
     if (!(kg > 0)){ S.posErr = "Kiloyu yaz."; render(true); return true; }
     if (p) cartAdd(p, r3(kg), null, {w:true}); S.posWeigh = null; S.posErr = null; render(); posFocus(); return true; }
-  if (id==="priceform"){ const u = pnum(v("pp-u")); if (!(u > 0)){ S.posErr = "Tutarı yaz."; render(true); return true; }
+  if (id==="priceform"){ const u = pnum(v("pp-u")); if (!(u > 0)){ S.posErr = (u<0?"Tutar eksi olamaz.":"Tutarı yaz."); render(true); return true; }
     if (u >= 100000 && S.posBigOk!==u){ S.posBigOk = u; S.posErr = `${TLx(u)} çok yüksek görünüyor. Fazla sıfır yazılmış olabilir. Doğruysa tekrar Ekle'ye bas.`; render(true); return true; }
     S.posBigOk = null;
     cartAdd(null, 1, r2(u), {n: (v("pp-name").trim() || "Diğer")}); S.posPrice = false; S.posUnknown = null; S.posErr = null; render(); posFocus(); return true; }
@@ -4831,7 +4838,7 @@ async function supSubmit(form){
     S.supEdit = null; S.supOpen = k; S.msg = {kind:"ok", text:`${name} kaydedildi.`}; render(); return;
   }
   if (form.id==="supform"){
-    const a = pnum(g("sf-a")); if (!(a > 0)){ S.supErr = "Tutarı yaz."; render(true); return; }
+    const a = pnum(g("sf-a")); if (!(a > 0)){ S.supErr = (a<0?"Tutar eksi olamaz.":"Tutarı yaz."); render(true); return; }
     const f = form.dataset.f, src = document.querySelector('input[name="sf-src"]:checked')?.value || "kasa";
     await supRecord({supId:S.supOpen, amount:a, kind: f==="odeme" ? "odeme" : "borc", note:g("sf-n"), fromCash: f==="odeme" && src==="kasa"});
     S.supForm = null; S.msg = {kind:"ok", text: f==="odeme" ? `${TLx(a)} ödeme kaydedildi${src==="kasa" ? ", kasadan düşüldü" : ""}.` : `${TLx(a)} borç yazıldı.`}; render(); return;

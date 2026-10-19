@@ -5191,6 +5191,11 @@ if ("serviceWorker" in navigator && !FILE_MODE && (location.protocol==="https:" 
     if (!el.hasAttribute("data-num") && el.getAttribute("inputmode")!=="decimal") return;
     const big = Math.abs(pnumAny(d.get.call(el))) > NUM_MAX;
     el.setCustomValidity(big ? "Bu kadar büyük sayı yazılamaz (en fazla 999.999.999)." : "");
+    { const hv = d.get.call(el).trim(); let h = el.closest("form,section,.card,body").querySelector(".numhint[data-for=\""+(el.id||"")+"\"]");
+      if (/^\d{1,3},\d{3}$/.test(hv)){
+        if (!h){ h = document.createElement("div"); h.className = "numhint notice"; h.dataset.for = el.id||""; h.setAttribute("role","status"); (el.closest(".kuprices")||el.closest("label")||el).insertAdjacentElement("afterend", h); }
+        h.textContent = `"${hv}" yazdın: bu ${TLx(pnum(hv))} okunur. ${hv.replace(",", ".")} lira demekse nokta kullan: ${hv.replace(",", ".")}`;
+      } else if (h) h.remove(); }
     if (big && document.activeElement===el) el.reportValidity(); }, true); })();
 // eksi sayı yazılamayan kutular (min="0"): formu göndermeden uyar
 document.addEventListener("submit", ev=>{
@@ -5406,7 +5411,7 @@ function kUrun(){
     <section class="kustep"><span class="kun">3</span><div class="kubody">
       <div class="kuprices"><label>Satış Fiyatı<span class="kutl"><input id="ku-sale" inputmode="decimal" value="${esc(num(v.salePrice))}" placeholder="25" ${lockP && Number(v.salePrice)>0 ? "readonly" : ""}><b>TL</b></span></label>
         <label>Alış Fiyatı<span class="kutl"><input id="ku-buy" inputmode="decimal" value="${esc(num(v.buyPrice))}" placeholder="18" ${lockP && Number(v.buyPrice)>0 ? "readonly" : ""}><b>TL</b></span></label></div>
-      <p class="small muted kuhint">${lockP ? "Var olan fiyatı sadece dükkân sahibi değiştirir." : "Bilmiyorsan boş bırak."}</p><div id="ku-kar" class="kukar">${kKarTxt(v.salePrice, v.buyPrice)}</div></div></section>
+      <p class="small muted kuhint">${lockP ? "Var olan fiyatı sadece dükkân sahibi değiştirir." : "Bilmiyorsan boş bırak. Kuruş için virgül: 12,50. Binlik için nokta: 1.500."}</p><div id="ku-kar" class="kukar">${kKarTxt(v.salePrice, v.buyPrice)}</div></div></section>
     <section class="kustep"><span class="kun">4</span><div class="kubody">
       <label for="ku-cnt">Rafta Kaç ${v.byWeight ? "Kilo" : "Tane"} Var?</label>
       <div class="kustepper"><button type="button" data-act="kStep" data-d="-1" aria-label="Bir azalt">${ic("minus",26)}</button><input id="ku-cnt" inputmode="decimal" placeholder="${p ? "Aynı" : "0"}"><button type="button" data-act="kStep" data-d="1" aria-label="Bir artır">${ic("plus",26)}</button></div>
